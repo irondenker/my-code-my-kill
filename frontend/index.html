@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <!-- ---------------------------- -->
+    <meta name="theme-color" content="#712cf9" />
+    <script src="assets/vendor/bootstrap-5.3.8-examples/js/color-modes.js"></script>
+    <link href="assets/vendor/bootstrap-5.3.8-examples/css/headers.css" rel="stylesheet" />
+    <link href="assets/vendor/bootstrap-5.3.8-examples/css/carousel.css" rel="stylesheet" />
+    <link href="assets/vendor/bootstrap-5.3.8-examples/css/internal.css" rel="stylesheet" />
+    <!-- ---------------------------- -->
+    <link rel="stylesheet" href="assets/css/style.css">
+
+</head>
+
+<body>
+    <!--  -->
+    <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle">
+        <button class="btn btn-bd-primary py-2 dropdown-toggle d-flex align-items-center" id="bd-theme" type="button"
+            aria-expanded="false" data-bs-toggle="dropdown" aria-label="Toggle theme (auto)">
+            <svg class="bi my-1 theme-icon-active" aria-hidden="true">
+                <!-- <use href="#circle-half"></use> -->
+                <use href="assets\vendor\bootstrap-5.3.8-examples\icons.svg#circle-half"></use>
+            </svg>
+            <span class="visually-hidden" id="bd-theme-text">Toggle theme</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="bd-theme-text">
+            <li>
+                <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="light"
+                    aria-pressed="false">
+                    <svg class="bi me-2 opacity-50" aria-hidden="true">
+                        <!-- <use href="#sun-fill"></use> -->
+                        <use href="assets\vendor\bootstrap-5.3.8-examples\icons.svg#sun-fill"></use>
+                    </svg>
+                    Light
+                    <svg class="bi ms-auto d-none" aria-hidden="true">
+                        <!-- <use href="#check2"></use> -->
+                        <use href="assets\vendor\bootstrap-5.3.8-examples\icons.svg#check2"></use>
+                    </svg>
+                </button>
+            </li>
+            <li>
+                <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="dark"
+                    aria-pressed="false">
+                    <svg class="bi me-2 opacity-50" aria-hidden="true">
+                        <!-- <use href="#moon-stars-fill"></use> -->
+                        <use href="assets\vendor\bootstrap-5.3.8-examples\icons.svg#moon-stars-fill"></use>
+                    </svg>
+                    Dark
+                    <svg class="bi ms-auto d-none" aria-hidden="true">
+                        <!-- <use href="#check2"></use> -->
+                        <use href="assets\vendor\bootstrap-5.3.8-examples\icons.svg#check2"></use>
+                    </svg>
+                </button>
+            </li>
+            <li>
+                <button type="button" class="dropdown-item d-flex align-items-center active" data-bs-theme-value="auto"
+                    aria-pressed="true">
+                    <svg class="bi me-2 opacity-50" aria-hidden="true">
+                        <!-- <use href="#circle-half"></use> -->
+                        <use href="assets\vendor\bootstrap-5.3.8-examples\icons.svg#circle-half"></use>
+                    </svg>
+                    Auto
+                    <svg class="bi ms-auto d-none" aria-hidden="true">
+                        <!-- <use href="#check2"></use> -->
+                        <use href="assets\vendor\bootstrap-5.3.8-examples\icons.svg#check2"></use>
+                    </svg>
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- header -->
+    <header class="sticky-top p-3 border-bottom">
+        <div class="container">
+            <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+                <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 link-body-emphasis text-decoration-none">
+                    <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap">
+                        <use xlink:href="assets\vendor\bootstrap-5.3.8-examples\icons.svg#bootstrap"></use>
+                    </svg>
+                </a>
+                <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+                    <li>
+                        <a href="#" class="nav-link px-2 link-secondary">Overview</a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link px-2 link-body-emphasis">Inventory</a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link px-2 link-body-emphasis">Customers</a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link px-2 link-body-emphasis">Products</a>
+                    </li>
+                </ul>
+                <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search">
+                    <input type="search" class="form-control" placeholder="Search..." aria-label="Search" />
+                </form>
+                <div class="dropdown text-end">
+                    <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="https://github.com/mdo.png" alt="mdo" width="32" height="32" class="rounded-circle" />
+                    </a>
+                    <ul class="dropdown-menu text-small">
+                        <li><a class="dropdown-item" href="#">New project...</a></li>
+                        <li><a class="dropdown-item" href="#">Settings</a></li>
+                        <li><a class="dropdown-item" href="#">Profile</a></li>
+                        <li>
+                            <hr class="dropdown-divider" />
+                        </li>
+                        <li><a class="dropdown-item" href="#">Sign out</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN, Corousel theme example -->
+    <main>
+        <div id="myCarousel" class="carousel slide mb-6" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="0" class="active"
+                    aria-current="true" aria-label="Slide 1"></button>
+                <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+            </div>
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <svg aria-hidden="true" class="bd-placeholder-img" height="100%"
+                        preserveAspectRatio="xMidYMid slice" width="100%" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100%" height="100%" fill="var(--bs-secondary-color)"></rect>
+                    </svg>
+                    <div class="container">
+                        <div class="carousel-caption text-start">
+                            <h1>Example headline.</h1>
+                            <p class="opacity-75">
+                                Some representative placeholder content for the first slide of
+                                the carousel.
+                            </p>
+                            <p>
+                                <a class="btn btn-lg btn-primary" href="#">Sign up today</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <svg aria-hidden="true" class="bd-placeholder-img" height="100%"
+                        preserveAspectRatio="xMidYMid slice" width="100%" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100%" height="100%" fill="var(--bs-secondary-color)"></rect>
+                    </svg>
+                    <div class="container">
+                        <div class="carousel-caption">
+                            <h1>Another example headline.</h1>
+                            <p>
+                                Some representative placeholder content for the second slide
+                                of the carousel.
+                            </p>
+                            <p><a class="btn btn-lg btn-primary" href="#">Learn more</a></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <svg aria-hidden="true" class="bd-placeholder-img" height="100%"
+                        preserveAspectRatio="xMidYMid slice" width="100%" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100%" height="100%" fill="var(--bs-secondary-color)"></rect>
+                    </svg>
+                    <div class="container">
+                        <div class="carousel-caption text-end">
+                            <h1>One more for good measure.</h1>
+                            <p>
+                                Some representative placeholder content for the third slide of
+                                this carousel.
+                            </p>
+                            <p>
+                                <a class="btn btn-lg btn-primary" href="#">Browse gallery</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#myCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#myCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+        <!-- Marketing messaging and featurettes
+        ================================================== -->
+        <!-- Wrap the rest of the page in another container to center all the content. -->
+        <div class="container marketing">
+            <!-- Three columns of text below the carousel -->
+            <div class="row">
+                <div class="col-lg-4">
+                    <svg aria-label="Placeholder" class="bd-placeholder-img rounded-circle" height="140"
+                        preserveAspectRatio="xMidYMid slice" role="img" width="140" xmlns="http://www.w3.org/2000/svg">
+                        <title>Placeholder</title>
+                        <rect width="100%" height="100%" fill="var(--bs-secondary-color)"></rect>
+                    </svg>
+                    <h2 class="fw-normal">Heading</h2>
+                    <p>
+                        Some representative placeholder content for the three columns of
+                        text below the carousel. This is the first column.
+                    </p>
+                    <p>
+                        <a class="btn btn-secondary" href="#">View details &raquo;</a>
+                    </p>
+                </div>
+                <!-- /.col-lg-4 -->
+                <div class="col-lg-4">
+                    <svg aria-label="Placeholder" class="bd-placeholder-img rounded-circle" height="140"
+                        preserveAspectRatio="xMidYMid slice" role="img" width="140" xmlns="http://www.w3.org/2000/svg">
+                        <title>Placeholder</title>
+                        <rect width="100%" height="100%" fill="var(--bs-secondary-color)"></rect>
+                    </svg>
+                    <h2 class="fw-normal">Heading</h2>
+                    <p>
+                        Another exciting bit of representative placeholder content. This
+                        time, we've moved on to the second column.
+                    </p>
+                    <p>
+                        <a class="btn btn-secondary" href="#">View details &raquo;</a>
+                    </p>
+                </div>
+                <!-- /.col-lg-4 -->
+                <div class="col-lg-4">
+                    <svg aria-label="Placeholder" class="bd-placeholder-img rounded-circle" height="140"
+                        preserveAspectRatio="xMidYMid slice" role="img" width="140" xmlns="http://www.w3.org/2000/svg">
+                        <title>Placeholder</title>
+                        <rect width="100%" height="100%" fill="var(--bs-secondary-color)"></rect>
+                    </svg>
+                    <h2 class="fw-normal">Heading</h2>
+                    <p>
+                        And lastly this, the third column of representative placeholder
+                        content.
+                    </p>
+                    <p>
+                        <a class="btn btn-secondary" href="#">View details &raquo;</a>
+                    </p>
+                </div>
+                <!-- /.col-lg-4 -->
+            </div>
+            <!-- /.row -->
+            <!-- START THE FEATURETTES -->
+            <hr class="featurette-divider" />
+            <div class="row featurette">
+                <div class="col-md-7">
+                    <h2 class="featurette-heading fw-normal lh-1">
+                        First featurette heading.
+                        <span class="text-body-secondary">It’ll blow your mind.</span>
+                    </h2>
+                    <p class="lead">
+                        Some great placeholder content for the first featurette here.
+                        Imagine some exciting prose here.
+                    </p>
+                </div>
+                <div class="col-md-5">
+                    <svg aria-label="Placeholder: 500x500"
+                        class="bd-placeholder-img bd-placeholder-img-lg featurette-image img-fluid mx-auto" height="500"
+                        preserveAspectRatio="xMidYMid slice" role="img" width="500" xmlns="http://www.w3.org/2000/svg">
+                        <title>Placeholder</title>
+                        <rect width="100%" height="100%" fill="var(--bs-secondary-bg)"></rect>
+                        <text x="50%" y="50%" fill="var(--bs-secondary-color)" dy=".3em">
+                            500x500
+                        </text>
+                    </svg>
+                </div>
+            </div>
+            <hr class="featurette-divider" />
+            <div class="row featurette">
+                <div class="col-md-7 order-md-2">
+                    <h2 class="featurette-heading fw-normal lh-1">
+                        Oh yeah, it’s that good.
+                        <span class="text-body-secondary">See for yourself.</span>
+                    </h2>
+                    <p class="lead">
+                        Another featurette? Of course. More placeholder content here to
+                        give you an idea of how this layout would work with some actual
+                        real-world content in place.
+                    </p>
+                </div>
+                <div class="col-md-5 order-md-1">
+                    <svg aria-label="Placeholder: 500x500"
+                        class="bd-placeholder-img bd-placeholder-img-lg featurette-image img-fluid mx-auto" height="500"
+                        preserveAspectRatio="xMidYMid slice" role="img" width="500" xmlns="http://www.w3.org/2000/svg">
+                        <title>Placeholder</title>
+                        <rect width="100%" height="100%" fill="var(--bs-secondary-bg)"></rect>
+                        <text x="50%" y="50%" fill="var(--bs-secondary-color)" dy=".3em">
+                            500x500
+                        </text>
+                    </svg>
+                </div>
+            </div>
+            <hr class="featurette-divider" />
+            <div class="row featurette">
+                <div class="col-md-7">
+                    <h2 class="featurette-heading fw-normal lh-1">
+                        And lastly, this one.
+                        <span class="text-body-secondary">Checkmate.</span>
+                    </h2>
+                    <p class="lead">
+                        And yes, this is the last block of representative placeholder
+                        content. Again, not really intended to be actually read, simply
+                        here to give you a better view of what this would look like with
+                        some actual content. Your content.
+                    </p>
+                </div>
+                <div class="col-md-5">
+                    <svg aria-label="Placeholder: 500x500"
+                        class="bd-placeholder-img bd-placeholder-img-lg featurette-image img-fluid mx-auto" height="500"
+                        preserveAspectRatio="xMidYMid slice" role="img" width="500" xmlns="http://www.w3.org/2000/svg">
+                        <title>Placeholder</title>
+                        <rect width="100%" height="100%" fill="var(--bs-secondary-bg)"></rect>
+                        <text x="50%" y="50%" fill="var(--bs-secondary-color)" dy=".3em">
+                            500x500
+                        </text>
+                    </svg>
+                </div>
+            </div>
+            <hr class="featurette-divider" />
+            <!-- /END THE FEATURETTES -->
+        </div>
+        <!-- /.container -->
+    </main>
+
+    <!-- FOOTER -->
+
+    <!-- <footer class="container">
+        <p class="float-end"><a href="#">Back to top</a></p>
+        <p>
+            &copy; 2017–2025 Company, Inc. &middot;
+            <a href="#">Privacy</a> &middot; <a href="#">Terms</a>
+        </p>
+    </footer> -->
+
+    <footer class="d-flex flex-wrap justify-content-around align-items-center p-3 mb-4 border-top">
+        <div class="col-md-4 d-flex align-items-center">
+            <a href="/" class="mb-3 me-2 mb-md-0 text-body-secondary text-decoration-none lh-1" aria-label="Bootstrap">
+                <svg class="bi" width="30" height="24" aria-hidden="true">
+                    <use xlink:href="assets/vendor/bootstrap-5.3.8-examples/icons.svg#bootstrap"></use>
+                </svg>
+            </a>
+            <span class="mb-3 mb-md-0 text-body-secondary">&copy; 2025 Company, Inc</span>
+        </div>
+        <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
+            <li class="ms-3">
+                <a class="text-body-secondary" href="#" aria-label="Instagram"><svg class="bi" width="24" height="24"
+                        aria-hidden="true">
+                        <use xlink:href="assets/vendor/bootstrap-5.3.8-examples/icons.svg#instagram"></use>
+                    </svg></a>
+            </li>
+            <li class="ms-3">
+                <a class="text-body-secondary" href="#" aria-label="Facebook"><svg class="bi" width="24" height="24">
+                        <use xlink:href="assets/vendor/bootstrap-5.3.8-examples/icons.svg#facebook"></use>
+                    </svg></a>
+            </li>
+        </ul>
+    </footer>
+
+    <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+
+</html>
