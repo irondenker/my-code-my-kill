@@ -3,10 +3,17 @@ import express from "express";
 export function createApp() {
   const app = express();
 
-  app.use(express.json());
+  app.set('view engine', 'ejs');
 
-  app.get("/", (req, res) => {
-    res.send("Hello from app.ts");
+  // 데이터
+  const data = {
+    title: 'My EJS Website',
+    message: 'Welcome to my website!'
+  };
+
+  // 라우트 정의
+  app.get('/', function (req, res) {
+    res.render('index', data);
   });
 
   return app;
