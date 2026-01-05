@@ -30,6 +30,7 @@ cd ..
 cd backend
 npm install
 cd ..
+# '.env' 프로젝트 루트 경로에 옮겨놓기
 ```
 
 ---
