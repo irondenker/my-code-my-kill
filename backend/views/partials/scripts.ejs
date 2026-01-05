@@ -1,0 +1,8 @@
+<!-- 페이지별 JS -->
+<% const _scripts = typeof scripts !== "undefined" ? scripts : []; %>
+<% _scripts.forEach(function (src) { %>
+    <script src="<%= src %>" defer></script>
+<% }) %>
+
+<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js" defer></script>
+<script src="/assets/js/app.js" defer></script>

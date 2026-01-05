@@ -1,13 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
-</head>
-<body>
-    <div>
-        <p><%= message %></p>
-    </div>
-</body>
+    <%- include("partials/head", {
+        styles: [
+            "/assets/vendor/bootstrap-5.3.8-examples/css/internal.css",
+            "/assets/vendor/bootstrap-5.3.8-examples/css/headers.css",
+            "/assets/vendor/bootstrap-5.3.8-examples/css/carousel.css",
+        ]
+    }) %>
+    <body>
+        <%- include("partials/theme-toggle") %>
+        <%- include("partials/header") %>
+        <%- include("partials/sections/carousel") %> <!-- example index main contents -->
+        <%- include("partials/footer") %>
+        <%- include("partials/scripts", {
+            scripts: [
+                "/assets/vendor/bootstrap-5.3.8-examples/js/color-modes.js"
+            ]
+        }) %>
+    </body>
 </html>
