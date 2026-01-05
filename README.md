@@ -1,4 +1,4 @@
-# my-code-my-kill
+# My Code, My Kill.
 웹페이지 제작 및 모의해킹 실습
 ### github
 https://github.com/irondenker/my-code-my-kill
