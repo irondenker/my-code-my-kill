@@ -39,3 +39,5 @@ cd ..
 - https://www.toptal.com/developers/gitignore
 - https://techicons.dev/
 - https://www.flaticon.com/kr/
+- https://www.svgrepo.com/
+- https://icons.getbootstrap.com/
