@@ -1,6 +1,7 @@
 .list-group {
   width: 100%;
-  max-width: 460px;
+  /* 주석 처리, 글 목록으로 사용할 예정이라 width 제한을 해제함 */
+  /* max-width: 460px; */
   margin-inline: 1.5rem;
 }
 
