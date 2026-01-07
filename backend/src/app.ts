@@ -11,6 +11,11 @@ export function createApp() {
     res.render('auth/sign-in');
   });
 
+    // 라우트 정의
+  app.get('/register', function (req, res) {
+    res.render('auth/register');
+  });
+
   // 라우트 정의
   app.get('/', function (req, res) {
     res.render('index');

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+    <%- include("../partials/head", {
+        styles: [
+            "/assets/vendor/bootstrap-5.3.8-examples/css/internal.css",
+            "/assets/vendor/bootstrap-5.3.8-examples/css/list-groups.css",
+        ]
+    }) %>
+
+    <body>
+        <%- include("../partials/theme-toggle") %>
+        <%- include("../partials/header") %>
+        <%- include("../partials/sections/board-index") %>
+        <%- include("../partials/footer") %>
+        <%- include("../partials/scripts", {
+            scripts: [
+                "/assets/vendor/bootstrap-5.3.8-examples/js/color-modes.js"
+            ]
+        }) %>
+    </body>
+</html>
