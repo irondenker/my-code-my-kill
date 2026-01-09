@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+    <%- include("../partials/head", {
+        styles: [
+            "/assets/vendor/bootstrap-5.3.8-examples/css/internal.css",
+            "/assets/vendor/bootstrap-5.3.8-examples/css/list-groups.css",
+        ]
+    }) %>
+
+    <body>
+        <%- include("../partials/theme-toggle") %>
+        <%- include("../partials/header") %>
+
+        <main class="container py-4" style="max-width: 920px;">
+            <div class="mb-3">
+                <a href="/board" class="text-decoration-none">&larr; 목록으로</a>
+            </div>
+
+            <article class="card shadow-sm">
+                <div class="card-body">
+                    <h1 class="h4 mb-2"><%= post.title %></h1>
+
+                    <div class="d-flex flex-wrap gap-2 text-muted small mb-3">
+                        <div>작성자: <strong class="text-body"><%= post.username %></strong></div>
+                        <div>·</div>
+                        <div>작성: <%= post.created_at %></div>
+                        <div>·</div>
+                        <div>수정: <%= post.updated_at ? post.updated_at : '-' %></div>
+                    </div>
+
+                    <hr class="my-3" />
+
+                    <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7;">
+                        <%= post.content %>
+                    </div>
+                </div>
+            </article>
+
+            <nav class="d-flex justify-content-between align-items-center mt-4">
+                <div>
+                    <% if (prevPost) { %>
+                    <a class="btn btn-outline-secondary btn-sm" href="/board/<%= boardSlug %>/<%= prevPost.display_id %>">
+                        &larr; 이전 글
+                    </a>
+                    <div class="small text-muted mt-1">
+                        <%= prevPost.title %>
+                    </div>
+                    <% } else { %>
+                    <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">&larr; 이전 글</span>
+                    <% } %>
+                </div>
+
+                <div class="text-center">
+                    <span class="badge text-bg-light">#<%= post.display_id %></span>
+                </div>
+
+                <div class="text-end">
+                    <% if (nextPost) { %>
+                    <a class="btn btn-outline-secondary btn-sm" href="/board/<%= boardSlug %>/<%= nextPost.display_id %>">
+                        다음 글 &rarr;
+                    </a>
+                    <div class="small text-muted mt-1">
+                        <%= nextPost.title %>
+                    </div>
+                    <% } else { %>
+                    <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">다음 글 &rarr;</span>
+                    <% } %>
+                </div>
+            </nav>
+        </main>
+
+        <%- include("../partials/footer") %>
+        <%- include("../partials/scripts", {
+            scripts: [
+                "/assets/vendor/bootstrap-5.3.8-examples/js/color-modes.js"
+            ]
+        }) %>
+    </body>
+
+</html>
