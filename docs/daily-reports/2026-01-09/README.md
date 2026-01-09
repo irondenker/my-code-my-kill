@@ -1,41 +1,53 @@
-# 일일 보고 (2026-01-08) 
+# 일일 보고 (2026-01-09) 
 
 ## 금일 작업 내용
 
-1. **Express 라우팅 구조 리팩토링(기능 단위로 Router 분리) 진행**
+1. **DB 초기 설정 및 기초 테이블 생성**
 
-   * `app.ts`에 직접 박혀 있던 `/login`, `/register`, `/` 라우팅을 제거하여 아래 파일로 기능 분리(“라우터는 경로만, 컨트롤러는 로직만”)
-        - `routes/auth.routes.ts`
-        - `routes/root.routes.ts`
-        - `controllers/auth.controller.ts`
-        - `controllers/root.controller.ts`
+   * `PostgreSQL` 세팅
+        - `Docker` 위에서 실행(localhost, 54921:5432)
+        - `sequelize-cil`로 DB 및 테이블 생성(ORM)
+   * `Sequelize` ORM 제어 세팅
+         - 추후 DB 제어: `sequelize` 우선, 필요 시 SQL 쿼리 직접 작성
+         - 테이블 생성: `users`,`boards`,`posts` 등
+   * Minor Fixes
+         - 관련 `.ejs` 템플릿, `/server` 로직 리팩터링
 
-   * 에러 처리 미들웨어 `middlewares/error-handler.ts` 추가
+2. **`/board` 기능 고도화**
+   * 실습 조건 충족 목적으로 게시판 분리
+      - `/board/general`: 
+         - `Create` - 누구나
+         - `Read` - 누구나
+         - `Update` - 글쓴이 본인만
+         - `Delete` - 글쓴이 본인, Admin
+      - `/board/announcement`: 
+         - `Create` - Admin
+         - `Read` - 누구나
+         - `Update` - Admin
+         - `Delete` - Admin
 
-2. **`/board` 페이지네이션 UI(EJS) 구현 완료이다**
+3. **`users` 테이블 권한 설정**
+   * `users` 권한 설정
+      - `admin` - 어드민, 모든 권한
+      - `user` - 일반 사용자, 제한된 권한
+      - 세부 설정 사항은 금일 Commit 기록 참고
 
-   * `server/views/partials/sections/board-index.ejs` 페이지네이션 계산 로직 완성
-   * 보드 섹션 제목에 `/board` 링크 작업
+4. **로고 추가**
+   * `My Code, My Kill` 로고 생성
+      - `svg` 확장자
+      - 정방형 디자인
+      - 기존 `Bootstrap` 로고를 전부 대체
+      - Copyright 문구 수정
 
 ## 차후 계획 중인 작업
 
-1. **DB 설계 및 작업**
-   * `users`, `board` 테이블 제작
-   * `users`에 `Admin / User` 권한 분리 반영
-   * `board`에 게시물 `postId(DB 내 분류)` 및 `PostNo(외부 조회용)`으로 ID 2개 분류
-   * (선택) `users`테이블 `rank` 추가
-   (예 - 대표, 과장, 대리, 사원, 인턴 등...)
+1. **로그인 기능 구현**
+   * `username`, `password` 기반
+   * `JWT token` -> `accessToken`, `refreshToken` 기반
 
-2. **Backend 기능 구현**
-    * `/login`
-        - JWT 토큰 (accessToken, refreshToken)
-    * `/board`
-        - 게시판 권한(Admin 여부 등) 기반 CRUD 제어
-            - 내가 쓴 글은 나만 수정 가능
-            - 인위적으로 `postID` 노출
-            - 취약한 권한 검증 구조 구현(임의의 글 변조 및 삭제 등) 
+2. **DB scheme 문서 생성**
+   * 정확한 DB 정보 가시화 및 전달 필요성 느낌
 
 3. **오픈소스 페이지로 실습 전환 고려**
-    - 개발 단계에서 많은 시간이 소요
-    - 현재 웹 취약점 분석이 아닌, 개발에 초점이 맞춰짐.
-    - 1달 안에 완성이 어려울 것 같으면 오픈소스 게시판 기반으로 실습 진행
+   - 속도를 올리기 위해, 생성형 AI를 적극적으로 이용 중이며, 그 결과 생산성 증가함.
+   - `2026-01-12(월)` 기준으로, 실습 가능한 수준으로 산출물이 나오지 않으면 오픈소스 게시판 기반으로 실습 진행
