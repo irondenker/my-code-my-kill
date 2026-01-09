@@ -1,29 +1,58 @@
-import { MOCK_POSTS } from "../mocks/posts.mock.ts";
+import { QueryTypes } from "sequelize";
+import { sequelize } from "../db/index.ts";
 
 export async function countBoardPosts(): Promise<number> {
-    // // DB(Sequelize)를 통한 통신이 필요한 구간
-    // const totalCount = await Post.count();
+    const rows = await sequelize.query<{ total_count: string }>(
+        `
+        SELECT COUNT(*) AS total_count
+        FROM posts
+        WHERE use_yn = true
+        `,
+        { type: QueryTypes.SELECT }
+    );
 
-    // 다만, 현재는 DB 미구현 상태이므로 Mocks 데이터로 대체
-    const totalCount = MOCK_POSTS.length;
-
-    return totalCount;
+    return Number(rows[0]?.total_count ?? 0);
 }
 
-// API 구조 미완성으로 인해 해당 기능 타입 추론으로 남겨놓음
-// 추후 API Docs 완성 혹은 안정화 시 타입 지정 필요
 export async function listBoardPostOutlines(params: {
     offset: number,
     limit: number
 }) {
-    // 사용하기 편하도록 입력값 분리
     const { offset, limit } = params;
 
-    // // DB(Sequelize)를 통한 통신이 필요한 구간
-    // const posts = await Post.findAll({ limit, offset });
+    const rows = await sequelize.query<{
+        board_slug: string;
+        display_id: number;
+        title: string;
+        author: string;
+        created_at: Date;
+    }>(
+        `
+        SELECT
+            b.slug AS board_slug,
+            p.display_id,
+            p.title,
+            u.username AS author,
+            p.created_at
+        FROM posts p
+        JOIN boards b ON p.board_id = b.board_id
+        JOIN users u ON p.user_id = u.user_id
+        WHERE p.use_yn = true
+        ORDER BY p.created_at DESC
+        LIMIT :limit
+        OFFSET :offset
+        `,
+        {
+            type: QueryTypes.SELECT,
+            replacements: { limit, offset },
+        }
+    );
 
-    // 다만, 현재는 DB 미구현 상태이므로 Mocks 데이터로 대체
-    const postOutlines = MOCK_POSTS.slice(offset, offset + limit);
-
-    return postOutlines;
+    return rows.map((row) => ({
+        boardSlug: row.board_slug,
+        displayId: Number(row.display_id),
+        title: row.title,
+        author: row.author,
+        createdAt: new Date(row.created_at),
+    }));
 }

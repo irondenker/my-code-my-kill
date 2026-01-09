@@ -17,13 +17,15 @@
  * - **사용 용도**: 게시판 `글 목록`표기에 사용, 각각 글마다 필요한 **메타데이터** 정의
  * - **Route**: `/board`
  * - 현재 사용처 없음
- * @param {number} postId 글 식별 ID
+ * @param {string} boardSlug board slug
+ * @param {number} displayId board display id
  * @param {string} title 글 제목
  * @param {string} author 글쓴이
  * @param {Date} createdAt 글 쓴 날짜
  */
 export interface BoardPostOutline {
-  postId: number;
+  boardSlug: string;
+  displayId: number;
   title: string;
   author: string;
   createdAt: Date;
