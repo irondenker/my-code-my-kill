@@ -1,14 +1,70 @@
 import type { Request, Response, NextFunction } from "express";
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.ts";
-import { buildBoardIndexViewModel } from "../view-models/board.view-model.ts";
+import { doesPostExistBySlugDisplayId, softDeletePostBySlugDisplayId } from "../services/board.service.ts";
+import { buildBoardIndexViewModel, buildBoardSlugViewModel } from "../view-models/board.view-model.ts";
 
 export async function getBoardIndex(req: Request, res: Response, next: NextFunction) {
     try {
         const viewModel = await buildBoardIndexViewModel(req);
         return res.render('board/index', viewModel);
     } catch (err) {
-        return next(err); // ?�기??throw ?��? 말고 ?�러 미들?�어�??�기??�??�석
+        return next(err); // ?�기??throw ?��? 말고 ?�러 미들?�어�??�기??�??�석
+    }
+}
+
+export async function getBoardBySlug(req: Request, res: Response, next: NextFunction) {
+    try {
+        const slug = String(req.params.slug ?? "").trim();
+        if (!slug) {
+            return res.status(400).send("Invalid slug");
+        }
+
+        const viewModel = await buildBoardSlugViewModel(req, slug);
+        return res.render("board/index", viewModel);
+    } catch (err) {
+        return next(err);
+    }
+}
+
+
+// 실험용 x-user-id 헤더 검증 패턴 ---> 매우 위험함을 인지하고 있음!!!!
+export async function deleteBoardPost(req: Request, res: Response, next: NextFunction) {
+    try {
+        const slug = String(req.params.slug ?? "").trim();
+        const displayId = Number(req.params.displayId);
+        const requestUserId = Number(req.header("x-user-id"));
+
+        if (!slug) {
+            return res.status(400).send("Invalid slug");
+        }
+
+        if (!Number.isFinite(displayId) || displayId <= 0) {
+            return res.status(400).send("Invalid displayId");
+        }
+
+        if (!Number.isFinite(requestUserId) || requestUserId <= 0) {
+            return res.status(400).send("Invalid requester");
+        }
+
+        const deleted = await softDeletePostBySlugDisplayId({
+            slug,
+            displayId,
+            requestUserId,
+        });
+
+        if (deleted) {
+            return res.status(204).send();
+        }
+
+        const exists = await doesPostExistBySlugDisplayId({ slug, displayId });
+        if (!exists) {
+            return res.status(404).send("Post not found");
+        }
+
+        return res.status(403).send("Forbidden");
+    } catch (err) {
+        return next(err);
     }
 }
 
@@ -134,10 +190,10 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
         // const [rows] = await sequelize.query<BoardPost[]>(
 
 
-        // 2) ?�전 글 (id < ?�재) - 가??가까운 글
+        // 2) ?�전 글 (id < ?�재) - 가??가까운 글
         // const [prevRows] = await sequelize.query<{id:number; title:string}[]>(
 
-        // 3) ?�음 글 (id > ?�재) - 가??가까운 글
+        // 3) ?�음 글 (id > ?�재) - 가??가까운 글
         // const [nextRows] = await sequelize.query<{id:number; title:string}[]>(
 
         return res.render("board/show", {

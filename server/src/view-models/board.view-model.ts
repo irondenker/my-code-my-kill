@@ -1,5 +1,5 @@
 import type { Request } from "express";
-import { countBoardPosts, listBoardPostOutlines } from "../services/board.service.ts";
+import { countBoardPosts, countBoardPostsBySlug, listBoardPostOutlines, listBoardPostOutlinesBySlug } from "../services/board.service.ts";
 import { createPaginationMeta } from "../utils/board.util.ts";
 import { PAGINATION_DEFAULT_LIMIT } from "../constants/board.constants.ts";
 
@@ -25,6 +25,33 @@ export async function buildBoardIndexViewModel(req: Request) {
     });
 
     return {
+        postOutlines,
+        pagination: {
+            page,
+            totalPages,
+            totalCount,
+            limit,
+        },
+    };
+}
+
+export async function buildBoardSlugViewModel(req: Request, slug: string) {
+    const page = parsePositiveInt(req.query.page, 1);
+
+    const totalCount = await countBoardPostsBySlug(slug);
+    const limit = PAGINATION_DEFAULT_LIMIT;
+
+    const totalPages = createPaginationMeta(totalCount, limit);
+    const offset = (page - 1) * limit;
+
+    const postOutlines = await listBoardPostOutlinesBySlug({
+        slug,
+        offset,
+        limit,
+    });
+
+    return {
+        boardSlug: slug,
         postOutlines,
         pagination: {
             page,
