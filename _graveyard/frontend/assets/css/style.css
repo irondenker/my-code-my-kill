@@ -1,8 +1,0 @@
-body {
-    /* padding-bottom: 1rem; */
-    color: rgb(var(--bs-tertiary-color-rgb));
-}
-
-header {
-    background-color: rgb(var(--bs-body-bg-rgb));
-}
