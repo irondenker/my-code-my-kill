@@ -250,3 +250,7 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,macos,node,git,linux
+
+# Keep the avatar uploads directory but ignore its contents.
+server/public/uploads/avatars/*
+!server/public/uploads/avatars/.gitkeep
