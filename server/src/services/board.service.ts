@@ -120,6 +120,23 @@ export async function listBoardPostOutlinesBySlug(params: {
     }));
 }
 
+export async function findBoardDisplayNameBySlug(slug: string): Promise<string | null> {
+    const rows = await sequelize.query<{ name: string }>(
+        `
+        SELECT name
+        FROM boards
+        WHERE slug = :slug
+        LIMIT 1
+        `,
+        {
+            type: QueryTypes.SELECT,
+            replacements: { slug },
+        }
+    );
+
+    return rows[0]?.name ?? null;
+}
+
 export async function doesPostExistBySlugDisplayId(params: {
     slug: string;
     displayId: number;

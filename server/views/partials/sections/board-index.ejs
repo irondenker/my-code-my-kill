@@ -1,8 +1,12 @@
 <main>
     <div class="flex-column flex-md-row p-4 gap-4 align-items-center justify-content-center">
+        <%
+            const boardTitle = typeof boardDisplayName === "string" ? boardDisplayName : "Board";
+            const boardHref = boardSlug ? `/board/${boardSlug}` : "/board";
+        %>
         <h1 class="display-5 p-4 fw-bold text-body-emphasis">
-            <a href="/board/general" class="text-decoration-none text-reset">
-                Board
+            <a href="<%= boardHref %>" class="text-decoration-none text-reset">
+                <%= boardTitle %>
             </a>
         </h1>
         <div class="list-group w-auto">

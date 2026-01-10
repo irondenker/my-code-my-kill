@@ -1,12 +1,18 @@
 import { Router } from "express";
-import { getLoginPage, getRegisterPage } from "../controllers/auth.controller.ts";
+import {
+    getLoginPage,
+    getRegisterPage,
+    postLogin,
+    postRegister,
+    postLogout,
+} from "../controllers/auth.controller.ts";
 
 const router = Router();
 
-/* 로그인 관련 Router */
-router.get('/login', getLoginPage);
-
-/* 회원가입 관련 Router */
-router.get('/register', getRegisterPage);
+router.get("/login", getLoginPage);
+router.post("/login", postLogin);
+router.get("/register", getRegisterPage);
+router.post("/register", postRegister);
+router.post("/logout", postLogout);
 
 export default router;

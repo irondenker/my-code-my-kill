@@ -28,12 +28,12 @@ export async function getBoardBySlug(req: Request, res: Response, next: NextFunc
 }
 
 
-// 실험용 x-user-id 헤더 검증 패턴 ---> 매우 위험함을 인지하고 있음!!!!
+// NOTE: session-based auth required for deletes.
 export async function deleteBoardPost(req: Request, res: Response, next: NextFunction) {
     try {
         const slug = String(req.params.slug ?? "").trim();
         const displayId = Number(req.params.displayId);
-        const requestUserId = Number(req.header("x-user-id"));
+        const requestUserId = Number(req.session.userId);
 
         if (!slug) {
             return res.status(400).send("Invalid slug");
@@ -44,7 +44,7 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
         }
 
         if (!Number.isFinite(requestUserId) || requestUserId <= 0) {
-            return res.status(400).send("Invalid requester");
+            return res.status(401).send("Unauthorized");
         }
 
         const deleted = await softDeletePostBySlugDisplayId({
@@ -185,16 +185,6 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
         const nextPost: Neighbor = nextRows[0]
             ? { display_id: Number(nextRows[0].display_id), title: nextRows[0].title }
             : null;
-
-        // 1) 본문 글
-        // const [rows] = await sequelize.query<BoardPost[]>(
-
-
-        // 2) ?�전 글 (id < ?�재) - 가??가까운 글
-        // const [prevRows] = await sequelize.query<{id:number; title:string}[]>(
-
-        // 3) ?�음 글 (id > ?�재) - 가??가까운 글
-        // const [nextRows] = await sequelize.query<{id:number; title:string}[]>(
 
         return res.render("board/show", {
             post,

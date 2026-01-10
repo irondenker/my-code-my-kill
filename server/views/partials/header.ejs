@@ -37,11 +37,24 @@
                     <img src="https://github.com/mdo.png" alt="mdo" width="32" height="32" class="rounded-circle" />
                 </a>
                 <ul class="dropdown-menu text-small">
-                    <li><a class="dropdown-item" href="/mypage">My Page</a></li>
+                    <% if (sessionUser) { %>
+                    <li><span class="dropdown-item-text">Signed in as <strong><%= sessionUsername || 'user' %></strong></span></li>
+                    <% if (sessionUsername) { %>
+                    <li><a class="dropdown-item" href="/@<%= sessionUsername %>">My Page</a></li>
+                    <% } %>
                     <li>
                         <hr class="dropdown-divider" />
                     </li>
+                    <li>
+                        <form method="post" action="/logout" class="px-3 py-1">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button type="submit" class="btn btn-link dropdown-item p-0">Logout</button>
+                        </form>
+                    </li>
+                    <% } else { %>
                     <li><a class="dropdown-item" href="/login">Login</a></li>
+                    <li><a class="dropdown-item" href="/register">Register</a></li>
+                    <% } %>
                 </ul>
             </div>
         </div>
