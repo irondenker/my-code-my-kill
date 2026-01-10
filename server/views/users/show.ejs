@@ -51,27 +51,7 @@
 
         <% if (showOwnerActions) { %>
         <div class="mt-4">
-            <h2 class="h6 mb-2">Update avatar</h2>
-            <form method="post" action="/users/avatar" enctype="multipart/form-data" class="d-flex flex-column gap-2">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <input
-                    type="file"
-                    name="avatar"
-                    accept="image/jpeg,image/png,image/webp"
-                    class="form-control"
-                    required
-                />
-                <button class="btn btn-outline-primary" type="submit">Upload</button>
-            </form>
-            <% if (hasAvatar) { %>
-            <form method="post" action="/users/avatar/delete" class="mt-2">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <button class="btn btn-outline-danger btn-sm" type="submit">Remove avatar</button>
-            </form>
-            <% } %>
-            <p class="text-muted small mt-2 mb-0">
-                Allowed formats: jpg, png, webp. Max 5MB. Min 128px. Max 2048px.
-            </p>
+            <a href="/settings/profile" class="btn btn-outline-secondary btn-sm">Edit profile</a>
         </div>
         <% } %>
     </main>

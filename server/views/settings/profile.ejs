@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+    <%- include("../partials/head", {
+        styles: [
+            "/assets/vendor/bootstrap-5.3.8-examples/css/internal.css",
+            "/assets/vendor/bootstrap-5.3.8-examples/css/list-groups.css"
+        ]
+    }) %>
+
+    <body>
+        <%- include("../partials/theme-toggle") %>
+        <%- include("../partials/header") %>
+
+        <main class="container py-4" style="max-width: 720px;">
+            <div class="mb-3">
+                <a href="/@<%= profile.username %>" class="text-decoration-none">&larr; Back to profile</a>
+            </div>
+
+            <h1 class="h4 mb-3">Edit profile</h1>
+
+            <% if (formError) { %>
+            <div class="alert alert-danger" role="alert"><%= formError %></div>
+            <% } %>
+
+            <form method="post" action="/settings/profile" id="profile-form">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="username"
+                        value="<%= profile.username %>"
+                        readonly
+                    />
+                </div>
+                <div class="mb-3">
+                    <label for="displayName" class="form-label">Display name</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="displayName"
+                        name="displayName"
+                        maxlength="50"
+                        value="<%= typeof profile.displayName === 'string' ? profile.displayName : '' %>"
+                    />
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input
+                        type="email"
+                        class="form-control"
+                        id="email"
+                        name="email"
+                        maxlength="255"
+                        value="<%= typeof profile.email === 'string' ? profile.email : '' %>"
+                    />
+                </div>
+                <div class="mb-3">
+                    <label for="phoneNumber" class="form-label">Phone number</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        maxlength="30"
+                        value="<%= typeof profile.phoneNumber === 'string' ? profile.phoneNumber : '' %>"
+                    />
+                </div>
+                <div class="mb-3">
+                    <label for="bio" class="form-label">Bio</label>
+                    <textarea
+                        class="form-control"
+                        id="bio"
+                        name="bio"
+                        rows="4"
+                        maxlength="500"
+                    ><%= typeof profile.bio === 'string' ? profile.bio : '' %></textarea>
+                </div>
+            </form>
+
+            <hr class="my-4" />
+
+            <h2 class="h6 mb-2">Update avatar</h2>
+            <form method="post" action="/users/avatar" enctype="multipart/form-data" class="d-flex flex-column gap-2">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input
+                    type="file"
+                    name="avatar"
+                    accept="image/jpeg,image/png,image/webp"
+                    class="form-control"
+                    required
+                />
+                <button class="btn btn-outline-primary" type="submit">Upload</button>
+            </form>
+            <% if (sessionProfileImageUrl) { %>
+            <form method="post" action="/users/avatar/delete" class="mt-2">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-outline-danger btn-sm" type="submit">Remove avatar</button>
+            </form>
+            <% } %>
+            <p class="text-muted small mt-2 mb-0">
+                Allowed formats: jpg, png, webp. Max 5MB. Min 128px. Max 2048px.
+            </p>
+
+            <div class="mt-4">
+                <button class="btn btn-primary" type="submit" form="profile-form">Save changes</button>
+            </div>
+        </main>
+
+        <%- include("../partials/footer") %>
+        <%- include("../partials/scripts", {
+            scripts: [
+                "/assets/vendor/bootstrap-5.3.8-examples/js/color-modes.js"
+            ]
+        }) %>
+    </body>
+</html>

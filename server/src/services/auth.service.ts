@@ -256,6 +256,39 @@ export async function findPublicProfileByUsername(username: string): Promise<Pub
     };
 }
 
+export async function updateUserProfile(params: {
+    userId: number;
+    displayName: string | null;
+    email: string | null;
+    phoneNumber: string | null;
+    bio: string | null;
+}): Promise<boolean> {
+    const rows = await sequelize.query<{ user_id: number }>(
+        `
+        UPDATE users
+        SET display_name = :displayName,
+            email = :email,
+            phone_number = :phoneNumber,
+            bio = :bio,
+            updated_at = NOW()
+        WHERE user_id = :userId
+        RETURNING user_id
+        `,
+        {
+            type: QueryTypes.SELECT,
+            replacements: {
+                userId: params.userId,
+                displayName: params.displayName,
+                email: params.email,
+                phoneNumber: params.phoneNumber,
+                bio: params.bio,
+            },
+        }
+    );
+
+    return rows.length > 0;
+}
+
 export async function updateUserProfileImage(params: {
     userId: number;
     profileImageUrl: string | null;
