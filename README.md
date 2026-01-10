@@ -34,8 +34,6 @@
 👉 **Proj. Blog**  
 <https://irondenker.tistory.com/category/Projects>
 
----
-
 ## ⚙️ Getting Started
 
 ### ⚙️ Config
@@ -45,8 +43,6 @@ cd server
 npm install
 # '.env' 프로젝트 루트 경로에 옮겨놓기
 ```
-
----
 
 ## 👀 References
 
