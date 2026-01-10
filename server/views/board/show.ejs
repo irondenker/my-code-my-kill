@@ -36,6 +36,20 @@
                 </div>
             </article>
 
+            <% if (canEdit || canDelete) { %>
+            <div class="d-flex gap-2 mt-3">
+                <% if (canEdit) { %>
+                <a class="btn btn-outline-primary btn-sm" href="/board/<%= boardSlug %>/<%= post.display_id %>/edit">Edit</a>
+                <% } %>
+                <% if (canDelete) { %>
+                <form method="post" action="/board/<%= boardSlug %>/<%= post.display_id %>/delete">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+                </form>
+                <% } %>
+            </div>
+            <% } %>
+
             <nav class="d-flex justify-content-between align-items-center mt-4">
                 <div>
                     <% if (prevPost) { %>

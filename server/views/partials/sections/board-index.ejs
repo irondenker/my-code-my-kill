@@ -9,6 +9,11 @@
                 <%= boardTitle %>
             </a>
         </h1>
+        <% if (canCreate && boardSlug) { %>
+        <div class="px-4 pb-3">
+            <a class="btn btn-primary" href="/board/<%= boardSlug %>/new">New post</a>
+        </div>
+        <% } %>
         <div class="list-group w-auto">
             <% postOutlines.forEach(post=> { %>
             <div>
@@ -19,13 +24,23 @@
                     <div class="d-flex gap-2 flex justify-content-between">
                         <div>
                             <h6 class="mb-0">
+                                <span class="text-muted me-2">#<%= post.displayId %></span>
                                 <%= post.title %>
                             </h6>
                             <p class="mb-0 opacity-75">
                                 <%= post.author %>
                             </p>
                         </div>
-                        <small class="opacity-50 text-nowrap">now</small>
+                        <%
+                            const createdAt = post.createdAt;
+                            const year = createdAt.getFullYear();
+                            const month = String(createdAt.getMonth() + 1).padStart(2, "0");
+                            const day = String(createdAt.getDate()).padStart(2, "0");
+                            const hours = String(createdAt.getHours()).padStart(2, "0");
+                            const minutes = String(createdAt.getMinutes()).padStart(2, "0");
+                            const createdLabel = `${year}-${month}-${day} ${hours}:${minutes}`;
+                        %>
+                        <small class="opacity-50 text-nowrap"><%= createdLabel %></small>
                     </div>
                 </a>
             </div>

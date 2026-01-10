@@ -16,6 +16,19 @@ function parsePositiveInt(rawValue: unknown, fallback: number): number {
     return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
 }
 
+function canCreateForBoardSlug(req: Request, slug: string | null): boolean {
+    const userId = Number(req.session.userId);
+    if (!Number.isFinite(userId) || userId <= 0) {
+        return false;
+    }
+
+    if (slug === "announcement") {
+        return req.session.userRole === "admin";
+    }
+
+    return true;
+}
+
 export async function buildBoardIndexViewModel(req: Request) {
     const page = parsePositiveInt(req.query.page, 1);
 
@@ -33,6 +46,7 @@ export async function buildBoardIndexViewModel(req: Request) {
     return {
         boardSlug: null,
         boardDisplayName: "Board",
+        canCreate: false,
         postOutlines,
         pagination: {
             page,
@@ -62,6 +76,7 @@ export async function buildBoardSlugViewModel(req: Request, slug: string) {
     return {
         boardSlug: slug,
         boardDisplayName: boardDisplayName ?? slug,
+        canCreate: canCreateForBoardSlug(req, slug),
         postOutlines,
         pagination: {
             page,

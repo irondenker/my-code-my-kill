@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+    <%- include("../partials/head", {
+        styles: [
+            "/assets/vendor/bootstrap-5.3.8-examples/css/internal.css",
+            "/assets/vendor/bootstrap-5.3.8-examples/css/list-groups.css",
+        ]
+    }) %>
+
+    <body>
+        <%- include("../partials/theme-toggle") %>
+        <%- include("../partials/header") %>
+
+        <main class="container py-4" style="max-width: 920px;">
+            <div class="mb-3">
+                <a href="/board/<%= boardSlug %>/<%= displayId %>" class="text-decoration-none">&larr; Back to post</a>
+            </div>
+
+            <h1 class="h4 mb-3">Edit post - <%= boardDisplayName %></h1>
+
+            <% if (formError) { %>
+            <div class="alert alert-danger" role="alert"><%= formError %></div>
+            <% } %>
+
+            <form method="post" action="/board/<%= boardSlug %>/<%= displayId %>/edit">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="title"
+                        name="title"
+                        maxlength="255"
+                        required
+                        value="<%= typeof title === 'string' ? title : '' %>"
+                    />
+                </div>
+                <div class="mb-3">
+                    <label for="content" class="form-label">Content</label>
+                    <textarea
+                        class="form-control"
+                        id="content"
+                        name="content"
+                        rows="10"
+                        required
+                    ><%= typeof content === 'string' ? content : '' %></textarea>
+                </div>
+                <button class="btn btn-primary" type="submit">Save</button>
+            </form>
+        </main>
+
+        <%- include("../partials/footer") %>
+        <%- include("../partials/scripts", {
+            scripts: [
+                "/assets/vendor/bootstrap-5.3.8-examples/js/color-modes.js"
+            ]
+        }) %>
+    </body>
+</html>

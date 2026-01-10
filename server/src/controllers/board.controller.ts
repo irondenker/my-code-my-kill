@@ -1,8 +1,53 @@
 import type { Request, Response, NextFunction } from "express";
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.ts";
-import { doesPostExistBySlugDisplayId, softDeletePostBySlugDisplayId } from "../services/board.service.ts";
+import {
+    createBoardPost,
+    doesPostExistBySlugDisplayId,
+    findBoardBySlug,
+    findPostBySlugDisplayId,
+    softDeletePostBySlugDisplayId,
+    softDeletePostBySlugDisplayIdAsAdmin,
+    updateBoardPost,
+} from "../services/board.service.ts";
 import { buildBoardIndexViewModel, buildBoardSlugViewModel } from "../view-models/board.view-model.ts";
+
+type BoardPolicy = {
+    create: "auth" | "admin";
+    update: "self" | "admin";
+    delete: "selfOrAdmin" | "admin";
+};
+
+function getBoardPolicy(slug: string): BoardPolicy {
+    if (slug === "announcement") {
+        return {
+            create: "admin",
+            update: "admin",
+            delete: "admin",
+        };
+    }
+
+    return {
+        create: "auth",
+        update: "self",
+        delete: "selfOrAdmin",
+    };
+}
+
+function getViewerContext(req: Request) {
+    const viewerUserId = Number(req.session.userId);
+    const isAuthenticated = Number.isFinite(viewerUserId) && viewerUserId > 0;
+    const isAdmin = req.session.userRole === "admin";
+    return { viewerUserId, isAuthenticated, isAdmin };
+}
+
+function isValidTitle(title: string): boolean {
+    return title.length >= 2 && title.length <= 255;
+}
+
+function isValidContent(content: string): boolean {
+    return content.length >= 2 && content.length <= 10_000;
+}
 
 export async function getBoardIndex(req: Request, res: Response, next: NextFunction) {
     try {
@@ -27,13 +72,191 @@ export async function getBoardBySlug(req: Request, res: Response, next: NextFunc
     }
 }
 
+export async function getBoardCreateForm(req: Request, res: Response, next: NextFunction) {
+    try {
+        const slug = String(req.params.slug ?? "").trim();
+        if (!slug) {
+            return res.status(400).send("Invalid slug");
+        }
+
+        const board = await findBoardBySlug(slug);
+        if (!board) {
+            return res.status(404).send("Board not found");
+        }
+
+        const policy = getBoardPolicy(slug);
+        const { isAuthenticated, isAdmin } = getViewerContext(req);
+
+        if (policy.create === "admin" && !isAdmin) {
+            return res.status(403).send("Forbidden");
+        }
+
+        if (policy.create === "auth" && !isAuthenticated) {
+            return res.status(401).redirect("/login");
+        }
+
+        return res.render("board/new", {
+            boardSlug: board.slug,
+            boardDisplayName: board.name,
+            formError: null,
+        });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+export async function postBoardCreate(req: Request, res: Response, next: NextFunction) {
+    try {
+        const slug = String(req.params.slug ?? "").trim();
+        if (!slug) {
+            return res.status(400).send("Invalid slug");
+        }
+
+        const board = await findBoardBySlug(slug);
+        if (!board) {
+            return res.status(404).send("Board not found");
+        }
+
+        const policy = getBoardPolicy(slug);
+        const { viewerUserId, isAuthenticated, isAdmin } = getViewerContext(req);
+
+        if (policy.create === "admin" && !isAdmin) {
+            return res.status(403).send("Forbidden");
+        }
+
+        if (policy.create === "auth" && !isAuthenticated) {
+            return res.status(401).redirect("/login");
+        }
+
+        if (!Number.isFinite(viewerUserId) || viewerUserId <= 0) {
+            return res.status(401).send("Unauthorized");
+        }
+
+        const title = String(req.body?.title ?? "").trim();
+        const content = String(req.body?.content ?? "").trim();
+
+        if (!isValidTitle(title) || !isValidContent(content)) {
+            return res.status(400).render("board/new", {
+                boardSlug: board.slug,
+                boardDisplayName: board.name,
+                formError: "Title or content is invalid.",
+                title,
+                content,
+            });
+        }
+
+        const created = await createBoardPost({
+            boardId: board.boardId,
+            userId: viewerUserId,
+            title,
+            content,
+        });
+
+        return res.redirect(`/board/${board.slug}/${created.displayId}`);
+    } catch (err) {
+        return next(err);
+    }
+}
+
+export async function getBoardEditForm(req: Request, res: Response, next: NextFunction) {
+    try {
+        const slug = String(req.params.slug ?? "").trim();
+        const displayId = Number(req.params.displayId);
+        if (!slug) {
+            return res.status(400).send("Invalid slug");
+        }
+        if (!Number.isFinite(displayId) || displayId <= 0) {
+            return res.status(400).send("Invalid displayId");
+        }
+
+        const post = await findPostBySlugDisplayId({ slug, displayId });
+        if (!post) {
+            return res.status(404).send("Post not found");
+        }
+
+        const policy = getBoardPolicy(slug);
+        const { viewerUserId, isAdmin } = getViewerContext(req);
+        const isOwner = viewerUserId === post.userId;
+
+        const canEdit = policy.update === "admin" ? isAdmin : isOwner;
+        if (!canEdit) {
+            return res.status(403).send("Forbidden");
+        }
+
+        return res.render("board/edit", {
+            boardSlug: post.boardSlug,
+            boardDisplayName: post.boardName,
+            displayId: post.displayId,
+            title: post.title,
+            content: post.content,
+            formError: null,
+        });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+export async function postBoardEdit(req: Request, res: Response, next: NextFunction) {
+    try {
+        const slug = String(req.params.slug ?? "").trim();
+        const displayId = Number(req.params.displayId);
+        if (!slug) {
+            return res.status(400).send("Invalid slug");
+        }
+        if (!Number.isFinite(displayId) || displayId <= 0) {
+            return res.status(400).send("Invalid displayId");
+        }
+
+        const post = await findPostBySlugDisplayId({ slug, displayId });
+        if (!post) {
+            return res.status(404).send("Post not found");
+        }
+
+        const policy = getBoardPolicy(slug);
+        const { viewerUserId, isAdmin } = getViewerContext(req);
+        const isOwner = viewerUserId === post.userId;
+
+        const canEdit = policy.update === "admin" ? isAdmin : isOwner;
+        if (!canEdit) {
+            return res.status(403).send("Forbidden");
+        }
+
+        const title = String(req.body?.title ?? "").trim();
+        const content = String(req.body?.content ?? "").trim();
+
+        if (!isValidTitle(title) || !isValidContent(content)) {
+            return res.status(400).render("board/edit", {
+                boardSlug: post.boardSlug,
+                boardDisplayName: post.boardName,
+                displayId: post.displayId,
+                title,
+                content,
+                formError: "Title or content is invalid.",
+            });
+        }
+
+        const updated = await updateBoardPost({
+            postId: post.postId,
+            title,
+            content,
+        });
+
+        if (!updated) {
+            return res.status(404).send("Post not found");
+        }
+
+        return res.redirect(`/board/${post.boardSlug}/${post.displayId}`);
+    } catch (err) {
+        return next(err);
+    }
+}
 
 // NOTE: session-based auth required for deletes.
 export async function deleteBoardPost(req: Request, res: Response, next: NextFunction) {
     try {
         const slug = String(req.params.slug ?? "").trim();
         const displayId = Number(req.params.displayId);
-        const requestUserId = Number(req.session.userId);
+        const { viewerUserId, isAuthenticated, isAdmin } = getViewerContext(req);
 
         if (!slug) {
             return res.status(400).send("Invalid slug");
@@ -43,15 +266,25 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
             return res.status(400).send("Invalid displayId");
         }
 
-        if (!Number.isFinite(requestUserId) || requestUserId <= 0) {
+        if (!isAuthenticated) {
             return res.status(401).send("Unauthorized");
         }
 
-        const deleted = await softDeletePostBySlugDisplayId({
-            slug,
-            displayId,
-            requestUserId,
-        });
+        const policy = getBoardPolicy(slug);
+        let deleted = false;
+
+        if (policy.delete === "admin") {
+            if (!isAdmin) {
+                return res.status(403).send("Forbidden");
+            }
+            deleted = await softDeletePostBySlugDisplayIdAsAdmin({ slug, displayId });
+        } else {
+            deleted = await softDeletePostBySlugDisplayId({
+                slug,
+                displayId,
+                requestUserId: viewerUserId,
+            });
+        }
 
         if (deleted) {
             return res.status(204).send();
@@ -70,8 +303,10 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
 
 type BoardPostRow = {
     board_id: number;
+    board_name: string;
     board_slug: string;
     display_id: number;
+    user_id: number;
     title: string;
     username: string;
     content: string;
@@ -87,6 +322,8 @@ type BoardPost = {
     content: string;
     created_at: string;
     updated_at: string | null;
+    user_id: number;
+    board_name: string;
 };
 
 type NeighborRow = { display_id: number; title: string };
@@ -109,8 +346,10 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
             `
             SELECT
                 b.board_id,
+                b.name AS board_name,
                 b.slug AS board_slug,
                 p.display_id,
+                p.user_id,
                 p.title,
                 u.username,
                 p.content,
@@ -144,9 +383,16 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
             content: postRow.content,
             created_at: new Date(postRow.created_at).toISOString(),
             updated_at: postRow.updated_at ? new Date(postRow.updated_at).toISOString() : null,
+            user_id: Number(postRow.user_id),
+            board_name: postRow.board_name,
         };
 
         const boardId = Number(postRow.board_id);
+        const { viewerUserId, isAdmin } = getViewerContext(req);
+        const policy = getBoardPolicy(slug);
+        const isOwner = viewerUserId === post.user_id;
+        const canEdit = policy.update === "admin" ? isAdmin : isOwner;
+        const canDelete = policy.delete === "admin" ? isAdmin : isOwner || isAdmin;
 
         const prevRows = await sequelize.query<NeighborRow>(
             `
@@ -191,6 +437,8 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
             prevPost,
             nextPost,
             boardSlug: slug,
+            canEdit,
+            canDelete,
         });
     } catch (err) {
         next(err);
