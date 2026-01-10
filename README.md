@@ -4,14 +4,14 @@
 
 ## 😊 Commit Emoji
 
-| emoji | commit message | when to use it           |
-| :---: | :------------: | :----------------------: |
-| 🎉    | Start          | 프로젝트 시작            |
-| ✨    | Feat           | 새로운 기능 추가         |
-| 🐛    | Fix            | 버그 수정                |
-| ♻️    | Refactor       | 코드 리팩터링            |
-| 💄    | Style          | 스타일 추가 및 업데이트  |
-| 📦    | Chore          | 패키지 추가 및 업데이트  |
+| emoji | commit message | when to use it              |
+| :---: | :------------: | :-------------------------: |
+| 🎉    | Start          | 프로젝트 시작               |
+| ✨    | Feat           | 새로운 기능 추가            |
+| 🐛    | Fix            | 버그 수정                   |
+| ♻️    | Refactor       | 코드 리팩터링               |
+| 💄    | Style          | 스타일 추가 및 업데이트     |
+| 📦    | Chore          | 패키지 추가 및 업데이트     |
 | 📚    | Docs           | 그 외 문서 추가 및 업데이트 |
 
 <!-- 
