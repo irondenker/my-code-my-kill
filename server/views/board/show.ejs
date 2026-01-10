@@ -30,6 +30,24 @@
 
                     <hr class="my-3" />
 
+                    <% if (post.image_url) { %>
+                    <div class="mb-3">
+                        <div class="text-muted small mb-2">Image</div>
+                        <a href="<%= post.image_url %>" target="_blank" rel="noreferrer">
+                            <img src="<%= post.image_url %>" alt="Post image" class="img-fluid rounded border" />
+                        </a>
+                    </div>
+                    <% } %>
+
+                    <% if (post.file_url) { %>
+                    <div class="mb-3">
+                        <div class="text-muted small mb-2">Attachment</div>
+                        <a href="<%= post.file_url %>" class="btn btn-outline-secondary btn-sm" download>
+                            <%= post.file_name || "Download attachment" %>
+                        </a>
+                    </div>
+                    <% } %>
+
                     <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7;">
                         <%= post.content %>
                     </div>

@@ -16,6 +16,8 @@ export type BoardPostRecord = {
     userId: number;
     title: string;
     content: string;
+    imageUrl: string | null;
+    fileUrl: string | null;
 };
 
 export async function countBoardPosts(): Promise<number> {
@@ -177,6 +179,8 @@ export async function findPostBySlugDisplayId(params: {
         user_id: number;
         title: string;
         content: string;
+        image_url: string | null;
+        file_url: string | null;
     }>(
         `
         SELECT
@@ -187,7 +191,9 @@ export async function findPostBySlugDisplayId(params: {
             p.display_id,
             p.user_id,
             p.title,
-            p.content
+            p.content,
+            p.image_url,
+            p.file_url
         FROM posts p
         JOIN boards b ON p.board_id = b.board_id
         WHERE b.slug = :slug
@@ -215,6 +221,8 @@ export async function findPostBySlugDisplayId(params: {
         userId: Number(row.user_id),
         title: row.title,
         content: row.content,
+        imageUrl: row.image_url ?? null,
+        fileUrl: row.file_url ?? null,
     };
 }
 
@@ -240,8 +248,10 @@ export async function createBoardPost(params: {
     userId: number;
     title: string;
     content: string;
+    imageUrl?: string | null;
+    fileUrl?: string | null;
 }): Promise<{ displayId: number }> {
-    const { boardId, userId, title, content } = params;
+    const { boardId, userId, title, content, imageUrl, fileUrl } = params;
 
     return sequelize.transaction(async (transaction) => {
         const displayRows = await sequelize.query<{ display_id: number }>(
@@ -283,6 +293,8 @@ export async function createBoardPost(params: {
                 user_id,
                 title,
                 content,
+                image_url,
+                file_url,
                 created_at,
                 updated_at,
                 use_yn
@@ -293,13 +305,23 @@ export async function createBoardPost(params: {
                 :userId,
                 :title,
                 :content,
+                :imageUrl,
+                :fileUrl,
                 NOW(),
                 NOW(),
                 true
             )
             `,
             {
-                replacements: { boardId, displayId, userId, title, content },
+                replacements: {
+                    boardId,
+                    displayId,
+                    userId,
+                    title,
+                    content,
+                    imageUrl: imageUrl ?? null,
+                    fileUrl: fileUrl ?? null,
+                },
                 transaction,
             }
         );
@@ -312,13 +334,17 @@ export async function updateBoardPost(params: {
     postId: number;
     title: string;
     content: string;
+    imageUrl?: string | null;
+    fileUrl?: string | null;
 }): Promise<boolean> {
-    const { postId, title, content } = params;
+    const { postId, title, content, imageUrl, fileUrl } = params;
     const rows = await sequelize.query<{ post_id: number }>(
         `
         UPDATE posts
         SET title = :title,
             content = :content,
+            image_url = :imageUrl,
+            file_url = :fileUrl,
             updated_at = NOW()
         WHERE post_id = :postId
           AND use_yn = true
@@ -326,7 +352,13 @@ export async function updateBoardPost(params: {
         `,
         {
             type: QueryTypes.SELECT,
-            replacements: { postId, title, content },
+            replacements: {
+                postId,
+                title,
+                content,
+                imageUrl: imageUrl ?? null,
+                fileUrl: fileUrl ?? null,
+            },
         }
     );
 

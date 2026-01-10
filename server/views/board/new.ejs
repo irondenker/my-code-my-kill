@@ -22,7 +22,7 @@
             <div class="alert alert-danger" role="alert"><%= formError %></div>
             <% } %>
 
-            <form method="post" action="/board/<%= boardSlug %>">
+            <form method="post" action="/board/<%= boardSlug %>" enctype="multipart/form-data">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div class="mb-3">
                     <label for="title" class="form-label">Title</label>
@@ -45,6 +45,28 @@
                         rows="10"
                         required
                     ><%= typeof content === 'string' ? content : '' %></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="image" class="form-label">Image (optional)</label>
+                    <input
+                        type="file"
+                        class="form-control"
+                        id="image"
+                        name="image"
+                        accept="image/jpeg,image/png,image/webp"
+                    />
+                    <div class="form-text">Max 20MB and 5120px. JPG/PNG/WebP only.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="attachment" class="form-label">Attachment (optional)</label>
+                    <input
+                        type="file"
+                        class="form-control"
+                        id="attachment"
+                        name="attachment"
+                        accept=".pdf,.txt,.csv,.zip"
+                    />
+                    <div class="form-text">Max 10MB. PDF/TXT/CSV/ZIP only.</div>
                 </div>
                 <button class="btn btn-primary" type="submit">Create</button>
             </form>

@@ -39,9 +39,16 @@ export function createApp() {
 
     const csrfProtection = csrf();
     app.use((req, res, next) => {
-        if (req.method === "POST" && req.path === "/users/avatar") {
+        const isMultipartPost =
+            req.method === "POST" &&
+            (req.path === "/users/avatar" ||
+                /^\/board\/[^/]+$/.test(req.path) ||
+                /^\/board\/[^/]+\/\d+\/edit$/.test(req.path));
+
+        if (isMultipartPost) {
             return next();
         }
+
         return csrfProtection(req, res, next);
     });
 

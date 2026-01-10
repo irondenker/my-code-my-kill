@@ -254,3 +254,9 @@ $RECYCLE.BIN/
 # Keep the avatar uploads directory but ignore its contents.
 server/public/uploads/avatars/*
 !server/public/uploads/avatars/.gitkeep
+
+# Keep the post uploads directories but ignore their contents.
+server/public/uploads/posts/images/*
+!server/public/uploads/posts/images/.gitkeep
+server/public/uploads/posts/files/*
+!server/public/uploads/posts/files/.gitkeep
