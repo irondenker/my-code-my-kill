@@ -33,7 +33,7 @@ export function errorHandler(
     // }
 
     // SSR 에러 페이지 렌더링
-    res.status(status).render('error/error', {
+    res.status(status).render('errors/error', {
         status,
         message,
         stack,

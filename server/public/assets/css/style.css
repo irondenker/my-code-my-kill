@@ -25,3 +25,10 @@ body:not(.d-flex) main {
 body:not(.d-flex) footer {
     margin-top: auto;
 }
+
+.profile-avatar {
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    background-color: rgb(var(--bs-secondary-bg-rgb));
+}

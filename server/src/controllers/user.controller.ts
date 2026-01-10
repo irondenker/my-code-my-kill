@@ -24,6 +24,11 @@ export async function getUserProfile(req: Request, res: Response, next: NextFunc
                 username: profile.username,
                 displayName: profile.displayName,
                 bio: profile.bio,
+                profileImageUrl: profile.profileImageUrl
+                    ? profile.profileImageUrl.startsWith("/")
+                        ? profile.profileImageUrl
+                        : `/uploads/avatars/${profile.profileImageUrl}`
+                    : null,
             },
             privateProfile: canViewPrivate
                 ? {

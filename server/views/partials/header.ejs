@@ -36,8 +36,22 @@
             </form>
 
             <div class="dropdown text-end">
+                <% const headerAvatarUrl = sessionProfileImageUrl; %>
                 <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="https://github.com/mdo.png" alt="mdo" width="32" height="32" class="rounded-circle" />
+                    <% if (headerAvatarUrl) { %>
+                    <img
+                        src="<%= headerAvatarUrl %>"
+                        alt="Profile"
+                        width="32"
+                        height="32"
+                        class="rounded-circle"
+                        style="object-fit: cover;"
+                    />
+                    <% } else { %>
+                    <svg class="rounded-circle" width="32" height="32" aria-hidden="true">
+                        <use xlink:href="/assets/icons/icons.svg#people-circle"></use>
+                    </svg>
+                    <% } %>
                 </a>
                 <ul class="dropdown-menu text-small">
                     <% if (sessionUser) { %>
@@ -56,7 +70,6 @@
                     </li>
                     <% } else { %>
                     <li><a class="dropdown-item" href="/login">Login</a></li>
-                    <li><a class="dropdown-item" href="/register">Register</a></li>
                     <% } %>
                 </ul>
             </div>

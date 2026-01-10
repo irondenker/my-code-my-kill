@@ -5,5 +5,6 @@ declare module "express-session" {
         userId?: number;
         userRole?: "admin" | "user";
         username?: string;
+        profileImageUrl?: string | null;
     }
 }

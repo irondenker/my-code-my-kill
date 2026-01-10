@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { createUser, findUserByUsername } from "../services/auth.service.ts";
+import { createUser, findUserByUsername, findUserProfileById } from "../services/auth.service.ts";
 import { hashPassword, verifyPassword } from "../utils/password.util.ts";
 import { getSafeRedirectPath } from "../utils/redirect.util.ts";
 
@@ -103,6 +103,7 @@ export async function postRegister(req: Request, res: Response, next: NextFuncti
         req.session.userId = user.userId;
         req.session.userRole = user.userRole;
         req.session.username = user.username;
+        req.session.profileImageUrl = null;
         await saveSession(req);
 
         return res.redirect("/board");
@@ -138,6 +139,8 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
         req.session.userId = user.userId;
         req.session.userRole = user.userRole;
         req.session.username = user.username;
+        const profile = await findUserProfileById(user.userId);
+        req.session.profileImageUrl = profile?.profileImageUrl ?? null;
         await saveSession(req);
 
         return res.redirect(nextPath);

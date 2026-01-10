@@ -37,12 +37,23 @@ export function createApp() {
         })
     );
 
-    app.use(csrf());
+    const csrfProtection = csrf();
+    app.use((req, res, next) => {
+        if (req.method === "POST" && req.path === "/users/avatar") {
+            return next();
+        }
+        return csrfProtection(req, res, next);
+    });
 
     app.use((req, res, next) => {
-        res.locals.csrfToken = req.csrfToken();
+        res.locals.csrfToken = typeof req.csrfToken === "function" ? req.csrfToken() : null;
         res.locals.sessionUser = req.session.userId ?? null;
         res.locals.sessionUsername = req.session.username ?? null;
+        const profileImageUrl = req.session.profileImageUrl;
+        res.locals.sessionProfileImageUrl =
+            profileImageUrl && !profileImageUrl.startsWith("/")
+                ? `/uploads/avatars/${profileImageUrl}`
+                : profileImageUrl ?? null;
         next();
     });
 

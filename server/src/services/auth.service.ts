@@ -14,6 +14,7 @@ type UserProfileRow = {
     email: string | null;
     phone_number: string | null;
     display_name: string | null;
+    profile_image_url: string | null;
     bio: string | null;
     created_at: Date;
 };
@@ -23,6 +24,7 @@ type PublicProfileRow = {
     email: string | null;
     phone_number: string | null;
     display_name: string | null;
+    profile_image_url: string | null;
     bio: string | null;
     created_at: Date;
 };
@@ -42,6 +44,7 @@ export type UserProfile = {
     email: string | null;
     phoneNumber: string | null;
     displayName: string | null;
+    profileImageUrl: string | null;
     bio: string | null;
     createdAt: Date;
 };
@@ -51,6 +54,7 @@ export type PublicUserProfile = {
     email: string | null;
     phoneNumber: string | null;
     displayName: string | null;
+    profileImageUrl: string | null;
     bio: string | null;
     createdAt: Date;
 };
@@ -146,6 +150,7 @@ export async function findUserProfileById(userId: number): Promise<UserProfile |
             email,
             phone_number,
             display_name,
+            profile_image_url,
             bio,
             created_at
         FROM users
@@ -169,6 +174,7 @@ export async function findUserProfileById(userId: number): Promise<UserProfile |
         email: row.email ?? null,
         phoneNumber: row.phone_number ?? null,
         displayName: row.display_name ?? null,
+        profileImageUrl: row.profile_image_url ?? null,
         bio: row.bio ?? null,
         createdAt: row.created_at,
     };
@@ -183,6 +189,7 @@ export async function findUserProfileByUsername(username: string): Promise<UserP
             email,
             phone_number,
             display_name,
+            profile_image_url,
             bio,
             created_at
         FROM users
@@ -206,6 +213,7 @@ export async function findUserProfileByUsername(username: string): Promise<UserP
         email: row.email ?? null,
         phoneNumber: row.phone_number ?? null,
         displayName: row.display_name ?? null,
+        profileImageUrl: row.profile_image_url ?? null,
         bio: row.bio ?? null,
         createdAt: row.created_at,
     };
@@ -219,6 +227,7 @@ export async function findPublicProfileByUsername(username: string): Promise<Pub
             email,
             phone_number,
             display_name,
+            profile_image_url,
             bio,
             created_at
         FROM users
@@ -241,7 +250,32 @@ export async function findPublicProfileByUsername(username: string): Promise<Pub
         email: row.email ?? null,
         phoneNumber: row.phone_number ?? null,
         displayName: row.display_name ?? null,
+        profileImageUrl: row.profile_image_url ?? null,
         bio: row.bio ?? null,
         createdAt: row.created_at,
     };
+}
+
+export async function updateUserProfileImage(params: {
+    userId: number;
+    profileImageUrl: string | null;
+}): Promise<boolean> {
+    const rows = await sequelize.query<{ user_id: number }>(
+        `
+        UPDATE users
+        SET profile_image_url = :profileImageUrl,
+            updated_at = NOW()
+        WHERE user_id = :userId
+        RETURNING user_id
+        `,
+        {
+            type: QueryTypes.SELECT,
+            replacements: {
+                userId: params.userId,
+                profileImageUrl: params.profileImageUrl,
+            },
+        }
+    );
+
+    return rows.length > 0;
 }

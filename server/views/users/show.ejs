@@ -12,13 +12,25 @@
     <%- include("../partials/header") %>
 
     <main class="container py-4" style="max-width: 920px;">
-        <div class="mb-3">
-            <a href="/board" class="text-decoration-none">&larr; Back to board</a>
-        </div>
-
         <section class="card shadow-sm">
             <div class="card-body">
-                <h1 class="h4 mb-3">@<%= profile.username %></h1>
+                <% const hasAvatar = Boolean(profile.profileImageUrl); %>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <% if (hasAvatar) { %>
+                    <img
+                        src="<%= profile.profileImageUrl %>"
+                        alt="Profile image"
+                        class="profile-avatar rounded-circle border"
+                    />
+                    <% } else { %>
+                    <svg class="profile-avatar rounded-circle border" aria-hidden="true">
+                        <use xlink:href="/assets/icons/icons.svg#people-circle"></use>
+                    </svg>
+                    <% } %>
+                    <div>
+                        <h1 class="h4 mb-1">@<%= profile.username %></h1>
+                    </div>
+                </div>
                 <div class="mb-2"><strong>Display name</strong>: <%= profile.displayName || "-" %></div>
                 <div class="mb-2"><strong>Bio</strong>: <%= profile.bio || "-" %></div>
 
@@ -38,8 +50,28 @@
         </section>
 
         <% if (showOwnerActions) { %>
-        <div class="alert alert-info mt-3" role="alert">
-            Account management is coming soon.
+        <div class="mt-4">
+            <h2 class="h6 mb-2">Update avatar</h2>
+            <form method="post" action="/users/avatar" enctype="multipart/form-data" class="d-flex flex-column gap-2">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input
+                    type="file"
+                    name="avatar"
+                    accept="image/jpeg,image/png,image/webp"
+                    class="form-control"
+                    required
+                />
+                <button class="btn btn-outline-primary" type="submit">Upload</button>
+            </form>
+            <% if (hasAvatar) { %>
+            <form method="post" action="/users/avatar/delete" class="mt-2">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-outline-danger btn-sm" type="submit">Remove avatar</button>
+            </form>
+            <% } %>
+            <p class="text-muted small mt-2 mb-0">
+                Allowed formats: jpg, png, webp. Max 5MB. Min 128px. Max 2048px.
+            </p>
         </div>
         <% } %>
     </main>
