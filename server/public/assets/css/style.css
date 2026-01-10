@@ -6,3 +6,22 @@ body {
 header {
     background-color: rgb(var(--bs-body-bg-rgb));
 }
+
+html,
+body {
+    height: 100%;
+}
+
+body:not(.d-flex) {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+body:not(.d-flex) main {
+    flex: 1 0 auto;
+}
+
+body:not(.d-flex) footer {
+    margin-top: auto;
+}
