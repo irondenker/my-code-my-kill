@@ -10,8 +10,8 @@ import {
     getBoardShow,
     postBoardCreate,
     postBoardEdit,
-} from "../controllers/board.controller.ts";
-import { requireAuth, requireAuthRedirect } from "../middlewares/auth.middleware.ts";
+} from "../controllers/board.controller.js";
+import { requireAuth, requireAuthRedirect } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 const upload = multer({

@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import { createUser, findUserByUsername, findUserProfileById } from "../services/auth.service.ts";
-import { hashPassword, verifyPassword } from "../utils/password.util.ts";
-import { getSafeRedirectPath } from "../utils/redirect.util.ts";
+import { createUser, findUserByUsername, findUserProfileById } from "../services/auth.service.js";
+import { hashPassword, verifyPassword } from "../utils/password.util.js";
+import { getSafeRedirectPath } from "../utils/redirect.util.js";
 
 type AuthRenderOptions = {
     formError?: string | null;

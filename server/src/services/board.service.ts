@@ -1,5 +1,5 @@
 import { QueryTypes } from "sequelize";
-import { sequelize } from "../db/index.ts";
+import { sequelize } from "../db/index.js";
 
 export type BoardMeta = {
     boardId: number;

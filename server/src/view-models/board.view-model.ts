@@ -5,9 +5,9 @@ import {
     findBoardDisplayNameBySlug,
     listBoardPostOutlines,
     listBoardPostOutlinesBySlug,
-} from "../services/board.service.ts";
-import { createPaginationMeta } from "../utils/board.util.ts";
-import { PAGINATION_DEFAULT_LIMIT } from "../constants/board.constants.ts";
+} from "../services/board.service.js";
+import { createPaginationMeta } from "../utils/board.util.js";
+import { PAGINATION_DEFAULT_LIMIT } from "../constants/board.constants.js";
 
 
 // page 파싱 로직은 재사용 가능하게 분리해두면 좋음

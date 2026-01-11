@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize";
-import { dbEnv } from "./env.ts";
+import { dbEnv } from "./env.js";
 
 const logging = process.env.DB_LOGGING === "true" ? console.log : false;
 

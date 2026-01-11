@@ -1,9 +1,9 @@
 import { Router } from "express";
 import multer from "multer";
 import csrf from "csurf";
-import { postAvatarDelete, postAvatarUpload } from "../controllers/avatar.controller.ts";
-import { getProfileEditForm, getUserProfile, postProfileEdit } from "../controllers/user.controller.ts";
-import { requireAuthRedirect } from "../middlewares/auth.middleware.ts";
+import { postAvatarDelete, postAvatarUpload } from "../controllers/avatar.controller.js";
+import { getProfileEditForm, getUserProfile, postProfileEdit } from "../controllers/user.controller.js";
+import { requireAuthRedirect } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });

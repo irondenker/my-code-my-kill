@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { QueryTypes } from "sequelize";
 import sharp from "sharp";
-import { sequelize } from "../db/index.ts";
+import { sequelize } from "../db/index.js";
 import {
     createBoardPost,
     doesPostExistBySlugDisplayId,
@@ -13,8 +13,8 @@ import {
     softDeletePostBySlugDisplayId,
     softDeletePostBySlugDisplayIdAsAdmin,
     updateBoardPost,
-} from "../services/board.service.ts";
-import { buildBoardIndexViewModel, buildBoardSlugViewModel } from "../view-models/board.view-model.ts";
+} from "../services/board.service.js";
+import { buildBoardIndexViewModel, buildBoardSlugViewModel } from "../view-models/board.view-model.js";
 
 type BoardPolicy = {
     create: "auth" | "admin";

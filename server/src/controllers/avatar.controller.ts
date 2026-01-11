@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { findUserProfileById, updateUserProfileImage } from "../services/auth.service.ts";
+import { findUserProfileById, updateUserProfileImage } from "../services/auth.service.js";
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;

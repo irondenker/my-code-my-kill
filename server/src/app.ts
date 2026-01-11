@@ -1,11 +1,11 @@
 import express from "express";
 import session from "express-session";
 import csrf from "csurf";
-import boardRouter from "./routes/board.routes.ts";
-import authRouter from "./routes/auth.routes.ts";
-import userRouter from "./routes/user.routes.ts";
-import rootRouter from "./routes/root.routes.ts";
-import { errorHandler } from "./middlewares/error-handler.ts";
+import boardRouter from "./routes/board.routes.js";
+import authRouter from "./routes/auth.routes.js";
+import userRouter from "./routes/user.routes.js";
+import rootRouter from "./routes/root.routes.js";
+import { errorHandler } from "./middlewares/error-handler.js";
 
 const isProd = process.env.NODE_ENV === "production";
 const sessionSecret = process.env.SESSION_SECRET ?? "dev-only-change-me";

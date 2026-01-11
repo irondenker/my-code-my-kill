@@ -1,7 +1,7 @@
 import "dotenv/config";
-import { createApp } from "./app.ts";
-import { assertDbConnection } from "./db/assert.ts";
-import { closeDb } from "./db/close.ts";
+import { createApp } from "./app.js";
+import { assertDbConnection } from "./db/assert.js";
+import { closeDb } from "./db/close.js";
 
 const PORT = Number(process.env.PORT ?? 3000);
 

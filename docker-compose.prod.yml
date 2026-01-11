@@ -1,0 +1,33 @@
+name: my-code-my-kill
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: runtime
+    env_file:
+      - ./server/.env.production
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+    expose:
+      - "3000"
+    networks:
+      - default
+      - db_net
+
+networks:
+  db_net:
+    external: true
+    name: mcmk_db

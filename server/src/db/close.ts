@@ -1,4 +1,4 @@
-import { sequelize } from "./index.ts";
+import { sequelize } from "./index.js";
 
 // close - 종료 시 DB 커넥션 정리
 export async function closeDb(): Promise<void> {

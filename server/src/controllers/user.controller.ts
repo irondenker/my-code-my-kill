@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
-import { findUserProfileById, findUserProfileByUsername, updateUserProfile } from "../services/auth.service.ts";
-import { isPublicProfileHandle, normalizeUsernameParam } from "../utils/username.util.ts";
+import { findUserProfileById, findUserProfileByUsername, updateUserProfile } from "../services/auth.service.js";
+import { isPublicProfileHandle, normalizeUsernameParam } from "../utils/username.util.js";
 
 function normalizeString(value: unknown): string {
     return typeof value === "string" ? value.trim() : "";
