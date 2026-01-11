@@ -3,14 +3,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import { findUserProfileById, updateUserProfileImage } from "../services/auth.service.js";
-
-const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
-const MAX_DIMENSION = 2048;
-const MIN_DIMENSION = 128;
-const OUTPUT_SIZE = 512;
-const OUTPUT_QUALITY = 80;
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "avatars");
+import { ALLOWED_MIME_TYPES, MAX_DIMENSION, MAX_FILE_SIZE_BYTES, MIN_DIMENSION, OUTPUT_QUALITY, OUTPUT_SIZE, UPLOAD_DIR } from "../constants/upload.constants.js";
+import { renderError } from "../utils/render-error.util.js";
 
 async function ensureUploadDir() {
     await fs.mkdir(UPLOAD_DIR, { recursive: true });
@@ -20,38 +14,45 @@ export async function postAvatarUpload(req: Request, res: Response, next: NextFu
     try {
         const userId = Number(req.session.userId);
         if (!Number.isFinite(userId) || userId <= 0) {
-            return res.status(401).send("Unauthorized");
+            return renderError(res, 401, "Unauthorized");
         }
 
         const file = req.file;
         if (!file) {
-            return res.status(400).send("Avatar file is required.");
+            return renderError(res, 400, "Avatar file is required.");
         }
 
+        // -----------------------
         if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
-            return res.status(400).send("Unsupported image type.");
+            return renderError(res, 400, "Unsupported image type.");
         }
 
         if (file.size > MAX_FILE_SIZE_BYTES) {
-            return res.status(413).send("Avatar file is too large.");
+            return renderError(res, 413, "Avatar file is too large.");
         }
+        // ---------------------------------------
+
 
         const image = sharp(file.buffer, {
             limitInputPixels: MAX_DIMENSION * MAX_DIMENSION,
         });
         const metadata = await image.metadata();
 
+
+        // ---------------------------------------------
         const width = metadata.width ?? 0;
         const height = metadata.height ?? 0;
         if (!width || !height) {
-            return res.status(400).send("Invalid image data.");
+            return renderError(res, 400, "Invalid image data.");
         }
         if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-            return res.status(400).send("Image dimensions exceed the limit.");
+            return renderError(res, 400, "Image dimensions exceed the limit.");
         }
         if (width < MIN_DIMENSION || height < MIN_DIMENSION) {
-            return res.status(400).send("Image dimensions are too small.");
+            return renderError(res, 400, "Image dimensions are too small.");
         }
+        // ---------------------------------------------
+                
 
         await ensureUploadDir();
 
@@ -86,7 +87,7 @@ export async function postAvatarDelete(req: Request, res: Response, next: NextFu
     try {
         const userId = Number(req.session.userId);
         if (!Number.isFinite(userId) || userId <= 0) {
-            return res.status(401).send("Unauthorized");
+            return renderError(res, 401, "Unauthorized");
         }
 
         const profile = await findUserProfileById(userId);

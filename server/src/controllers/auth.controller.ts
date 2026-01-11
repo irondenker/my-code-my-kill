@@ -2,23 +2,13 @@ import type { Request, Response, NextFunction } from "express";
 import { createUser, findUserByUsername, findUserProfileById } from "../services/auth.service.js";
 import { hashPassword, verifyPassword } from "../utils/password.util.js";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
+import { isValidPassword, isValidUsername, normalizeString } from "../utils/auth.validation.js";
+import { regenerateSession, saveSession } from "../utils/session.util.js";
 
 type AuthRenderOptions = {
     formError?: string | null;
     nextPath?: string | null;
 };
-
-function normalizeString(value: unknown): string {
-    return typeof value === "string" ? value.trim() : "";
-}
-
-function isValidUsername(username: string): boolean {
-    return username.length >= 3 && username.length <= 50;
-}
-
-function isValidPassword(password: string): boolean {
-    return password.length >= 8 && password.length <= 128;
-}
 
 function renderLogin(res: Response, options: AuthRenderOptions = {}) {
     return res.render("auth/sign-in", {
@@ -30,28 +20,6 @@ function renderLogin(res: Response, options: AuthRenderOptions = {}) {
 function renderRegister(res: Response, options: AuthRenderOptions = {}) {
     return res.render("auth/register", {
         formError: options.formError ?? null,
-    });
-}
-
-function regenerateSession(req: Request): Promise<void> {
-    return new Promise((resolve, reject) => {
-        req.session.regenerate((err) => {
-            if (err) {
-                return reject(err);
-            }
-            return resolve();
-        });
-    });
-}
-
-function saveSession(req: Request): Promise<void> {
-    return new Promise((resolve, reject) => {
-        req.session.save((err) => {
-            if (err) {
-                return reject(err);
-            }
-            return resolve();
-        });
     });
 }
 
