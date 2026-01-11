@@ -38,10 +38,55 @@
 
 ### ⚙️ Config
 
+1. [Docker](https://www.docker.com/) 설치(필수)
+
+2. Repository 다운로드:
+    - `Download ZIP manually` or `git clone`
+
+3. 프로젝트 루트 경로로 이동:
+    - `.../my-code-my-kill` or `.../my-code-my-kill-main`
+
+4. '.env' && '.env.production' -> '/server' 경로에 옮겨놓기
+    - 없을 경우 자체 구성
+
+5. `Terminal`에서 아래 명령어 입력
+
 ```bash
-cd server
-npm install
-# '.env' 프로젝트 루트 경로에 옮겨놓기
+docker compose -f docker-compose.prod.yml up --build
+```
+
+### 🎮 Controls
+
+```bash
+
+# 컨테이너 켜기(단순 켜기, 빌드 과정 / 강제 리빌드 없음)
+docker compose -f docker-compose.prod.yml up
+# 컨테이너 끄기
+docker compose -f docker-compose.prod.yml down
+# 컨테이너 강제 리빌드 후 켜기
+docker compose up -f --force-recreate
+
+```
+
+### 💻 Dev (Docker)
+
+``` bash
+#개발용 세팅 (세부 설정 사항은 위와 같음)
+docker compose up -d --build
+docker compose -d up
+docker compose -d down
+docker compose up -d --force-recreate
+```
+
+### 🏠 Local
+
+``` bash
+### 로컬에 Node.js 설치 필요!
+
+#로컬 nodemon 켜기
+npm run dev
+#로컬에서 build 후 켜기(Nginx 미적용)
+npm start
 ```
 
 ## 👀 References
