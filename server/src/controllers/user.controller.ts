@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { findUserProfileById, findUserProfileByUsername, updateUserProfile } from "../services/auth.service.js";
 import { isPublicProfileHandle, normalizeUsernameParam } from "../utils/username.util.js";
+import { renderError } from "../utils/render-error.util.js";
 
 function normalizeString(value: unknown): string {
     return typeof value === "string" ? value.trim() : "";
@@ -23,7 +24,7 @@ export async function getUserProfile(req: Request, res: Response, next: NextFunc
     try {
         const username = normalizeUsernameParam(req.params.username);
         if (!isPublicProfileHandle(username)) {
-            return res.status(400).send("Invalid username");
+            return renderError(res, 400, "Invalid username");
         }
 
         const profile = await findUserProfileByUsername(username);

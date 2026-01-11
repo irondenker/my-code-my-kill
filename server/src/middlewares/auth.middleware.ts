@@ -1,9 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
+import { renderError } from "../utils/render-error.util.js";
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
     if (!req.session.userId) {
-        return res.status(401).send("Unauthorized");
+        return renderError(res, 401, "Unauthorized");
     }
     return next();
 }

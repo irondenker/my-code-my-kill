@@ -6,6 +6,7 @@ import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
 import rootRouter from "./routes/root.routes.js";
 import { errorHandler } from "./middlewares/error-handler.js";
+import { renderError } from "./utils/render-error.util.js";
 
 const isProd = process.env.NODE_ENV === "production";
 const sessionSecret = process.env.SESSION_SECRET ?? "dev-only-change-me";
@@ -79,9 +80,15 @@ export function createApp() {
 
     app.use("/", rootRouter);
 
+    app.use((_req, res) => {
+        return res.status(404).render("errors/404", {
+            message: "The requested resource was not found.",
+        });
+    });
+
     app.use((err: any, _req: express.Request, res: express.Response, next: express.NextFunction) => {
         if (err?.code === "EBADCSRFTOKEN") {
-            return res.status(403).send("Invalid CSRF token");
+            return renderError(res, 403, "Invalid CSRF token");
         }
         return next(err);
     });

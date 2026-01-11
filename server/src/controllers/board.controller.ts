@@ -15,6 +15,7 @@ import {
     updateBoardPost,
 } from "../services/board.service.js";
 import { buildBoardIndexViewModel, buildBoardSlugViewModel } from "../view-models/board.view-model.js";
+import { renderError } from "../utils/render-error.util.js";
 
 type BoardPolicy = {
     create: "auth" | "admin";
@@ -177,7 +178,7 @@ export async function getBoardIndex(req: Request, res: Response, next: NextFunct
         const viewModel = await buildBoardIndexViewModel(req);
         return res.render('board/index', viewModel);
     } catch (err) {
-        return next(err); // ?�기??throw ?��? 말고 ?�러 미들?�어�??�기??�??�석
+        return next(err);
     }
 }
 
@@ -185,7 +186,7 @@ export async function getBoardBySlug(req: Request, res: Response, next: NextFunc
     try {
         const slug = String(req.params.slug ?? "").trim();
         if (!slug) {
-            return res.status(400).send("Invalid slug");
+            return renderError(res, 400, "Invalid slug");
         }
 
         const viewModel = await buildBoardSlugViewModel(req, slug);
@@ -199,7 +200,7 @@ export async function getBoardCreateForm(req: Request, res: Response, next: Next
     try {
         const slug = String(req.params.slug ?? "").trim();
         if (!slug) {
-            return res.status(400).send("Invalid slug");
+            return renderError(res, 400, "Invalid slug");
         }
 
         const board = await findBoardBySlug(slug);
@@ -211,7 +212,7 @@ export async function getBoardCreateForm(req: Request, res: Response, next: Next
         const { isAuthenticated, isAdmin } = getViewerContext(req);
 
         if (policy.create === "admin" && !isAdmin) {
-            return res.status(403).send("Forbidden");
+            return renderError(res, 403, "Forbidden");
         }
 
         if (policy.create === "auth" && !isAuthenticated) {
@@ -232,7 +233,7 @@ export async function postBoardCreate(req: Request, res: Response, next: NextFun
     try {
         const slug = String(req.params.slug ?? "").trim();
         if (!slug) {
-            return res.status(400).send("Invalid slug");
+            return renderError(res, 400, "Invalid slug");
         }
 
         const board = await findBoardBySlug(slug);
@@ -244,7 +245,7 @@ export async function postBoardCreate(req: Request, res: Response, next: NextFun
         const { viewerUserId, isAuthenticated, isAdmin } = getViewerContext(req);
 
         if (policy.create === "admin" && !isAdmin) {
-            return res.status(403).send("Forbidden");
+            return renderError(res, 403, "Forbidden");
         }
 
         if (policy.create === "auth" && !isAuthenticated) {
@@ -252,7 +253,7 @@ export async function postBoardCreate(req: Request, res: Response, next: NextFun
         }
 
         if (!Number.isFinite(viewerUserId) || viewerUserId <= 0) {
-            return res.status(401).send("Unauthorized");
+            return renderError(res, 401, "Unauthorized");
         }
 
         const title = String(req.body?.title ?? "").trim();
@@ -321,10 +322,10 @@ export async function getBoardEditForm(req: Request, res: Response, next: NextFu
         const slug = String(req.params.slug ?? "").trim();
         const displayId = Number(req.params.displayId);
         if (!slug) {
-            return res.status(400).send("Invalid slug");
+            return renderError(res, 400, "Invalid slug");
         }
         if (!Number.isFinite(displayId) || displayId <= 0) {
-            return res.status(400).send("Invalid displayId");
+            return renderError(res, 400, "Invalid displayId");
         }
 
         const post = await findPostBySlugDisplayId({ slug, displayId });
@@ -338,7 +339,7 @@ export async function getBoardEditForm(req: Request, res: Response, next: NextFu
 
         const canEdit = policy.update === "admin" ? isAdmin : isOwner;
         if (!canEdit) {
-            return res.status(403).send("Forbidden");
+            return renderError(res, 403, "Forbidden");
         }
 
         const imageUrl = buildPostImageUrl(post.imageUrl);
@@ -367,10 +368,10 @@ export async function postBoardEdit(req: Request, res: Response, next: NextFunct
         const slug = String(req.params.slug ?? "").trim();
         const displayId = Number(req.params.displayId);
         if (!slug) {
-            return res.status(400).send("Invalid slug");
+            return renderError(res, 400, "Invalid slug");
         }
         if (!Number.isFinite(displayId) || displayId <= 0) {
-            return res.status(400).send("Invalid displayId");
+            return renderError(res, 400, "Invalid displayId");
         }
 
         const post = await findPostBySlugDisplayId({ slug, displayId });
@@ -384,7 +385,7 @@ export async function postBoardEdit(req: Request, res: Response, next: NextFunct
 
         const canEdit = policy.update === "admin" ? isAdmin : isOwner;
         if (!canEdit) {
-            return res.status(403).send("Forbidden");
+            return renderError(res, 403, "Forbidden");
         }
 
         const title = String(req.body?.title ?? "").trim();
@@ -482,15 +483,15 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
         const { viewerUserId, isAuthenticated, isAdmin } = getViewerContext(req);
 
         if (!slug) {
-            return res.status(400).send("Invalid slug");
+            return renderError(res, 400, "Invalid slug");
         }
 
         if (!Number.isFinite(displayId) || displayId <= 0) {
-            return res.status(400).send("Invalid displayId");
+            return renderError(res, 400, "Invalid displayId");
         }
 
         if (!isAuthenticated) {
-            return res.status(401).send("Unauthorized");
+            return renderError(res, 401, "Unauthorized");
         }
 
         const policy = getBoardPolicy(slug);
@@ -498,7 +499,7 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
 
         if (policy.delete === "admin") {
             if (!isAdmin) {
-                return res.status(403).send("Forbidden");
+                return renderError(res, 403, "Forbidden");
             }
             deleted = await softDeletePostBySlugDisplayIdAsAdmin({ slug, displayId });
         } else {
@@ -518,7 +519,7 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
             return res.status(404).send("Post not found");
         }
 
-        return res.status(403).send("Forbidden");
+        return renderError(res, 403, "Forbidden");
     } catch (err) {
         return next(err);
     }
@@ -563,11 +564,11 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
         const displayId = Number(req.params.displayId);
 
         if (!slug) {
-            return res.status(400).send("Invalid slug");
+            return renderError(res, 400, "Invalid slug");
         }
 
         if (!Number.isFinite(displayId) || displayId <= 0) {
-            return res.status(400).send("Invalid displayId");
+            return renderError(res, 400, "Invalid displayId");
         }
 
         const postRows = await sequelize.query<BoardPostRow>(
