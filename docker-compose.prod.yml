@@ -9,6 +9,7 @@ services:
       - server
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - public_data:/var/www/public:ro
 
   server:
     build:
@@ -23,9 +24,14 @@ services:
       DB_PORT: 5432
     expose:
       - "3000"
+    volumes:
+      - public_data:/app/public
     networks:
       - default
       - db_net
+
+volumes:
+  public_data:
 
 networks:
   db_net:

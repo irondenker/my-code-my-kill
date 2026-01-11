@@ -12,9 +12,14 @@ const sessionSecret = process.env.SESSION_SECRET ?? "dev-only-change-me";
 if (isProd && sessionSecret === "dev-only-change-me") {
     throw new Error("Missing SESSION_SECRET in production.");
 }
+const trustProxy = process.env.TRUST_PROXY === "true" || isProd;
+const cookieSecure: boolean | "auto" = isProd ? "auto" : false;
 
 export function createApp() {
     const app = express();
+    if (trustProxy) {
+        app.set("trust proxy", 1);
+    }
 
     app.set("view engine", "ejs");
     app.use(express.static("public"));
@@ -30,7 +35,7 @@ export function createApp() {
             saveUninitialized: false,
             cookie: {
                 httpOnly: true,
-                secure: isProd,
+                secure: cookieSecure,
                 sameSite: "lax",
                 maxAge: 1000 * 60 * 60 * 2,
             },
