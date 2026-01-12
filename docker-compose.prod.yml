@@ -1,17 +1,15 @@
 name: my-code-my-kill
 
 services:
-  nginx:
-    image: nginx:1.27-alpine
-    ports:
-      - "80:80"
-    depends_on:
-      - server
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: mcmk
+      POSTGRES_USER: mcmk_app
+      POSTGRES_PASSWORD: 1234
+      PGDATA: /var/lib/postgresql/18/docker
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./server/views/errors:/var/www/errors:ro
-      - public_data:/var/www/public:ro
-
+      - postgresql:/var/lib/postgresql
   server:
     build:
       context: ./server
@@ -23,18 +21,28 @@ services:
       NODE_ENV: production
       DB_HOST: db
       DB_PORT: 5432
+    depends_on:
+      - db
     expose:
       - "3000"
     volumes:
       - public_data:/app/public
     networks:
       - default
-      - db_net
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./server/views/errors:/var/www/errors:ro
+      - public_data:/var/www/public:ro
 
 volumes:
+  postgresql:
+    external: true
+    name: postgresql
   public_data:
 
-networks:
-  db_net:
-    external: true
-    name: mcmk_db
