@@ -262,3 +262,5 @@ server/public/uploads/posts/images/*
 !server/public/uploads/posts/images/.gitkeep
 server/public/uploads/posts/files/*
 !server/public/uploads/posts/files/.gitkeep
+
+backups/
