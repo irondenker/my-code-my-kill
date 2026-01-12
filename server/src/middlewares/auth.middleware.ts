@@ -1,10 +1,10 @@
-import type { Request, Response, NextFunction } from "express";
+﻿import type { Request, Response, NextFunction } from "express";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
-import { renderError } from "../utils/render-error.util.js";
+import { HttpError } from "../utils/http-error.js";
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
     if (!req.session.userId) {
-        return renderError(res, 401, "Unauthorized");
+        return next(new HttpError(401, "Unauthorized"));
     }
     return next();
 }
@@ -19,3 +19,5 @@ export function requireAuthRedirect(req: Request, res: Response, next: NextFunct
     }
     return next();
 }
+
+

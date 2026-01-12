@@ -82,6 +82,9 @@
             <hr class="my-4" />
 
             <h2 class="h6 mb-2">Update avatar</h2>
+            <% if (avatarError) { %>
+            <div class="alert alert-danger" role="alert"><%= avatarError %></div>
+            <% } %>
             <form method="post" action="/users/avatar" enctype="multipart/form-data" class="d-flex flex-column gap-2">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <input

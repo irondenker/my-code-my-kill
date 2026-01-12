@@ -1,10 +1,11 @@
-import type { Request, Response, NextFunction } from "express";
+﻿import type { Request, Response, NextFunction } from "express";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { QueryTypes } from "sequelize";
 import sharp from "sharp";
 import { sequelize } from "../db/index.js";
+import { HttpError } from "../utils/http-error.js";
 import {
     createBoardPost,
     doesPostExistBySlugDisplayId,
@@ -15,7 +16,6 @@ import {
     updateBoardPost,
 } from "../services/board.service.js";
 import { buildBoardIndexViewModel, buildBoardSlugViewModel } from "../view-models/board.view-model.js";
-import { renderError } from "../utils/render-error.util.js";
 
 type BoardPolicy = {
     create: "auth" | "admin";
@@ -186,7 +186,7 @@ export async function getBoardBySlug(req: Request, res: Response, next: NextFunc
     try {
         const slug = String(req.params.slug ?? "").trim();
         if (!slug) {
-            return renderError(res, 400, "Invalid slug");
+            return next(new HttpError(404, "Not Found"));
         }
 
         const viewModel = await buildBoardSlugViewModel(req, slug);
@@ -200,19 +200,19 @@ export async function getBoardCreateForm(req: Request, res: Response, next: Next
     try {
         const slug = String(req.params.slug ?? "").trim();
         if (!slug) {
-            return renderError(res, 400, "Invalid slug");
+            return next(new HttpError(404, "Not Found"));
         }
 
         const board = await findBoardBySlug(slug);
         if (!board) {
-            return res.status(404).send("Board not found");
+            return next(new HttpError(404, "Not Found"));
         }
 
         const policy = getBoardPolicy(slug);
         const { isAuthenticated, isAdmin } = getViewerContext(req);
 
         if (policy.create === "admin" && !isAdmin) {
-            return renderError(res, 403, "Forbidden");
+            return next(new HttpError(403, "Forbidden"));
         }
 
         if (policy.create === "auth" && !isAuthenticated) {
@@ -233,19 +233,19 @@ export async function postBoardCreate(req: Request, res: Response, next: NextFun
     try {
         const slug = String(req.params.slug ?? "").trim();
         if (!slug) {
-            return renderError(res, 400, "Invalid slug");
+            return next(new HttpError(404, "Not Found"));
         }
 
         const board = await findBoardBySlug(slug);
         if (!board) {
-            return res.status(404).send("Board not found");
+            return next(new HttpError(404, "Not Found"));
         }
 
         const policy = getBoardPolicy(slug);
         const { viewerUserId, isAuthenticated, isAdmin } = getViewerContext(req);
 
         if (policy.create === "admin" && !isAdmin) {
-            return renderError(res, 403, "Forbidden");
+            return next(new HttpError(403, "Forbidden"));
         }
 
         if (policy.create === "auth" && !isAuthenticated) {
@@ -253,14 +253,25 @@ export async function postBoardCreate(req: Request, res: Response, next: NextFun
         }
 
         if (!Number.isFinite(viewerUserId) || viewerUserId <= 0) {
-            return renderError(res, 401, "Unauthorized");
+            return next(new HttpError(401, "Unauthorized"));
         }
 
         const title = String(req.body?.title ?? "").trim();
         const content = String(req.body?.content ?? "").trim();
 
-        if (!isValidTitle(title) || !isValidContent(content)) {
+        if (!title || !content) {
             return res.status(400).render("board/new", {
+                boardSlug: board.slug,
+                boardDisplayName: board.name,
+                formError: "Title and content are required.",
+                title,
+                content,
+                csrfToken: typeof req.csrfToken === "function" ? req.csrfToken() : null,
+            });
+        }
+
+        if (!isValidTitle(title) || !isValidContent(content)) {
+            return res.status(422).render("board/new", {
                 boardSlug: board.slug,
                 boardDisplayName: board.name,
                 formError: "Title or content is invalid.",
@@ -285,7 +296,7 @@ export async function postBoardCreate(req: Request, res: Response, next: NextFun
         } catch (err) {
             await removeFile(savedImage ? path.join(IMAGE_UPLOAD_DIR, savedImage) : null);
             await removeFile(savedAttachment ? path.join(FILE_UPLOAD_DIR, savedAttachment) : null);
-            return res.status(400).render("board/new", {
+            return res.status(422).render("board/new", {
                 boardSlug: board.slug,
                 boardDisplayName: board.name,
                 formError: err instanceof Error ? err.message : "Invalid upload.",
@@ -322,15 +333,15 @@ export async function getBoardEditForm(req: Request, res: Response, next: NextFu
         const slug = String(req.params.slug ?? "").trim();
         const displayId = Number(req.params.displayId);
         if (!slug) {
-            return renderError(res, 400, "Invalid slug");
+            return next(new HttpError(404, "Not Found"));
         }
         if (!Number.isFinite(displayId) || displayId <= 0) {
-            return renderError(res, 400, "Invalid displayId");
+            return next(new HttpError(404, "Not Found"));
         }
 
         const post = await findPostBySlugDisplayId({ slug, displayId });
         if (!post) {
-            return res.status(404).send("Post not found");
+            return next(new HttpError(404, "Not Found"));
         }
 
         const policy = getBoardPolicy(slug);
@@ -339,7 +350,7 @@ export async function getBoardEditForm(req: Request, res: Response, next: NextFu
 
         const canEdit = policy.update === "admin" ? isAdmin : isOwner;
         if (!canEdit) {
-            return renderError(res, 403, "Forbidden");
+            return next(new HttpError(403, "Forbidden"));
         }
 
         const imageUrl = buildPostImageUrl(post.imageUrl);
@@ -368,15 +379,15 @@ export async function postBoardEdit(req: Request, res: Response, next: NextFunct
         const slug = String(req.params.slug ?? "").trim();
         const displayId = Number(req.params.displayId);
         if (!slug) {
-            return renderError(res, 400, "Invalid slug");
+            return next(new HttpError(404, "Not Found"));
         }
         if (!Number.isFinite(displayId) || displayId <= 0) {
-            return renderError(res, 400, "Invalid displayId");
+            return next(new HttpError(404, "Not Found"));
         }
 
         const post = await findPostBySlugDisplayId({ slug, displayId });
         if (!post) {
-            return res.status(404).send("Post not found");
+            return next(new HttpError(404, "Not Found"));
         }
 
         const policy = getBoardPolicy(slug);
@@ -385,7 +396,7 @@ export async function postBoardEdit(req: Request, res: Response, next: NextFunct
 
         const canEdit = policy.update === "admin" ? isAdmin : isOwner;
         if (!canEdit) {
-            return renderError(res, 403, "Forbidden");
+            return next(new HttpError(403, "Forbidden"));
         }
 
         const title = String(req.body?.title ?? "").trim();
@@ -396,8 +407,24 @@ export async function postBoardEdit(req: Request, res: Response, next: NextFunct
         const currentImageName = post.imageUrl ? path.basename(post.imageUrl) : null;
         const currentFileName = post.fileUrl ? path.basename(post.fileUrl) : null;
 
-        if (!isValidTitle(title) || !isValidContent(content)) {
+        if (!title || !content) {
             return res.status(400).render("board/edit", {
+                boardSlug: post.boardSlug,
+                boardDisplayName: post.boardName,
+                displayId: post.displayId,
+                title,
+                content,
+                imageUrl: currentImageUrl,
+                imageName: currentImageName,
+                fileUrl: currentFileUrl,
+                fileName: currentFileName,
+                formError: "Title and content are required.",
+                csrfToken: typeof req.csrfToken === "function" ? req.csrfToken() : null,
+            });
+        }
+
+        if (!isValidTitle(title) || !isValidContent(content)) {
+            return res.status(422).render("board/edit", {
                 boardSlug: post.boardSlug,
                 boardDisplayName: post.boardName,
                 displayId: post.displayId,
@@ -427,7 +454,7 @@ export async function postBoardEdit(req: Request, res: Response, next: NextFunct
         } catch (err) {
             await removeFile(newImage ? path.join(IMAGE_UPLOAD_DIR, newImage) : null);
             await removeFile(newAttachment ? path.join(FILE_UPLOAD_DIR, newAttachment) : null);
-            return res.status(400).render("board/edit", {
+            return res.status(422).render("board/edit", {
                 boardSlug: post.boardSlug,
                 boardDisplayName: post.boardName,
                 displayId: post.displayId,
@@ -456,7 +483,7 @@ export async function postBoardEdit(req: Request, res: Response, next: NextFunct
         if (!updated) {
             await removeFile(newImage ? path.join(IMAGE_UPLOAD_DIR, newImage) : null);
             await removeFile(newAttachment ? path.join(FILE_UPLOAD_DIR, newAttachment) : null);
-            return res.status(404).send("Post not found");
+            return next(new HttpError(404, "Not Found"));
         }
 
         if (newImage && post.imageUrl) {
@@ -483,15 +510,15 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
         const { viewerUserId, isAuthenticated, isAdmin } = getViewerContext(req);
 
         if (!slug) {
-            return renderError(res, 400, "Invalid slug");
+            return next(new HttpError(404, "Not Found"));
         }
 
         if (!Number.isFinite(displayId) || displayId <= 0) {
-            return renderError(res, 400, "Invalid displayId");
+            return next(new HttpError(404, "Not Found"));
         }
 
         if (!isAuthenticated) {
-            return renderError(res, 401, "Unauthorized");
+            return next(new HttpError(401, "Unauthorized"));
         }
 
         const policy = getBoardPolicy(slug);
@@ -499,7 +526,7 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
 
         if (policy.delete === "admin") {
             if (!isAdmin) {
-                return renderError(res, 403, "Forbidden");
+                return next(new HttpError(403, "Forbidden"));
             }
             deleted = await softDeletePostBySlugDisplayIdAsAdmin({ slug, displayId });
         } else {
@@ -516,10 +543,10 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
 
         const exists = await doesPostExistBySlugDisplayId({ slug, displayId });
         if (!exists) {
-            return res.status(404).send("Post not found");
+            return next(new HttpError(404, "Not Found"));
         }
 
-        return renderError(res, 403, "Forbidden");
+        return next(new HttpError(403, "Forbidden"));
     } catch (err) {
         return next(err);
     }
@@ -564,11 +591,11 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
         const displayId = Number(req.params.displayId);
 
         if (!slug) {
-            return renderError(res, 400, "Invalid slug");
+            return next(new HttpError(404, "Not Found"));
         }
 
         if (!Number.isFinite(displayId) || displayId <= 0) {
-            return renderError(res, 400, "Invalid displayId");
+            return next(new HttpError(404, "Not Found"));
         }
 
         const postRows = await sequelize.query<BoardPostRow>(
@@ -603,7 +630,7 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
         const postRow = postRows[0];
 
         if (!postRow) {
-            return res.status(404).render("errors/404", { message: "Post not found" });
+            return next(new HttpError(404, "Not Found"));
         }
 
         const post: BoardPost = {
@@ -678,3 +705,7 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
         next(err);
     }
 }
+
+
+
+

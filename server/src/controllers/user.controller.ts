@@ -1,7 +1,7 @@
-import type { Request, Response, NextFunction } from "express";
+﻿import type { Request, Response, NextFunction } from "express";
 import { findUserProfileById, findUserProfileByUsername, updateUserProfile } from "../services/auth.service.js";
 import { isPublicProfileHandle, normalizeUsernameParam } from "../utils/username.util.js";
-import { renderError } from "../utils/render-error.util.js";
+import { HttpError } from "../utils/http-error.js";
 
 function normalizeString(value: unknown): string {
     return typeof value === "string" ? value.trim() : "";
@@ -24,12 +24,12 @@ export async function getUserProfile(req: Request, res: Response, next: NextFunc
     try {
         const username = normalizeUsernameParam(req.params.username);
         if (!isPublicProfileHandle(username)) {
-            return renderError(res, 400, "Invalid username");
+            return next(new HttpError(400, "Invalid username"));
         }
 
         const profile = await findUserProfileByUsername(username);
         if (!profile) {
-            return res.status(404).send("User not found");
+            return next(new HttpError(404, "Not Found"));
         }
 
         const viewerUserId = Number(req.session.userId);
@@ -71,7 +71,7 @@ export async function getProfileEditForm(req: Request, res: Response, next: Next
 
         const profile = await findUserProfileById(userId);
         if (!profile) {
-            return res.status(404).send("User not found");
+            return next(new HttpError(404, "Not Found"));
         }
 
         return res.render("settings/profile", {
@@ -98,7 +98,7 @@ export async function postProfileEdit(req: Request, res: Response, next: NextFun
 
         const profile = await findUserProfileById(userId);
         if (!profile) {
-            return res.status(404).send("User not found");
+            return next(new HttpError(404, "Not Found"));
         }
 
         const displayName = normalizeNullable(req.body?.displayName);
@@ -107,28 +107,28 @@ export async function postProfileEdit(req: Request, res: Response, next: NextFun
         const bio = normalizeNullable(req.body?.bio);
 
         if (displayName && displayName.length > 50) {
-            return res.status(400).render("settings/profile", {
+            return res.status(422).render("settings/profile", {
                 formError: "Display name must be 50 characters or less.",
                 profile: { ...profile, displayName, email, phoneNumber, bio },
             });
         }
 
         if (email && !isValidEmail(email)) {
-            return res.status(400).render("settings/profile", {
+            return res.status(422).render("settings/profile", {
                 formError: "Email format is invalid.",
                 profile: { ...profile, displayName, email, phoneNumber, bio },
             });
         }
 
         if (phoneNumber && (phoneNumber.length > 30 || !isValidPhone(phoneNumber))) {
-            return res.status(400).render("settings/profile", {
+            return res.status(422).render("settings/profile", {
                 formError: "Phone number format is invalid.",
                 profile: { ...profile, displayName, email, phoneNumber, bio },
             });
         }
 
         if (bio && bio.length > 500) {
-            return res.status(400).render("settings/profile", {
+            return res.status(422).render("settings/profile", {
                 formError: "Bio must be 500 characters or less.",
                 profile: { ...profile, displayName, email, phoneNumber, bio },
             });
@@ -143,7 +143,7 @@ export async function postProfileEdit(req: Request, res: Response, next: NextFun
         });
 
         if (!updated) {
-            return res.status(404).send("User not found");
+            return next(new HttpError(404, "Not Found"));
         }
 
         return res.redirect(`/@${profile.username}`);
@@ -151,3 +151,6 @@ export async function postProfileEdit(req: Request, res: Response, next: NextFun
         return next(err);
     }
 }
+
+
+

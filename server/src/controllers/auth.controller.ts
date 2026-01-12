@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+﻿import type { Request, Response, NextFunction } from "express";
 import { createUser, findUserByUsername, findUserProfileById } from "../services/auth.service.js";
 import { hashPassword, verifyPassword } from "../utils/password.util.js";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
@@ -45,14 +45,26 @@ export async function postRegister(req: Request, res: Response, next: NextFuncti
         const username = normalizeString(req.body?.username);
         const password = String(req.body?.password ?? "");
 
-        if (!isValidUsername(username)) {
+        if (!username) {
             return res.status(400).render("auth/register", {
+                formError: "Username is required.",
+            });
+        }
+
+        if (!password) {
+            return res.status(400).render("auth/register", {
+                formError: "Password is required.",
+            });
+        }
+
+        if (!isValidUsername(username)) {
+            return res.status(422).render("auth/register", {
                 formError: "Username must be 3-50 characters.",
             });
         }
 
         if (!isValidPassword(password)) {
-            return res.status(400).render("auth/register", {
+            return res.status(422).render("auth/register", {
                 formError: "Password must be at least 8 characters.",
             });
         }
@@ -130,3 +142,4 @@ export async function postLogout(req: Request, res: Response, next: NextFunction
         return next(err);
     }
 }
+

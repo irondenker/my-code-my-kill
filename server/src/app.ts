@@ -1,4 +1,5 @@
-import express from "express";
+﻿import express from "express";
+import path from "node:path";
 import session from "express-session";
 import csrf from "csurf";
 import boardRouter from "./routes/board.routes.js";
@@ -6,7 +7,7 @@ import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
 import rootRouter from "./routes/root.routes.js";
 import { errorHandler } from "./middlewares/error-handler.js";
-import { renderError } from "./utils/render-error.util.js";
+import { HttpError } from "./utils/http-error.js";
 
 const isProd = process.env.NODE_ENV === "production";
 const sessionSecret = process.env.SESSION_SECRET ?? "dev-only-change-me";
@@ -24,6 +25,11 @@ export function createApp() {
 
     app.set("view engine", "ejs");
     app.use(express.static("public"));
+    const errorStaticRoot = path.join(process.cwd(), "views", "errors");
+    ["403", "404", "500", "503", "504"].forEach((status) => {
+        app.use(`/errors/${status}`, express.static(path.join(errorStaticRoot, status)));
+    });
+
 
     app.use(express.urlencoded({ extended: false }));
     app.use(express.json());
@@ -80,15 +86,13 @@ export function createApp() {
 
     app.use("/", rootRouter);
 
-    app.use((_req, res) => {
-        return res.status(404).render("errors/404", {
-            message: "The requested resource was not found.",
-        });
+    app.use((_req, _res, next) => {
+        return next(new HttpError(404, "Not Found"));
     });
 
     app.use((err: any, _req: express.Request, res: express.Response, next: express.NextFunction) => {
         if (err?.code === "EBADCSRFTOKEN") {
-            return renderError(res, 403, "Invalid CSRF token");
+            return next(new HttpError(403, "Invalid CSRF token"));
         }
         return next(err);
     });
@@ -97,3 +101,5 @@ export function createApp() {
 
     return app;
 }
+
+

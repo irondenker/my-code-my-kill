@@ -1,4 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
+import path from 'node:path';
+import { getSafeRedirectPath } from "../utils/redirect.util.js";
+
+const staticErrorStatuses = new Set([403, 404, 500, 503, 504]);
 
 export function errorHandler(
     err: any,
@@ -6,33 +10,36 @@ export function errorHandler(
     res: Response,
     next: NextFunction
 ) {
-    // 개발 환경일 때만 console.error로 오류 조회
     const isProd = process.env.NODE_ENV === 'production';
     if (!isProd) console.error('[ERROR]', err);
 
-    const status = typeof err?.status === 'number' ? //이 값이 integer가 맞는지 검증
-        err.status : //맞으면 반환
-        500; //아니면 500 반환
+    const status = typeof err?.status === 'number'
+        ? err.status
+        : 500;
+    const isClientError = status >= 400 && status < 500;
 
-    const message = isProd ?
-        '서버 오류가 발생했습니다.' : // 운영 환경일 경우 메시지 간략화
-        (err?.message ?? 'Internal Server Error'); // 개발 환경일 경우 상세 메시지 전달
+    if (status === 401) {
+        const nextPath = getSafeRedirectPath(req.originalUrl, "");
+        if (nextPath && req.path !== "/login") {
+            return res.redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+        }
+        return res.redirect("/login");
+    }
 
-    // error stack 수집
-    const stack = isProd ?
-        null : // 운영 환경일 경우 null
-        err?.stack ?? null; // 개발 환경일 경우 error stack (error stack 없으면 null)
+    if (staticErrorStatuses.has(status)) {
+        const errorPage = path.join(process.cwd(), 'views', 'errors', String(status), 'index.html');
+        return res.status(status).sendFile(errorPage);
+    }
 
-    // // API 요청인지 SSR 요청인지 분기 (확장성 고려)
-    // if (req.xhr || req.headers.accept?.includes('application/json')) {
-    //     return res.status(status).json({
-    //         success: false,
-    //         message,
-    //         stack,
-    //     });
-    // }
+    const message = isProd && !isClientError
+        ? 'An unexpected error occurred.'
+        : (err?.message ?? 'Internal Server Error');
 
-    // SSR 에러 페이지 렌더링
+    const stack = isProd || isClientError
+        ? null
+        : err?.stack ?? null;
+
+    // fallback
     res.status(status).render('errors/error', {
         status,
         message,

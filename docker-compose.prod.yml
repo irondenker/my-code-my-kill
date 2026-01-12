@@ -9,6 +9,7 @@ services:
       - server
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./server/views/errors:/var/www/errors:ro
       - public_data:/var/www/public:ro
 
   server:
