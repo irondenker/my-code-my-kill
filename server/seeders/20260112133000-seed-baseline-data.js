@@ -219,6 +219,15 @@ export default {
       throw new Error("Missing seeded users");
     }
 
+    const adminRows = await queryInterface.sequelize.query(
+      "SELECT user_id FROM users WHERE username = 'admin' LIMIT 1",
+      { type: QueryTypes.SELECT }
+    );
+    const adminUserId = adminRows[0]?.user_id;
+    if (!adminUserId) {
+      throw new Error("Missing admin user");
+    }
+
     const pick = (list) => list[Math.floor(rng() * list.length)];
 
     const titleTopics = [
@@ -373,10 +382,11 @@ export default {
       const hasImage = imagePaths.length > 0 && rng() < 0.22;
       const hasFile = filePaths.length > 0 && rng() < 0.08;
       const createdAt = nextPostDate();
+      const authorId = boardSlug === "announcement" ? adminUserId : pick(userIds);
       return {
         board_id: boardIdBySlug[boardSlug],
         display_id: displayId,
-        user_id: pick(userIds),
+        user_id: authorId,
         title: buildTitle(boardSlug, displayId),
         content: buildContent(boardSlug, hasImage, hasFile),
         image_url: hasImage ? pick(imagePaths) : null,
