@@ -1,6 +1,6 @@
 'use strict';
 
-import crypto from "node:crypto";
+const crypto = require("node:crypto");
 
 const SALT_BYTES = 16;
 const KEY_LENGTH = 64;
@@ -28,7 +28,7 @@ function titleCase(value) {
 }
 
 /** @type {import('sequelize-cli').Migration} */
-export default {
+module.exports = {
   async up(queryInterface, Sequelize) {
     const { QueryTypes } = Sequelize;
     const rng = makeRng(20260112);
