@@ -33,6 +33,23 @@ export async function countBoardPosts(): Promise<number> {
     return Number(rows[0]?.total_count ?? 0);
 }
 
+export async function listBoards(): Promise<BoardMeta[]> {
+    const rows = await sequelize.query<{ board_id: number; slug: string; name: string }>(
+        `
+        SELECT board_id, slug, name
+        FROM boards
+        ORDER BY name ASC
+        `,
+        { type: QueryTypes.SELECT }
+    );
+
+    return rows.map((row) => ({
+        boardId: Number(row.board_id),
+        slug: row.slug,
+        name: row.name,
+    }));
+}
+
 export async function countBoardPostsBySlug(slug: string): Promise<number> {
     const rows = await sequelize.query<{ total_count: string }>(
         `

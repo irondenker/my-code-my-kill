@@ -3,6 +3,7 @@
         <%
             const boardTitle = typeof boardDisplayName === "string" ? boardDisplayName : "Board";
             const boardHref = boardSlug ? `/board/${boardSlug}` : "/board";
+            const isBoardDirectory = !boardSlug;
         %>
         <h1 class="display-5 p-4 fw-bold text-body-emphasis">
             <a href="<%= boardHref %>" class="text-decoration-none text-reset">
@@ -14,6 +15,25 @@
             <a class="btn btn-primary" href="/board/<%= boardSlug %>/new">New post</a>
         </div>
         <% } %>
+        <% if (isBoardDirectory) { %>
+        <div class="list-group w-auto">
+            <% if (Array.isArray(boards) && boards.length > 0) { %>
+            <% boards.forEach((board) => { %>
+            <a href="/board/<%= board.slug %>" class="list-group-item list-group-item-action d-flex gap-3 p-3" aria-current="true">
+                <svg class="bi flex-shrink-0" alt="" width="32" height="32">
+                    <use xlink:href="/assets/icons/icons.svg#plain-post"></use>
+                </svg>
+                <div class="d-flex flex-column">
+                    <h6 class="mb-0"><%= board.name %></h6>
+                    <small class="text-muted">/<%= board.slug %></small>
+                </div>
+            </a>
+            <% }) %>
+            <% } else { %>
+            <div class="list-group-item p-3 text-muted">No boards available.</div>
+            <% } %>
+        </div>
+        <% } else { %>
         <div class="list-group w-auto">
             <% postOutlines.forEach(post=> { %>
             <div>
@@ -96,5 +116,6 @@
                 </ul>
             </div>
         </div>
+        <% } %>
     </div>
 </main>
