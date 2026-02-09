@@ -6,19 +6,21 @@
             const boardHref = boardSlug ? `/board/${boardSlug}` : "/board";
             const isBoardDirectory = !boardSlug;
         %>
-        <h1 class="display-5 py-2 fw-bold text-body-emphasis">
-            <a href="<%= boardHref %>" class="text-decoration-none text-reset">
-                <%= boardTitle %>
-            </a>
-        </h1>
-        <% if (boardDesc) { %>
-        <p class="text-muted mb-2"><%= boardDesc %></p>
-        <% } %>
-        <% if (canCreate && boardSlug) { %>
-        <div class="pb-3">
-            <a class="btn btn-primary" href="/board/<%= boardSlug %>/new">New post</a>
+        <div class="board-content-width">
+            <h1 class="display-5 py-2 fw-bold text-body-emphasis">
+                <a href="<%= boardHref %>" class="text-decoration-none text-reset">
+                    <%= boardTitle %>
+                </a>
+            </h1>
+            <% if (boardDesc) { %>
+            <p class="text-muted mb-2"><%= boardDesc %></p>
+            <% } %>
+            <% if (canCreate && boardSlug) { %>
+            <div class="pb-3">
+                <a class="btn btn-primary" href="/board/<%= boardSlug %>/new">New post</a>
+            </div>
+            <% } %>
         </div>
-        <% } %>
         <% if (isBoardDirectory) { %>
         <div class="list-group board-list">
             <% if (Array.isArray(boards) && boards.length > 0) { %>
@@ -48,7 +50,7 @@
                     <svg class="bi flex-shrink-0" alt="" width="32" height="32">
                         <use xlink:href="/assets/icons/icons.svg#plain-post"></use>
                     </svg>
-                    <div class="d-flex gap-2 flex justify-content-between">
+                    <div class="d-flex gap-2 justify-content-between w-100">
                         <div>
                             <h6 class="mb-0">
                                 <span class="text-muted me-2">#<%= post.displayId %></span>
