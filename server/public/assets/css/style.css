@@ -49,9 +49,30 @@ body:not(.d-flex) footer {
     margin-inline: auto;
 }
 
+.board-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+}
+
+.board-title {
+    margin: 0;
+    line-height: 1.15;
+}
+
+.board-description {
+    margin: 0;
+}
+
+.board-actions {
+    padding-top: 0.5rem;
+}
+
 .board-list {
     width: min(100%, 920px);
     margin-inline: auto;
+    margin-top: 1rem;
 }
 
 .board-page .board-list.list-group {

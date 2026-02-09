@@ -6,17 +6,17 @@
             const boardHref = boardSlug ? `/board/${boardSlug}` : "/board";
             const isBoardDirectory = !boardSlug;
         %>
-        <div class="board-content-width">
-            <h1 class="display-5 py-2 fw-bold text-body-emphasis">
+        <div class="board-content-width board-header">
+            <h1 class="board-title fw-bold text-body-emphasis">
                 <a href="<%= boardHref %>" class="text-decoration-none text-reset">
                     <%= boardTitle %>
                 </a>
             </h1>
             <% if (boardDesc) { %>
-            <p class="text-muted mb-2"><%= boardDesc %></p>
+            <p class="board-description text-muted"><%= boardDesc %></p>
             <% } %>
             <% if (canCreate && boardSlug) { %>
-            <div class="pb-3">
+            <div class="board-actions">
                 <a class="btn btn-primary" href="/board/<%= boardSlug %>/new">New post</a>
             </div>
             <% } %>
