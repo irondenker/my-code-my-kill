@@ -2,6 +2,7 @@
     <div class="board-layout">
         <%
             const boardTitle = typeof boardDisplayName === "string" ? boardDisplayName : "Board";
+            const boardDesc = typeof boardDescription === "string" ? boardDescription : null;
             const boardHref = boardSlug ? `/board/${boardSlug}` : "/board";
             const isBoardDirectory = !boardSlug;
         %>
@@ -10,6 +11,9 @@
                 <%= boardTitle %>
             </a>
         </h1>
+        <% if (boardDesc) { %>
+        <p class="text-muted mb-2"><%= boardDesc %></p>
+        <% } %>
         <% if (canCreate && boardSlug) { %>
         <div class="pb-3">
             <a class="btn btn-primary" href="/board/<%= boardSlug %>/new">New post</a>
@@ -26,6 +30,9 @@
                 <div class="d-flex flex-column">
                     <h6 class="mb-0"><%= board.name %></h6>
                     <small class="text-muted">/<%= board.slug %></small>
+                    <% if (board.description) { %>
+                    <small class="text-muted"><%= board.description %></small>
+                    <% } %>
                 </div>
             </a>
             <% }) %>

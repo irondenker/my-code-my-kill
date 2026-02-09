@@ -179,12 +179,14 @@ module.exports = {
       {
         slug: "general",
         name: "General",
+        description: "Open discussions for everyday topics and free conversation.",
         created_at: now,
         updated_at: now,
       },
       {
         slug: "announcement",
         name: "Announcement",
+        description: "Official updates, notices, and important project news.",
         created_at: now,
         updated_at: now,
       },

@@ -5,6 +5,7 @@ export type BoardMeta = {
     boardId: number;
     slug: string;
     name: string;
+    description: string | null;
 };
 
 export type BoardPostRecord = {
@@ -34,9 +35,9 @@ export async function countBoardPosts(): Promise<number> {
 }
 
 export async function listBoards(): Promise<BoardMeta[]> {
-    const rows = await sequelize.query<{ board_id: number; slug: string; name: string }>(
+    const rows = await sequelize.query<{ board_id: number; slug: string; name: string; description: string | null }>(
         `
-        SELECT board_id, slug, name
+        SELECT board_id, slug, name, description
         FROM boards
         ORDER BY name ASC
         `,
@@ -47,6 +48,7 @@ export async function listBoards(): Promise<BoardMeta[]> {
         boardId: Number(row.board_id),
         slug: row.slug,
         name: row.name,
+        description: row.description ?? null,
     }));
 }
 
@@ -157,9 +159,9 @@ export async function listBoardPostOutlinesBySlug(params: {
 }
 
 export async function findBoardBySlug(slug: string): Promise<BoardMeta | null> {
-    const rows = await sequelize.query<{ board_id: number; slug: string; name: string }>(
+    const rows = await sequelize.query<{ board_id: number; slug: string; name: string; description: string | null }>(
         `
-        SELECT board_id, slug, name
+        SELECT board_id, slug, name, description
         FROM boards
         WHERE slug = :slug
         LIMIT 1
@@ -179,6 +181,7 @@ export async function findBoardBySlug(slug: string): Promise<BoardMeta | null> {
         boardId: Number(row.board_id),
         slug: row.slug,
         name: row.name,
+        description: row.description ?? null,
     };
 }
 
@@ -241,23 +244,6 @@ export async function findPostBySlugDisplayId(params: {
         imageUrl: row.image_url ?? null,
         fileUrl: row.file_url ?? null,
     };
-}
-
-export async function findBoardDisplayNameBySlug(slug: string): Promise<string | null> {
-    const rows = await sequelize.query<{ name: string }>(
-        `
-        SELECT name
-        FROM boards
-        WHERE slug = :slug
-        LIMIT 1
-        `,
-        {
-            type: QueryTypes.SELECT,
-            replacements: { slug },
-        }
-    );
-
-    return rows[0]?.name ?? null;
 }
 
 export async function createBoardPost(params: {

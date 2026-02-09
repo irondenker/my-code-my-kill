@@ -1,7 +1,7 @@
 import type { Request } from "express";
 import {
     countBoardPostsBySlug,
-    findBoardDisplayNameBySlug,
+    findBoardBySlug,
     listBoardPostOutlinesBySlug,
     listBoards,
 } from "../services/board.service.js";
@@ -32,6 +32,7 @@ export async function buildBoardIndexViewModel(_req: Request) {
     return {
         boardSlug: null,
         boardDisplayName: "Boards",
+        boardDescription: null,
         canCreate: false,
         boards,
     };
@@ -51,11 +52,12 @@ export async function buildBoardSlugViewModel(req: Request, slug: string) {
         offset,
         limit,
     });
-    const boardDisplayName = await findBoardDisplayNameBySlug(slug);
+    const board = await findBoardBySlug(slug);
 
     return {
         boardSlug: slug,
-        boardDisplayName: boardDisplayName ?? slug,
+        boardDisplayName: board?.name ?? slug,
+        boardDescription: board?.description ?? null,
         canCreate: canCreateForBoardSlug(req, slug),
         postOutlines,
         pagination: {
