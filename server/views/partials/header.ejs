@@ -18,6 +18,8 @@
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="/board/general">General</a></li>
                         <li><a class="dropdown-item" href="/board/announcement">Announcement</a></li>
+                        <li><a class="dropdown-item" href="/board/useronly">User Only</a></li>
+                        <li><a class="dropdown-item" href="/board/qna">Q&A</a></li>
                     </ul>
                 </li>
                 <li>
@@ -35,43 +37,48 @@
                 <input type="search" class="form-control" placeholder="Search..." aria-label="Search" />
             </form>
 
-            <div class="dropdown text-end">
-                <% const headerAvatarUrl = sessionProfileImageUrl; %>
-                <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <% if (headerAvatarUrl) { %>
-                    <img
-                        src="<%= headerAvatarUrl %>"
-                        alt="Profile"
-                        width="32"
-                        height="32"
-                        class="rounded-circle"
-                        style="object-fit: cover;"
-                    />
-                    <% } else { %>
-                    <svg class="rounded-circle" width="32" height="32" aria-hidden="true">
-                        <use xlink:href="/assets/icons/icons.svg#people-circle"></use>
-                    </svg>
-                    <% } %>
-                </a>
-                <ul class="dropdown-menu text-small">
-                    <% if (sessionUser) { %>
-                    <li><span class="dropdown-item-text">Signed in as <strong><%= sessionUsername || 'user' %></strong></span></li>
-                    <% if (sessionUsername) { %>
-                    <li><a class="dropdown-item" href="/@<%= sessionUsername %>">My Page</a></li>
-                    <% } %>
-                    <li>
-                        <hr class="dropdown-divider" />
-                    </li>
-                    <li>
-                        <form method="post" action="/logout" class="px-3 py-1">
-                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                            <button type="submit" class="btn btn-link dropdown-item p-0">Logout</button>
-                        </form>
-                    </li>
-                    <% } else { %>
-                    <li><a class="dropdown-item" href="/login">Login</a></li>
-                    <% } %>
-                </ul>
+            <div class="d-flex align-items-center gap-2">
+                <div class="dropdown text-end">
+                    <% const headerAvatarUrl = sessionProfileImageUrl; %>
+                    <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <% if (headerAvatarUrl) { %>
+                        <img
+                            src="<%= headerAvatarUrl %>"
+                            alt="Profile"
+                            width="32"
+                            height="32"
+                            class="rounded-circle"
+                            style="object-fit: cover;"
+                        />
+                        <% } else { %>
+                        <svg class="rounded-circle" width="32" height="32" aria-hidden="true">
+                            <use xlink:href="/assets/icons/icons.svg#people-circle"></use>
+                        </svg>
+                        <% } %>
+                    </a>
+                    <ul class="dropdown-menu text-small">
+                        <% if (sessionUser) { %>
+                        <li><span class="dropdown-item-text">Signed in as <strong><%= sessionUsername || 'user' %></strong></span></li>
+                        <% if (sessionUsername) { %>
+                        <li><a class="dropdown-item" href="/@<%= sessionUsername %>">My Page</a></li>
+                        <% } %>
+                        <li>
+                            <hr class="dropdown-divider" />
+                        </li>
+                        <li>
+                            <form method="post" action="/logout" class="px-3 py-1">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <button type="submit" class="btn btn-link dropdown-item p-0">Logout</button>
+                            </form>
+                        </li>
+                        <% } else { %>
+                        <li><a class="dropdown-item" href="/login">Login</a></li>
+                        <% } %>
+                    </ul>
+                </div>
+                <% if (sessionUserRole === "admin") { %>
+                <a href="/admin" class="btn btn-sm btn-outline-danger">Admin</a>
+                <% } %>
             </div>
         </div>
     </div>

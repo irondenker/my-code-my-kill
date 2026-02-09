@@ -31,7 +31,7 @@ function titleCase(value) {
 module.exports = {
   async up(queryInterface, Sequelize) {
     const { QueryTypes } = Sequelize;
-    const rng = makeRng(20260112);
+    const rng = makeRng(crypto.randomInt(0, 0xffffffff));
     const now = new Date();
 
     const userNames = [
@@ -134,6 +134,7 @@ module.exports = {
       user_role: "admin",
       username: "admin",
       password_hash: hashPassword("admin1234"),
+      is_active: true,
       display_name: "Admin",
       email: "admin@example.com",
       phone_number: "010-1000-0000",
@@ -147,6 +148,7 @@ module.exports = {
       user_role: "user",
       username: "pentest",
       password_hash: hashPassword("pentest1234"),
+      is_active: true,
       display_name: "Pentest",
       email: "pentest@example.com",
       phone_number: "010-1000-0001",
@@ -161,6 +163,7 @@ module.exports = {
         user_role: "user",
         username,
         password_hash: hashPassword(`${username}1234`),
+        is_active: true,
         display_name: titleCase(username),
         email: `${username}@example.com`,
         phone_number: `010-${String(2000 + index).padStart(4, "0")}-${String(
@@ -173,13 +176,57 @@ module.exports = {
       });
     });
 
-    await queryInterface.bulkInsert("users", users);
+    for (const user of users) {
+      await queryInterface.sequelize.query(
+        `
+        INSERT INTO users (
+          user_role,
+          username,
+          password_hash,
+          is_active,
+          display_name,
+          email,
+          phone_number,
+          bio,
+          profile_image_url,
+          created_at,
+          updated_at
+        )
+        VALUES (
+          :user_role,
+          :username,
+          :password_hash,
+          :is_active,
+          :display_name,
+          :email,
+          :phone_number,
+          :bio,
+          :profile_image_url,
+          :created_at,
+          :updated_at
+        )
+        ON CONFLICT (username) DO UPDATE
+        SET user_role = EXCLUDED.user_role,
+            password_hash = EXCLUDED.password_hash,
+            is_active = EXCLUDED.is_active,
+            display_name = EXCLUDED.display_name,
+            email = EXCLUDED.email,
+            phone_number = EXCLUDED.phone_number,
+            bio = EXCLUDED.bio,
+            profile_image_url = EXCLUDED.profile_image_url,
+            updated_at = NOW()
+        `,
+        { replacements: user }
+      );
+    }
 
     const boards = [
       {
         slug: "general",
         name: "General",
         description: "Open discussions for everyday topics and free conversation.",
+        read_access: "public",
+        create_access: "auth",
         created_at: now,
         updated_at: now,
       },
@@ -187,17 +234,67 @@ module.exports = {
         slug: "announcement",
         name: "Announcement",
         description: "Official updates, notices, and important project news.",
+        read_access: "public",
+        create_access: "admin",
+        created_at: now,
+        updated_at: now,
+      },
+      {
+        slug: "useronly",
+        name: "User Only",
+        description: "Private board visible to authenticated users only.",
+        read_access: "auth",
+        create_access: "auth",
+        created_at: now,
+        updated_at: now,
+      },
+      {
+        slug: "qna",
+        name: "Q&A",
+        description: "Private Q&A board where only the author and admins can read each post.",
+        read_access: "owner_or_admin",
+        create_access: "auth",
         created_at: now,
         updated_at: now,
       },
     ];
 
-    await queryInterface.bulkInsert("boards", boards);
+    for (const board of boards) {
+      await queryInterface.sequelize.query(
+        `
+        INSERT INTO boards (
+          slug,
+          name,
+          description,
+          read_access,
+          create_access,
+          created_at,
+          updated_at
+        )
+        VALUES (
+          :slug,
+          :name,
+          :description,
+          :read_access,
+          :create_access,
+          :created_at,
+          :updated_at
+        )
+        ON CONFLICT (slug) DO UPDATE
+        SET name = EXCLUDED.name,
+            description = EXCLUDED.description,
+            read_access = EXCLUDED.read_access,
+            create_access = EXCLUDED.create_access,
+            updated_at = NOW()
+        `,
+        { replacements: board }
+      );
+    }
 
     const boardRows = await queryInterface.sequelize.query(
       "SELECT board_id, slug FROM boards WHERE slug IN (:slugs)",
       {
-        replacements: { slugs: ["general", "announcement"] },
+        replacements: { slugs: ["general", "announcement", "useronly", "qna"] },
         type: QueryTypes.SELECT,
       }
     );
@@ -207,7 +304,7 @@ module.exports = {
       boardIdBySlug[row.slug] = row.board_id;
     });
 
-    if (!boardIdBySlug.general || !boardIdBySlug.announcement) {
+    if (!boardIdBySlug.general || !boardIdBySlug.announcement || !boardIdBySlug.useronly || !boardIdBySlug.qna) {
       throw new Error("Missing seeded boards");
     }
 
@@ -368,9 +465,6 @@ module.exports = {
       return parts.join(" ");
     };
 
-    const totalGeneral = 329;
-    const totalAnnouncement = 31;
-    const posts = [];
     let postIndex = 0;
     const basePostDate = new Date(Date.UTC(2026, 0, 1, 9, 0, 0));
 
@@ -384,7 +478,12 @@ module.exports = {
       const hasImage = imagePaths.length > 0 && rng() < 0.22;
       const hasFile = filePaths.length > 0 && rng() < 0.08;
       const createdAt = nextPostDate();
-      const authorId = boardSlug === "announcement" ? adminUserId : pick(userIds);
+      const authorId =
+        boardSlug === "announcement"
+          ? adminUserId
+          : boardSlug === "useronly" || boardSlug === "qna"
+            ? pick([...userIds, adminUserId])
+            : pick(userIds);
       return {
         board_id: boardIdBySlug[boardSlug],
         display_id: displayId,
@@ -399,30 +498,94 @@ module.exports = {
       };
     };
 
-    for (let i = 1; i <= totalGeneral; i += 1) {
-      posts.push(buildPost("general", i));
-      if (i <= totalAnnouncement) {
-        posts.push(buildPost("announcement", i));
+    const seedBoardPostsUpTo = async (boardSlug, targetCount) => {
+      const boardId = boardIdBySlug[boardSlug];
+      if (!boardId) {
+        throw new Error(`Missing board id for ${boardSlug}`);
       }
+
+      const countRows = await queryInterface.sequelize.query(
+        `
+        SELECT COUNT(*) AS total_count
+        FROM posts
+        WHERE board_id = :boardId
+          AND use_yn = true
+        `,
+        {
+          replacements: { boardId },
+          type: QueryTypes.SELECT,
+        }
+      );
+      const existingCount = Number(countRows[0]?.total_count ?? 0);
+      if (existingCount >= targetCount) {
+        return;
+      }
+
+      const maxRows = await queryInterface.sequelize.query(
+        `
+        SELECT COALESCE(MAX(display_id), 0) AS max_display_id
+        FROM posts
+        WHERE board_id = :boardId
+        `,
+        {
+          replacements: { boardId },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      const maxDisplayId = Number(maxRows[0]?.max_display_id ?? 0);
+      const posts = [];
+      const missingCount = targetCount - existingCount;
+
+      for (let i = 1; i <= missingCount; i += 1) {
+        posts.push(buildPost(boardSlug, maxDisplayId + i));
+      }
+
+      if (posts.length > 0) {
+        await queryInterface.bulkInsert("posts", posts);
+      }
+    };
+
+    await seedBoardPostsUpTo("general", 329);
+    await seedBoardPostsUpTo("announcement", 31);
+    await seedBoardPostsUpTo("useronly", crypto.randomInt(20, 31));
+    await seedBoardPostsUpTo("qna", crypto.randomInt(20, 31));
+
+    const counters = [
+      { board_id: boardIdBySlug.general },
+      { board_id: boardIdBySlug.announcement },
+      { board_id: boardIdBySlug.useronly },
+      { board_id: boardIdBySlug.qna },
+    ];
+
+    for (const counter of counters) {
+      const maxRows = await queryInterface.sequelize.query(
+        `
+        SELECT COALESCE(MAX(display_id), 0) AS max_display_id
+        FROM posts
+        WHERE board_id = :board_id
+        `,
+        {
+          replacements: { board_id: counter.board_id },
+          type: QueryTypes.SELECT,
+        }
+      );
+      const nextDisplayId = Number(maxRows[0]?.max_display_id ?? 0) + 1;
+      await queryInterface.sequelize.query(
+        `
+        INSERT INTO board_post_counters (board_id, next_display_id)
+        VALUES (:board_id, :next_display_id)
+        ON CONFLICT (board_id) DO UPDATE
+        SET next_display_id = EXCLUDED.next_display_id
+        `,
+        { replacements: { board_id: counter.board_id, next_display_id: nextDisplayId } }
+      );
     }
-
-    await queryInterface.bulkInsert("posts", posts);
-
-    await queryInterface.bulkInsert("board_post_counters", [
-      {
-        board_id: boardIdBySlug.general,
-        next_display_id: totalGeneral + 1,
-      },
-      {
-        board_id: boardIdBySlug.announcement,
-        next_display_id: totalAnnouncement + 1,
-      },
-    ]);
   },
 
   async down(queryInterface, Sequelize) {
     const { QueryTypes, Op } = Sequelize;
-    const slugs = ["general", "announcement"];
+    const slugs = ["general", "announcement", "useronly", "qna"];
     const usernames = [
       "admin",
       "pentest",

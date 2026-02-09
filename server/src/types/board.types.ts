@@ -26,6 +26,7 @@
 export interface BoardPostOutline {
   boardSlug: string;
   displayId: number;
+  userId: number;
   title: string;
   author: string;
   createdAt: Date;

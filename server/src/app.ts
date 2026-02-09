@@ -5,6 +5,7 @@ import csrf from "csurf";
 import boardRouter from "./routes/board.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
+import adminRouter from "./routes/admin.routes.js";
 import rootRouter from "./routes/root.routes.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import { HttpError } from "./utils/http-error.js";
@@ -68,6 +69,7 @@ export function createApp() {
         res.locals.csrfToken = typeof req.csrfToken === "function" ? req.csrfToken() : null;
         res.locals.sessionUser = req.session.userId ?? null;
         res.locals.sessionUsername = req.session.username ?? null;
+        res.locals.sessionUserRole = req.session.userRole ?? null;
         const profileImageUrl = req.session.profileImageUrl;
         res.locals.sessionProfileImageUrl =
             profileImageUrl && !profileImageUrl.startsWith("/")
@@ -82,6 +84,7 @@ export function createApp() {
 
     app.use(authRouter);
     app.use(userRouter);
+    app.use(adminRouter);
     app.use(boardRouter);
 
     app.use("/", rootRouter);

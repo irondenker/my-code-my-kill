@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+    <%- include("../../partials/head", {
+        styles: [
+            "/assets/css/color-modes.css"
+        ]
+    }) %>
+
+    <body>
+        <%- include("../../partials/theme-toggle") %>
+        <%- include("../../partials/header") %>
+
+        <main class="container py-4" style="max-width: 840px;">
+            <div class="mb-3">
+                <a href="/admin/boards" class="text-decoration-none">&larr; Back to board management</a>
+            </div>
+
+            <h1 class="h4 mb-3">Edit board</h1>
+
+            <% if (formError) { %>
+            <div class="alert alert-danger" role="alert"><%= formError %></div>
+            <% } %>
+
+            <form method="post" action="/admin/boards/<%= board.boardId %>/edit">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                <div class="mb-3">
+                    <label for="slug" class="form-label">Slug</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="slug"
+                        name="slug"
+                        maxlength="50"
+                        value="<%= board.slug %>"
+                        required
+                    />
+                </div>
+
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="name"
+                        name="name"
+                        maxlength="100"
+                        value="<%= board.name %>"
+                        required
+                    />
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea
+                        class="form-control"
+                        id="description"
+                        name="description"
+                        rows="3"
+                        maxlength="255"
+                    ><%= board.description %></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="readAccess" class="form-label">Read Access</label>
+                    <select class="form-select" id="readAccess" name="readAccess" required>
+                        <option value="public" <%= board.readAccess === "public" ? "selected" : "" %>>Public</option>
+                        <option value="auth" <%= board.readAccess === "auth" ? "selected" : "" %>>Logged-in users</option>
+                        <option value="admin" <%= board.readAccess === "admin" ? "selected" : "" %>>Admins only</option>
+                        <option value="owner_or_admin" <%= board.readAccess === "owner_or_admin" ? "selected" : "" %>>Owner or admin</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="createAccess" class="form-label">Create Access</label>
+                    <select class="form-select" id="createAccess" name="createAccess" required>
+                        <option value="auth" <%= board.createAccess === "auth" ? "selected" : "" %>>Logged-in users</option>
+                        <option value="admin" <%= board.createAccess === "admin" ? "selected" : "" %>>Admins only</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" type="submit">Save changes</button>
+            </form>
+        </main>
+
+        <%- include("../../partials/footer") %>
+        <%- include("../../partials/scripts", {
+            scripts: [
+                "/assets/js/color-modes.js"
+            ]
+        }) %>
+    </body>
+</html>

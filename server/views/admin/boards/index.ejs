@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+    <%- include("../../partials/head", {
+        styles: [
+            "/assets/css/color-modes.css"
+        ]
+    }) %>
+
+    <body>
+        <%- include("../../partials/theme-toggle") %>
+        <%- include("../../partials/header") %>
+
+        <main class="container py-4" style="max-width: 1080px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h1 class="h4 mb-1">Board Management</h1>
+                    <p class="text-muted mb-0">Create and edit board metadata.</p>
+                </div>
+                <a class="btn btn-outline-secondary" href="/admin">Back to dashboard</a>
+            </div>
+
+            <% if (formError) { %>
+            <div class="alert alert-danger" role="alert"><%= formError %></div>
+            <% } %>
+            <% if (formSuccess) { %>
+            <div class="alert alert-success" role="alert"><%= formSuccess %></div>
+            <% } %>
+
+            <div class="card mb-4">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Slug</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Description</th>
+                                    <th scope="col">Read</th>
+                                    <th scope="col">Create</th>
+                                    <th scope="col" class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% boards.forEach((board) => { %>
+                                <tr>
+                                    <td><%= board.boardId %></td>
+                                    <td><code><%= board.slug %></code></td>
+                                    <td><%= board.name %></td>
+                                    <td><%= board.description || "-" %></td>
+                                    <td><code><%= board.readAccess %></code></td>
+                                    <td><code><%= board.createAccess %></code></td>
+                                    <td class="text-end">
+                                        <a class="btn btn-outline-primary btn-sm" href="/admin/boards/<%= board.boardId %>/edit">
+                                            Edit
+                                        </a>
+                                        <a class="btn btn-outline-secondary btn-sm" href="/board/<%= board.slug %>" target="_blank" rel="noreferrer">
+                                            Open
+                                        </a>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Create board</h2>
+                    <form method="post" action="/admin/boards">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-3">
+                                <label for="slug" class="form-label">Slug</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="slug"
+                                    name="slug"
+                                    maxlength="50"
+                                    value="<%= formValue.slug %>"
+                                    placeholder="example-board"
+                                    required
+                                />
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label for="name" class="form-label">Name</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="name"
+                                    name="name"
+                                    maxlength="100"
+                                    value="<%= formValue.name %>"
+                                    placeholder="Example Board"
+                                    required
+                                />
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="description" class="form-label">Description</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="description"
+                                    name="description"
+                                    maxlength="255"
+                                    value="<%= formValue.description %>"
+                                    placeholder="What this board is for"
+                                />
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label for="readAccess" class="form-label">Read Access</label>
+                                <select class="form-select" id="readAccess" name="readAccess" required>
+                                    <option value="public" <%= formValue.readAccess === "public" ? "selected" : "" %>>Public</option>
+                                    <option value="auth" <%= formValue.readAccess === "auth" ? "selected" : "" %>>Logged-in users</option>
+                                    <option value="admin" <%= formValue.readAccess === "admin" ? "selected" : "" %>>Admins only</option>
+                                    <option value="owner_or_admin" <%= formValue.readAccess === "owner_or_admin" ? "selected" : "" %>>Owner or admin</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label for="createAccess" class="form-label">Create Access</label>
+                                <select class="form-select" id="createAccess" name="createAccess" required>
+                                    <option value="auth" <%= formValue.createAccess === "auth" ? "selected" : "" %>>Logged-in users</option>
+                                    <option value="admin" <%= formValue.createAccess === "admin" ? "selected" : "" %>>Admins only</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-primary" type="submit">Create board</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <%- include("../../partials/footer") %>
+        <%- include("../../partials/scripts", {
+            scripts: [
+                "/assets/js/color-modes.js"
+            ]
+        }) %>
+    </body>
+</html>

@@ -7,6 +7,7 @@ import sharp from "sharp";
 import { sequelize } from "../db/index.js";
 import { HttpError } from "../utils/http-error.js";
 import {
+    type BoardMeta,
     createBoardPost,
     doesPostExistBySlugDisplayId,
     findBoardBySlug,
@@ -17,36 +18,62 @@ import {
 } from "../services/board.service.js";
 import { buildBoardIndexViewModel, buildBoardSlugViewModel } from "../view-models/board.view-model.js";
 
-type BoardPolicy = {
-    read: "public" | "auth";
-    create: "auth" | "admin";
+type BoardWritePolicy = {
     update: "self" | "admin";
     delete: "selfOrAdmin" | "admin";
 };
 
-function getBoardPolicy(slug: string): BoardPolicy {
+type ViewerContext = {
+    viewerUserId: number;
+    isAuthenticated: boolean;
+    isAdmin: boolean;
+};
+
+function getBoardWritePolicy(slug: string): BoardWritePolicy {
     if (slug === "announcement") {
         return {
-            read: "public",
-            create: "admin",
             update: "admin",
             delete: "admin",
         };
     }
 
     return {
-        read: "public",
-        create: "auth",
         update: "self",
         delete: "selfOrAdmin",
     };
 }
 
-function getViewerContext(req: Request) {
+function getViewerContext(req: Request): ViewerContext {
     const viewerUserId = Number(req.session.userId);
     const isAuthenticated = Number.isFinite(viewerUserId) && viewerUserId > 0;
     const isAdmin = req.session.userRole === "admin";
     return { viewerUserId, isAuthenticated, isAdmin };
+}
+
+function getBoardReadAccessResult(board: BoardMeta, context: ViewerContext): "ok" | "unauthorized" | "forbidden" {
+    if (board.readAccess === "public") {
+        return "ok";
+    }
+
+    if (board.readAccess === "admin") {
+        if (!context.isAuthenticated) {
+            return "unauthorized";
+        }
+        return context.isAdmin ? "ok" : "forbidden";
+    }
+
+    if (!context.isAuthenticated) {
+        return "unauthorized";
+    }
+
+    return "ok";
+}
+
+function canReadPostForBoard(board: BoardMeta, context: ViewerContext, postUserId: number): boolean {
+    if (board.readAccess !== "owner_or_admin") {
+        return true;
+    }
+    return context.isAdmin || context.viewerUserId === postUserId;
 }
 
 function isValidTitle(title: string): boolean {
@@ -197,10 +224,13 @@ export async function getBoardBySlug(req: Request, res: Response, next: NextFunc
             return next(new HttpError(404, "Not Found"));
         }
 
-        const policy = getBoardPolicy(board.slug);
-        const { isAuthenticated } = getViewerContext(req);
-        if (policy.read === "auth" && !isAuthenticated) {
+        const viewerContext = getViewerContext(req);
+        const readAccessResult = getBoardReadAccessResult(board, viewerContext);
+        if (readAccessResult === "unauthorized") {
             return next(new HttpError(401, "Unauthorized"));
+        }
+        if (readAccessResult === "forbidden") {
+            return next(new HttpError(403, "Forbidden"));
         }
 
         const viewModel = await buildBoardSlugViewModel(req, slug);
@@ -222,14 +252,14 @@ export async function getBoardCreateForm(req: Request, res: Response, next: Next
             return next(new HttpError(404, "Not Found"));
         }
 
-        const policy = getBoardPolicy(slug);
+        const policy = board;
         const { isAuthenticated, isAdmin } = getViewerContext(req);
 
-        if (policy.create === "admin" && !isAdmin) {
+        if (policy.createAccess === "admin" && !isAdmin) {
             return next(new HttpError(403, "Forbidden"));
         }
 
-        if (policy.create === "auth" && !isAuthenticated) {
+        if (policy.createAccess === "auth" && !isAuthenticated) {
             return res.status(401).redirect("/login");
         }
 
@@ -255,14 +285,14 @@ export async function postBoardCreate(req: Request, res: Response, next: NextFun
             return next(new HttpError(404, "Not Found"));
         }
 
-        const policy = getBoardPolicy(slug);
+        const policy = board;
         const { viewerUserId, isAuthenticated, isAdmin } = getViewerContext(req);
 
-        if (policy.create === "admin" && !isAdmin) {
+        if (policy.createAccess === "admin" && !isAdmin) {
             return next(new HttpError(403, "Forbidden"));
         }
 
-        if (policy.create === "auth" && !isAuthenticated) {
+        if (policy.createAccess === "auth" && !isAuthenticated) {
             return res.status(401).redirect("/login");
         }
 
@@ -358,7 +388,7 @@ export async function getBoardEditForm(req: Request, res: Response, next: NextFu
             return next(new HttpError(404, "Not Found"));
         }
 
-        const policy = getBoardPolicy(slug);
+        const policy = getBoardWritePolicy(slug);
         const { viewerUserId, isAdmin } = getViewerContext(req);
         const isOwner = viewerUserId === post.userId;
 
@@ -404,7 +434,7 @@ export async function postBoardEdit(req: Request, res: Response, next: NextFunct
             return next(new HttpError(404, "Not Found"));
         }
 
-        const policy = getBoardPolicy(slug);
+        const policy = getBoardWritePolicy(slug);
         const { viewerUserId, isAdmin } = getViewerContext(req);
         const isOwner = viewerUserId === post.userId;
 
@@ -535,7 +565,7 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
             return next(new HttpError(401, "Unauthorized"));
         }
 
-        const policy = getBoardPolicy(slug);
+        const policy = getBoardWritePolicy(slug);
         let deleted = false;
 
         if (policy.delete === "admin") {
@@ -617,10 +647,13 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
             return next(new HttpError(404, "Not Found"));
         }
 
-        const readPolicy = getBoardPolicy(board.slug);
-        const { isAuthenticated } = getViewerContext(req);
-        if (readPolicy.read === "auth" && !isAuthenticated) {
+        const viewerContext = getViewerContext(req);
+        const readAccessResult = getBoardReadAccessResult(board, viewerContext);
+        if (readAccessResult === "unauthorized") {
             return next(new HttpError(401, "Unauthorized"));
+        }
+        if (readAccessResult === "forbidden") {
+            return next(new HttpError(403, "Forbidden"));
         }
 
         const postRows = await sequelize.query<BoardPostRow>(
@@ -674,11 +707,24 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
         };
 
         const boardId = Number(postRow.board_id);
-        const { viewerUserId, isAdmin } = getViewerContext(req);
-        const policy = getBoardPolicy(slug);
+        const { viewerUserId, isAdmin } = viewerContext;
+        const canReadPost = canReadPostForBoard(board, viewerContext, post.user_id);
+        if (!canReadPost) {
+            return next(new HttpError(403, "Forbidden"));
+        }
+
+        const writePolicy = getBoardWritePolicy(slug);
         const isOwner = viewerUserId === post.user_id;
-        const canEdit = policy.update === "admin" ? isAdmin : isOwner;
-        const canDelete = policy.delete === "admin" ? isAdmin : isOwner || isAdmin;
+        const canEdit = writePolicy.update === "admin" ? isAdmin : isOwner;
+        const canDelete = writePolicy.delete === "admin" ? isAdmin : isOwner || isAdmin;
+        const neighborVisibilityPredicate =
+            board.readAccess === "owner_or_admin" && !isAdmin
+                ? " AND user_id = :viewerUserId"
+                : "";
+        const neighborReplacements =
+            board.readAccess === "owner_or_admin" && !isAdmin
+                ? { boardId, displayId, viewerUserId }
+                : { boardId, displayId };
 
         const prevRows = await sequelize.query<NeighborRow>(
             `
@@ -687,12 +733,13 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
             WHERE board_id = :boardId
               AND use_yn = true
               AND display_id < :displayId
+              ${neighborVisibilityPredicate}
             ORDER BY display_id DESC
             LIMIT 1
             `,
             {
                 type: QueryTypes.SELECT,
-                replacements: { boardId, displayId },
+                replacements: neighborReplacements,
             }
         );
         const prevPost: Neighbor = prevRows[0]
@@ -706,12 +753,13 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
             WHERE board_id = :boardId
               AND use_yn = true
               AND display_id > :displayId
+              ${neighborVisibilityPredicate}
             ORDER BY display_id ASC
             LIMIT 1
             `,
             {
                 type: QueryTypes.SELECT,
-                replacements: { boardId, displayId },
+                replacements: neighborReplacements,
             }
         );
         const nextPost: Neighbor = nextRows[0]

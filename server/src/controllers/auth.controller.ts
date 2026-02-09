@@ -114,6 +114,12 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
                 nextPath: safeNextForView || null,
             });
         }
+        if (!user.isActive) {
+            return res.status(403).render("auth/sign-in", {
+                formError: "This account is inactive. Contact an administrator.",
+                nextPath: safeNextForView || null,
+            });
+        }
 
         await regenerateSession(req);
         req.session.userId = user.userId;

@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: 1234
       PGDATA: /var/lib/postgresql/18/docker
     ports:
-      - "5432:5432"
+      - "54973:5432"
     volumes:
       - postgresql:/var/lib/postgresql
   server:

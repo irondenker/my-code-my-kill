@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+    <%- include("../../partials/head", {
+        styles: [
+            "/assets/css/color-modes.css"
+        ]
+    }) %>
+
+    <body>
+        <%- include("../../partials/theme-toggle") %>
+        <%- include("../../partials/header") %>
+
+        <main class="container py-4" style="max-width: 1080px;">
+            <% const safeAdminCount = typeof adminCount === "number" ? adminCount : 0; %>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h1 class="h4 mb-1">User Management</h1>
+                    <p class="text-muted mb-0">Manage account status and admin permissions.</p>
+                </div>
+                <a class="btn btn-outline-secondary" href="/admin">Back to dashboard</a>
+            </div>
+
+            <% if (formError) { %>
+            <div class="alert alert-danger" role="alert"><%= formError %></div>
+            <% } %>
+            <% if (formSuccess) { %>
+            <div class="alert alert-success" role="alert"><%= formSuccess %></div>
+            <% } %>
+
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Username</th>
+                                    <th scope="col">Role</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Created</th>
+                                    <th scope="col" class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% users.forEach((user) => { %>
+                                <% const isSelf = Number(sessionUser) === user.userId; %>
+                                <% const disableDeactivate = user.userRole === 'admin' && user.isActive; %>
+                                <tr>
+                                    <td><%= user.userId %></td>
+                                    <td><code><%= user.username %></code></td>
+                                    <td>
+                                        <span class="badge <%= user.userRole === 'admin' ? 'text-bg-dark' : 'text-bg-secondary' %>">
+                                            <%= user.userRole %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge <%= user.isActive ? 'text-bg-success' : 'text-bg-danger' %>">
+                                            <%= user.isActive ? 'active' : 'inactive' %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <%= new Date(user.createdAt).toISOString().slice(0, 10) %>
+                                    </td>
+                                    <td class="text-end">
+                                        <form method="post" action="/admin/users/<%= user.userId %>/status" class="d-inline">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="hidden" name="status" value="<%= user.isActive ? 'inactive' : 'active' %>">
+                                            <button
+                                                class="btn btn-sm <%= user.isActive ? 'btn-outline-danger' : 'btn-outline-success' %>"
+                                                type="submit"
+                                                <%= disableDeactivate ? 'disabled title=\"Admin users cannot be deactivated.\"' : '' %>
+                                            >
+                                                <%= user.isActive ? 'Deactivate' : 'Activate' %>
+                                            </button>
+                                        </form>
+                                        <form method="post" action="/admin/users/<%= user.userId %>/role" class="d-inline ms-1">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="hidden" name="role" value="<%= user.userRole === 'admin' ? 'user' : 'admin' %>">
+                                            <button
+                                                class="btn btn-sm <%= user.userRole === 'admin' ? 'btn-outline-warning' : 'btn-outline-primary' %>"
+                                                type="submit"
+                                                <%= user.userRole === 'admin' && (safeAdminCount <= 1 || isSelf) ? 'disabled' : '' %>
+                                            >
+                                                <%= user.userRole === 'admin' ? 'Revoke admin' : 'Make admin' %>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <%- include("../../partials/footer") %>
+        <%- include("../../partials/scripts", {
+            scripts: [
+                "/assets/js/color-modes.js"
+            ]
+        }) %>
+    </body>
+</html>

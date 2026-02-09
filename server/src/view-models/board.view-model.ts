@@ -1,5 +1,6 @@
 import type { Request } from "express";
 import {
+    type BoardMeta,
     countBoardPostsBySlug,
     findBoardBySlug,
     listBoardPostOutlinesBySlug,
@@ -13,21 +14,52 @@ function parsePositiveInt(rawValue: unknown, fallback: number): number {
     return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
 }
 
-function canCreateForBoardSlug(req: Request, slug: string | null): boolean {
+function getViewerContext(req: Request) {
     const userId = Number(req.session.userId);
-    if (!Number.isFinite(userId) || userId <= 0) {
+    const isAuthenticated = Number.isFinite(userId) && userId > 0;
+    const isAdmin = req.session.userRole === "admin";
+    return { userId, isAuthenticated, isAdmin };
+}
+
+function canAccessBoardDirectory(req: Request, board: BoardMeta): boolean {
+    const { isAuthenticated, isAdmin } = getViewerContext(req);
+    if (board.readAccess === "public") {
+        return true;
+    }
+    if (board.readAccess === "admin") {
+        return isAdmin;
+    }
+    return isAuthenticated;
+}
+
+function canCreateForBoard(req: Request, board: BoardMeta | null): boolean {
+    if (!board) {
         return false;
     }
 
-    if (slug === "announcement") {
-        return req.session.userRole === "admin";
+    const { isAuthenticated, isAdmin } = getViewerContext(req);
+    if (!isAuthenticated) {
+        return false;
     }
 
-    return true;
+    return board.createAccess === "admin" ? isAdmin : true;
 }
 
-export async function buildBoardIndexViewModel(_req: Request) {
-    const boards = await listBoards();
+function canReadPost(req: Request, board: BoardMeta | null, postUserId: number): boolean {
+    if (!board) {
+        return true;
+    }
+
+    if (board.readAccess !== "owner_or_admin") {
+        return true;
+    }
+
+    const { userId, isAdmin } = getViewerContext(req);
+    return isAdmin || userId === postUserId;
+}
+
+export async function buildBoardIndexViewModel(req: Request) {
+    const boards = (await listBoards()).filter((board) => canAccessBoardDirectory(req, board));
 
     return {
         boardSlug: null,
@@ -39,6 +71,7 @@ export async function buildBoardIndexViewModel(_req: Request) {
 }
 
 export async function buildBoardSlugViewModel(req: Request, slug: string) {
+    const board = await findBoardBySlug(slug);
     const page = parsePositiveInt(req.query.page, 1);
 
     const totalCount = await countBoardPostsBySlug(slug);
@@ -47,18 +80,26 @@ export async function buildBoardSlugViewModel(req: Request, slug: string) {
     const totalPages = createPaginationMeta(totalCount, limit);
     const offset = (page - 1) * limit;
 
-    const postOutlines = await listBoardPostOutlinesBySlug({
+    const outlines = await listBoardPostOutlinesBySlug({
         slug,
         offset,
         limit,
     });
-    const board = await findBoardBySlug(slug);
+
+    const postOutlines = outlines.map((post) => {
+        const canOpen = canReadPost(req, board, post.userId);
+        return {
+            ...post,
+            title: canOpen ? post.title : "비밀글",
+            canOpen,
+        };
+    });
 
     return {
         boardSlug: slug,
         boardDisplayName: board?.name ?? slug,
         boardDescription: board?.description ?? null,
-        canCreate: canCreateForBoardSlug(req, slug),
+        canCreate: canCreateForBoard(req, board),
         postOutlines,
         pagination: {
             page,

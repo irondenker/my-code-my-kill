@@ -20,4 +20,20 @@ export function requireAuthRedirect(req: Request, res: Response, next: NextFunct
     return next();
 }
 
+export function requireAdminRedirect(req: Request, res: Response, next: NextFunction) {
+    if (!req.session.userId) {
+        const nextPath = getSafeRedirectPath(req.originalUrl, "");
+        if (nextPath) {
+            return res.redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+        }
+        return res.redirect("/login");
+    }
+
+    if (req.session.userRole !== "admin") {
+        return next(new HttpError(403, "Forbidden"));
+    }
+
+    return next();
+}
+
 

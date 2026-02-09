@@ -1,11 +1,16 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 
+export type BoardReadAccess = "public" | "auth" | "admin" | "owner_or_admin";
+export type BoardCreateAccess = "auth" | "admin";
+
 export type BoardMeta = {
     boardId: number;
     slug: string;
     name: string;
     description: string | null;
+    readAccess: BoardReadAccess;
+    createAccess: BoardCreateAccess;
 };
 
 export type BoardPostRecord = {
@@ -35,9 +40,16 @@ export async function countBoardPosts(): Promise<number> {
 }
 
 export async function listBoards(): Promise<BoardMeta[]> {
-    const rows = await sequelize.query<{ board_id: number; slug: string; name: string; description: string | null }>(
+    const rows = await sequelize.query<{
+        board_id: number;
+        slug: string;
+        name: string;
+        description: string | null;
+        read_access: string;
+        create_access: string;
+    }>(
         `
-        SELECT board_id, slug, name, description
+        SELECT board_id, slug, name, description, read_access, create_access
         FROM boards
         ORDER BY name ASC
         `,
@@ -49,6 +61,8 @@ export async function listBoards(): Promise<BoardMeta[]> {
         slug: row.slug,
         name: row.name,
         description: row.description ?? null,
+        readAccess: row.read_access as BoardReadAccess,
+        createAccess: row.create_access as BoardCreateAccess,
     }));
 }
 
@@ -79,6 +93,7 @@ export async function listBoardPostOutlines(params: {
     const rows = await sequelize.query<{
         board_slug: string;
         display_id: number;
+        user_id: number;
         title: string;
         author: string;
         created_at: Date;
@@ -87,6 +102,7 @@ export async function listBoardPostOutlines(params: {
         SELECT
             b.slug AS board_slug,
             p.display_id,
+            p.user_id,
             p.title,
             u.username AS author,
             p.created_at
@@ -107,6 +123,7 @@ export async function listBoardPostOutlines(params: {
     return rows.map((row) => ({
         boardSlug: row.board_slug,
         displayId: Number(row.display_id),
+        userId: Number(row.user_id),
         title: row.title,
         author: row.author,
         createdAt: new Date(row.created_at),
@@ -123,6 +140,7 @@ export async function listBoardPostOutlinesBySlug(params: {
     const rows = await sequelize.query<{
         board_slug: string;
         display_id: number;
+        user_id: number;
         title: string;
         author: string;
         created_at: Date;
@@ -131,6 +149,7 @@ export async function listBoardPostOutlinesBySlug(params: {
         SELECT
             b.slug AS board_slug,
             p.display_id,
+            p.user_id,
             p.title,
             u.username AS author,
             p.created_at
@@ -152,6 +171,7 @@ export async function listBoardPostOutlinesBySlug(params: {
     return rows.map((row) => ({
         boardSlug: row.board_slug,
         displayId: Number(row.display_id),
+        userId: Number(row.user_id),
         title: row.title,
         author: row.author,
         createdAt: new Date(row.created_at),
@@ -159,9 +179,16 @@ export async function listBoardPostOutlinesBySlug(params: {
 }
 
 export async function findBoardBySlug(slug: string): Promise<BoardMeta | null> {
-    const rows = await sequelize.query<{ board_id: number; slug: string; name: string; description: string | null }>(
+    const rows = await sequelize.query<{
+        board_id: number;
+        slug: string;
+        name: string;
+        description: string | null;
+        read_access: string;
+        create_access: string;
+    }>(
         `
-        SELECT board_id, slug, name, description
+        SELECT board_id, slug, name, description, read_access, create_access
         FROM boards
         WHERE slug = :slug
         LIMIT 1
@@ -182,7 +209,128 @@ export async function findBoardBySlug(slug: string): Promise<BoardMeta | null> {
         slug: row.slug,
         name: row.name,
         description: row.description ?? null,
+        readAccess: row.read_access as BoardReadAccess,
+        createAccess: row.create_access as BoardCreateAccess,
     };
+}
+
+export async function findBoardById(boardId: number): Promise<BoardMeta | null> {
+    const rows = await sequelize.query<{
+        board_id: number;
+        slug: string;
+        name: string;
+        description: string | null;
+        read_access: string;
+        create_access: string;
+    }>(
+        `
+        SELECT board_id, slug, name, description, read_access, create_access
+        FROM boards
+        WHERE board_id = :boardId
+        LIMIT 1
+        `,
+        {
+            type: QueryTypes.SELECT,
+            replacements: { boardId },
+        }
+    );
+
+    const row = rows[0];
+    if (!row) {
+        return null;
+    }
+
+    return {
+        boardId: Number(row.board_id),
+        slug: row.slug,
+        name: row.name,
+        description: row.description ?? null,
+        readAccess: row.read_access as BoardReadAccess,
+        createAccess: row.create_access as BoardCreateAccess,
+    };
+}
+
+export async function createBoard(params: {
+    slug: string;
+    name: string;
+    description?: string | null;
+    readAccess?: BoardReadAccess;
+    createAccess?: BoardCreateAccess;
+}): Promise<BoardMeta> {
+    const rows = await sequelize.query<{
+        board_id: number;
+        slug: string;
+        name: string;
+        description: string | null;
+        read_access: string;
+        create_access: string;
+    }>(
+        `
+        INSERT INTO boards (slug, name, description, read_access, create_access, created_at, updated_at)
+        VALUES (:slug, :name, :description, :readAccess, :createAccess, NOW(), NOW())
+        RETURNING board_id, slug, name, description, read_access, create_access
+        `,
+        {
+            type: QueryTypes.SELECT,
+            replacements: {
+                slug: params.slug,
+                name: params.name,
+                description: params.description ?? null,
+                readAccess: params.readAccess ?? "public",
+                createAccess: params.createAccess ?? "auth",
+            },
+        }
+    );
+
+    const row = rows[0];
+    if (!row) {
+        throw new Error("Failed to create board");
+    }
+
+    return {
+        boardId: Number(row.board_id),
+        slug: row.slug,
+        name: row.name,
+        description: row.description ?? null,
+        readAccess: row.read_access as BoardReadAccess,
+        createAccess: row.create_access as BoardCreateAccess,
+    };
+}
+
+export async function updateBoard(params: {
+    boardId: number;
+    slug: string;
+    name: string;
+    description?: string | null;
+    readAccess: BoardReadAccess;
+    createAccess: BoardCreateAccess;
+}): Promise<boolean> {
+    const rows = await sequelize.query<{ board_id: number }>(
+        `
+        UPDATE boards
+        SET slug = :slug,
+            name = :name,
+            description = :description,
+            read_access = :readAccess,
+            create_access = :createAccess,
+            updated_at = NOW()
+        WHERE board_id = :boardId
+        RETURNING board_id
+        `,
+        {
+            type: QueryTypes.SELECT,
+            replacements: {
+                boardId: params.boardId,
+                slug: params.slug,
+                name: params.name,
+                description: params.description ?? null,
+                readAccess: params.readAccess,
+                createAccess: params.createAccess,
+            },
+        }
+    );
+
+    return rows.length > 0;
 }
 
 export async function findPostBySlugDisplayId(params: {

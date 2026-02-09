@@ -6,6 +6,7 @@ type UserRow = {
     user_role: string;
     username: string;
     password_hash: string;
+    is_active: boolean;
 };
 
 type UserProfileRow = {
@@ -34,6 +35,7 @@ export type AuthUser = {
     userRole: "admin" | "user";
     username: string;
     passwordHash: string;
+    isActive: boolean;
 };
 
 export type AuthUserPublic = Omit<AuthUser, "passwordHash">;
@@ -59,6 +61,21 @@ export type PublicUserProfile = {
     createdAt: Date;
 };
 
+export type AdminUserSummary = {
+    userId: number;
+    username: string;
+    userRole: "admin" | "user";
+    isActive: boolean;
+    createdAt: Date;
+};
+
+export type AdminUserMeta = {
+    userId: number;
+    username: string;
+    userRole: "admin" | "user";
+    isActive: boolean;
+};
+
 export async function findUserByUsername(username: string): Promise<AuthUser | null> {
     const rows = await sequelize.query<UserRow>(
         `
@@ -66,7 +83,8 @@ export async function findUserByUsername(username: string): Promise<AuthUser | n
             user_id,
             user_role,
             username,
-            password_hash
+            password_hash,
+            is_active
         FROM users
         WHERE username = :username
         LIMIT 1
@@ -87,6 +105,7 @@ export async function findUserByUsername(username: string): Promise<AuthUser | n
         userRole: row.user_role as AuthUser["userRole"],
         username: row.username,
         passwordHash: row.password_hash,
+        isActive: Boolean(row.is_active),
     };
 }
 
@@ -101,12 +120,14 @@ export async function createUser(params: {
         user_id: number;
         user_role: string;
         username: string;
+        is_active: boolean;
     }>(
         `
         INSERT INTO users (
             user_role,
             username,
             password_hash,
+            is_active,
             created_at,
             updated_at
         )
@@ -114,10 +135,11 @@ export async function createUser(params: {
             :userRole,
             :username,
             :passwordHash,
+            true,
             NOW(),
             NOW()
         )
-        RETURNING user_id, user_role, username
+        RETURNING user_id, user_role, username, is_active
         `,
         {
             type: QueryTypes.SELECT,
@@ -138,6 +160,7 @@ export async function createUser(params: {
         userId: Number(row.user_id),
         userRole: row.user_role as AuthUser["userRole"],
         username: row.username,
+        isActive: Boolean(row.is_active),
     };
 }
 
@@ -306,6 +329,137 @@ export async function updateUserProfileImage(params: {
             replacements: {
                 userId: params.userId,
                 profileImageUrl: params.profileImageUrl,
+            },
+        }
+    );
+
+    return rows.length > 0;
+}
+
+export async function listUsersForAdmin(): Promise<AdminUserSummary[]> {
+    const rows = await sequelize.query<{
+        user_id: number;
+        username: string;
+        user_role: string;
+        is_active: boolean;
+        created_at: Date;
+    }>(
+        `
+        SELECT
+            user_id,
+            username,
+            user_role,
+            is_active,
+            created_at
+        FROM users
+        ORDER BY user_id ASC
+        `,
+        {
+            type: QueryTypes.SELECT,
+        }
+    );
+
+    return rows.map((row) => ({
+        userId: Number(row.user_id),
+        username: row.username,
+        userRole: row.user_role as AdminUserSummary["userRole"],
+        isActive: Boolean(row.is_active),
+        createdAt: row.created_at,
+    }));
+}
+
+export async function updateUserActiveStatus(params: {
+    userId: number;
+    isActive: boolean;
+}): Promise<boolean> {
+    const rows = await sequelize.query<{ user_id: number }>(
+        `
+        UPDATE users
+        SET is_active = :isActive,
+            updated_at = NOW()
+        WHERE user_id = :userId
+        RETURNING user_id
+        `,
+        {
+            type: QueryTypes.SELECT,
+            replacements: {
+                userId: params.userId,
+                isActive: params.isActive,
+            },
+        }
+    );
+
+    return rows.length > 0;
+}
+
+export async function findUserMetaForAdminById(userId: number): Promise<AdminUserMeta | null> {
+    const rows = await sequelize.query<{
+        user_id: number;
+        username: string;
+        user_role: string;
+        is_active: boolean;
+    }>(
+        `
+        SELECT
+            user_id,
+            username,
+            user_role,
+            is_active
+        FROM users
+        WHERE user_id = :userId
+        LIMIT 1
+        `,
+        {
+            type: QueryTypes.SELECT,
+            replacements: { userId },
+        }
+    );
+
+    const row = rows[0];
+    if (!row) {
+        return null;
+    }
+
+    return {
+        userId: Number(row.user_id),
+        username: row.username,
+        userRole: row.user_role as AdminUserMeta["userRole"],
+        isActive: Boolean(row.is_active),
+    };
+}
+
+export async function countAdminUsers(): Promise<number> {
+    const rows = await sequelize.query<{ total_count: string }>(
+        `
+        SELECT COUNT(*) AS total_count
+        FROM users
+        WHERE user_role = 'admin'
+        `,
+        {
+            type: QueryTypes.SELECT,
+        }
+    );
+
+    return Number(rows[0]?.total_count ?? 0);
+}
+
+export async function updateUserRole(params: {
+    userId: number;
+    userRole: "admin" | "user";
+}): Promise<boolean> {
+    const rows = await sequelize.query<{ user_id: number }>(
+        `
+        UPDATE users
+        SET user_role = :userRole,
+            updated_at = NOW()
+        WHERE user_id = :userId
+        RETURNING user_id
+        `,
+        {
+            type: QueryTypes.SELECT,
+            replacements: {
+                userId: params.userId,
+                userRole: params.userRole,
             },
         }
     );
