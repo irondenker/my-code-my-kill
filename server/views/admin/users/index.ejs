@@ -12,12 +12,17 @@
 
         <main class="container py-4" style="max-width: 1080px;">
             <% const safeAdminCount = typeof adminCount === "number" ? adminCount : 0; %>
+            <% const createValue = createFormValue || { username: "", role: "user", status: "active" }; %>
+
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <h1 class="h4 mb-1">User Management</h1>
-                    <p class="text-muted mb-0">Manage account status and admin permissions.</p>
+                    <p class="text-muted mb-0">Manage account lifecycle and admin permissions.</p>
                 </div>
-                <a class="btn btn-outline-secondary" href="/admin">Back to dashboard</a>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-outline-primary" href="/admin/audit-logs">View audit logs</a>
+                    <a class="btn btn-outline-secondary" href="/admin">Back to dashboard</a>
+                </div>
             </div>
 
             <% if (formError) { %>
@@ -26,6 +31,41 @@
             <% if (formSuccess) { %>
             <div class="alert alert-success" role="alert"><%= formSuccess %></div>
             <% } %>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h2 class="h6 mb-3">Create account</h2>
+                    <form method="post" action="/admin/users" class="row g-2">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <div class="col-12 col-md-3">
+                            <label class="form-label mb-1" for="new-username">Username</label>
+                            <input id="new-username" class="form-control" name="username" maxlength="50" required value="<%= createValue.username %>">
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label mb-1" for="new-password">Password</label>
+                            <input id="new-password" class="form-control" name="password" type="password" minlength="8" maxlength="128" required>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label mb-1" for="new-role">Role</label>
+                            <select id="new-role" class="form-select" name="role">
+                                <option value="user" <%= createValue.role === "user" ? "selected" : "" %>>user</option>
+                                <option value="admin" <%= createValue.role === "admin" ? "selected" : "" %>>admin</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label mb-1" for="new-status">Status</label>
+                            <select id="new-status" class="form-select" name="status">
+                                <option value="active" <%= createValue.status === "active" ? "selected" : "" %>>active</option>
+                                <option value="inactive" <%= createValue.status === "inactive" ? "selected" : "" %>>inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-2 d-grid">
+                            <label class="form-label mb-1 d-none d-md-block">&nbsp;</label>
+                            <button class="btn btn-primary" type="submit">Create</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             <div class="card">
                 <div class="card-body p-0">
@@ -44,18 +84,19 @@
                             <tbody>
                                 <% users.forEach((user) => { %>
                                 <% const isSelf = Number(sessionUser) === user.userId; %>
-                                <% const disableDeactivate = user.userRole === 'admin' && user.isActive; %>
+                                <% const disableDeactivate = user.userRole === "admin" && user.isActive; %>
+                                <% const disableDelete = isSelf || (user.userRole === "admin" && safeAdminCount <= 1); %>
                                 <tr>
                                     <td><%= user.userId %></td>
                                     <td><code><%= user.username %></code></td>
                                     <td>
-                                        <span class="badge <%= user.userRole === 'admin' ? 'text-bg-dark' : 'text-bg-secondary' %>">
+                                        <span class="badge <%= user.userRole === "admin" ? "text-bg-dark" : "text-bg-secondary" %>">
                                             <%= user.userRole %>
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge <%= user.isActive ? 'text-bg-success' : 'text-bg-danger' %>">
-                                            <%= user.isActive ? 'active' : 'inactive' %>
+                                        <span class="badge <%= user.isActive ? "text-bg-success" : "text-bg-danger" %>">
+                                            <%= user.isActive ? "active" : "inactive" %>
                                         </span>
                                     </td>
                                     <td>
@@ -64,24 +105,35 @@
                                     <td class="text-end">
                                         <form method="post" action="/admin/users/<%= user.userId %>/status" class="d-inline">
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                            <input type="hidden" name="status" value="<%= user.isActive ? 'inactive' : 'active' %>">
+                                            <input type="hidden" name="status" value="<%= user.isActive ? "inactive" : "active" %>">
                                             <button
-                                                class="btn btn-sm <%= user.isActive ? 'btn-outline-danger' : 'btn-outline-success' %>"
+                                                class="btn btn-sm <%= user.isActive ? "btn-outline-danger" : "btn-outline-success" %>"
                                                 type="submit"
-                                                <%= disableDeactivate ? 'disabled title=\"Admin users cannot be deactivated.\"' : '' %>
+                                                <%= disableDeactivate ? "disabled title=\"Admin users cannot be deactivated.\"" : "" %>
                                             >
-                                                <%= user.isActive ? 'Deactivate' : 'Activate' %>
+                                                <%= user.isActive ? "Deactivate" : "Activate" %>
                                             </button>
                                         </form>
                                         <form method="post" action="/admin/users/<%= user.userId %>/role" class="d-inline ms-1">
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                            <input type="hidden" name="role" value="<%= user.userRole === 'admin' ? 'user' : 'admin' %>">
+                                            <input type="hidden" name="role" value="<%= user.userRole === "admin" ? "user" : "admin" %>">
                                             <button
-                                                class="btn btn-sm <%= user.userRole === 'admin' ? 'btn-outline-warning' : 'btn-outline-primary' %>"
+                                                class="btn btn-sm <%= user.userRole === "admin" ? "btn-outline-warning" : "btn-outline-primary" %>"
                                                 type="submit"
-                                                <%= user.userRole === 'admin' && (safeAdminCount <= 1 || isSelf) ? 'disabled' : '' %>
+                                                <%= user.userRole === "admin" && (safeAdminCount <= 1 || isSelf) ? "disabled" : "" %>
                                             >
-                                                <%= user.userRole === 'admin' ? 'Revoke admin' : 'Make admin' %>
+                                                <%= user.userRole === "admin" ? "Revoke admin" : "Make admin" %>
+                                            </button>
+                                        </form>
+                                        <form method="post" action="/admin/users/<%= user.userId %>/delete" class="d-inline ms-1">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <button
+                                                class="btn btn-sm btn-outline-danger"
+                                                type="submit"
+                                                onclick="return confirm('Delete this account? This cannot be undone.');"
+                                                <%= disableDelete ? "disabled" : "" %>
+                                            >
+                                                Delete
                                             </button>
                                         </form>
                                     </td>

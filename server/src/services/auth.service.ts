@@ -113,8 +113,10 @@ export async function createUser(params: {
     username: string;
     passwordHash: string;
     userRole?: AuthUser["userRole"];
+    isActive?: boolean;
 }): Promise<AuthUserPublic> {
     const userRole = params.userRole ?? "user";
+    const isActive = params.isActive ?? true;
 
     const rows = await sequelize.query<{
         user_id: number;
@@ -135,7 +137,7 @@ export async function createUser(params: {
             :userRole,
             :username,
             :passwordHash,
-            true,
+            :isActive,
             NOW(),
             NOW()
         )
@@ -147,6 +149,7 @@ export async function createUser(params: {
                 userRole,
                 username: params.username,
                 passwordHash: params.passwordHash,
+                isActive,
             },
         }
     );
@@ -465,4 +468,48 @@ export async function updateUserRole(params: {
     );
 
     return rows.length > 0;
+}
+
+export type DeleteUserForAdminResult = "deleted" | "not_found" | "has_posts";
+
+export async function deleteUserForAdmin(userId: number): Promise<DeleteUserForAdminResult> {
+    const deletedRows = await sequelize.query<{ user_id: number }>(
+        `
+        DELETE FROM users
+        WHERE user_id = :userId
+          AND NOT EXISTS (
+            SELECT 1
+            FROM posts
+            WHERE user_id = :userId
+          )
+        RETURNING user_id
+        `,
+        {
+            type: QueryTypes.SELECT,
+            replacements: { userId },
+        }
+    );
+
+    if (deletedRows.length > 0) {
+        return "deleted";
+    }
+
+    const existingRows = await sequelize.query<{ user_id: number }>(
+        `
+        SELECT user_id
+        FROM users
+        WHERE user_id = :userId
+        LIMIT 1
+        `,
+        {
+            type: QueryTypes.SELECT,
+            replacements: { userId },
+        }
+    );
+
+    if (existingRows.length === 0) {
+        return "not_found";
+    }
+
+    return "has_posts";
 }

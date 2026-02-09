@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+    <%- include("../../partials/head", {
+        styles: [
+            "/assets/css/color-modes.css"
+        ]
+    }) %>
+
+    <body>
+        <%- include("../../partials/theme-toggle") %>
+        <%- include("../../partials/header") %>
+
+        <main class="container py-4" style="max-width: 1180px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h1 class="h4 mb-1">Admin Audit Logs</h1>
+                    <p class="text-muted mb-0">All account login/logout and admin account/permission changes.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-outline-secondary" href="/admin/users">Back to users</a>
+                    <a class="btn btn-outline-secondary" href="/admin">Back to dashboard</a>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body py-2">
+                    <form method="get" action="/admin/audit-logs" class="d-flex gap-2 align-items-center">
+                        <label class="form-label mb-0" for="limit">Rows</label>
+                        <select id="limit" class="form-select" style="width: 140px;" name="limit">
+                            <option value="50" <%= selectedLimit === 50 ? "selected" : "" %>>50</option>
+                            <option value="100" <%= selectedLimit === 100 ? "selected" : "" %>>100</option>
+                            <option value="200" <%= selectedLimit === 200 ? "selected" : "" %>>200</option>
+                            <option value="500" <%= selectedLimit === 500 ? "selected" : "" %>>500</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body p-0">
+                    <% if (!logs || logs.length === 0) { %>
+                    <div class="p-3 text-muted">No audit logs yet.</div>
+                    <% } else { %>
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Time (UTC)</th>
+                                    <th scope="col">Action</th>
+                                    <th scope="col">Actor</th>
+                                    <th scope="col">Target</th>
+                                    <th scope="col">Details</th>
+                                    <th scope="col">IP</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% logs.forEach((log) => { %>
+                                <tr>
+                                    <td><%= new Date(log.createdAt).toISOString() %></td>
+                                    <td><code><%= log.action %></code></td>
+                                    <td>
+                                        <% if (log.actorUserId) { %>
+                                        #<%= log.actorUserId %>
+                                        <% } %>
+                                        <%= log.actorUsername ? log.actorUsername : "-" %>
+                                    </td>
+                                    <td>
+                                        <% if (log.targetUserId) { %>
+                                        #<%= log.targetUserId %>
+                                        <% } %>
+                                        <%= log.targetUsername ? log.targetUsername : "-" %>
+                                    </td>
+                                    <td>
+                                        <code style="white-space: pre-wrap;"><%= JSON.stringify(log.details) %></code>
+                                    </td>
+                                    <td><%= log.ipAddress || "-" %></td>
+                                </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </main>
+
+        <%- include("../../partials/footer") %>
+        <%- include("../../partials/scripts", {
+            scripts: [
+                "/assets/js/color-modes.js"
+            ]
+        }) %>
+    </body>
+</html>

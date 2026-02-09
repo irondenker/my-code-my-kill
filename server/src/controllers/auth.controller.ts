@@ -1,5 +1,6 @@
-﻿import type { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { createUser, findUserByUsername, findUserProfileById } from "../services/auth.service.js";
+import { writeAdminAuditLog } from "../services/admin-audit.service.js";
 import { hashPassword, verifyPassword } from "../utils/password.util.js";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
 import { isValidPassword, isValidUsername, normalizeString } from "../utils/auth.validation.js";
@@ -9,6 +10,42 @@ type AuthRenderOptions = {
     formError?: string | null;
     nextPath?: string | null;
 };
+
+function getRequestIp(req: Request): string | null {
+    const value = typeof req.ip === "string" ? req.ip.trim() : "";
+    return value || null;
+}
+
+function getRequestUserAgent(req: Request): string | null {
+    const value = req.get("user-agent");
+    if (typeof value !== "string") {
+        return null;
+    }
+    const trimmed = value.trim();
+    return trimmed || null;
+}
+
+function destroySession(req: Request): Promise<void> {
+    return new Promise((resolve, reject) => {
+        req.session.destroy((err) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve();
+        });
+    });
+}
+
+async function writeAdminAuditLogSafely(
+    params: Parameters<typeof writeAdminAuditLog>[0]
+): Promise<void> {
+    try {
+        await writeAdminAuditLog(params);
+    } catch (err) {
+        // Audit logging must not break auth flow.
+        console.error("[AUDIT_LOG_ERROR]", err);
+    }
+}
 
 function renderLogin(res: Response, options: AuthRenderOptions = {}) {
     return res.render("auth/sign-in", {
@@ -129,6 +166,20 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
         req.session.profileImageUrl = profile?.profileImageUrl ?? null;
         await saveSession(req);
 
+        await writeAdminAuditLogSafely({
+            action: "LOGIN",
+            actorUserId: user.userId,
+            actorUsername: user.username,
+            targetUserId: user.userId,
+            targetUsername: user.username,
+            details: {
+                loginResult: "success",
+                userRole: user.userRole,
+            },
+            ipAddress: getRequestIp(req),
+            userAgent: getRequestUserAgent(req),
+        });
+
         return res.redirect(nextPath);
     } catch (err) {
         return next(err);
@@ -137,15 +188,30 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
 
 export async function postLogout(req: Request, res: Response, next: NextFunction) {
     try {
-        req.session.destroy((err) => {
-            if (err) {
-                return next(err);
-            }
-            res.clearCookie("mcmk.sid");
-            return res.redirect("/");
-        });
+        const userId = typeof req.session.userId === "number" ? req.session.userId : null;
+        const role = req.session.userRole;
+        const username = normalizeString(req.session.username);
+
+        if (userId !== null) {
+            await writeAdminAuditLogSafely({
+                action: "LOGOUT",
+                actorUserId: userId,
+                actorUsername: username || null,
+                targetUserId: userId,
+                targetUsername: username || null,
+                details: {
+                    logoutResult: "success",
+                    userRole: role ?? null,
+                },
+                ipAddress: getRequestIp(req),
+                userAgent: getRequestUserAgent(req),
+            });
+        }
+
+        await destroySession(req);
+        res.clearCookie("mcmk.sid");
+        return res.redirect("/");
     } catch (err) {
         return next(err);
     }
 }
-
