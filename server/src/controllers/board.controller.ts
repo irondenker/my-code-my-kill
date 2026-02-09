@@ -18,6 +18,7 @@ import {
 import { buildBoardIndexViewModel, buildBoardSlugViewModel } from "../view-models/board.view-model.js";
 
 type BoardPolicy = {
+    read: "public" | "auth";
     create: "auth" | "admin";
     update: "self" | "admin";
     delete: "selfOrAdmin" | "admin";
@@ -26,6 +27,7 @@ type BoardPolicy = {
 function getBoardPolicy(slug: string): BoardPolicy {
     if (slug === "announcement") {
         return {
+            read: "public",
             create: "admin",
             update: "admin",
             delete: "admin",
@@ -33,6 +35,7 @@ function getBoardPolicy(slug: string): BoardPolicy {
     }
 
     return {
+        read: "public",
         create: "auth",
         update: "self",
         delete: "selfOrAdmin",
@@ -187,6 +190,17 @@ export async function getBoardBySlug(req: Request, res: Response, next: NextFunc
         const slug = String(req.params.slug ?? "").trim();
         if (!slug) {
             return next(new HttpError(404, "Not Found"));
+        }
+
+        const board = await findBoardBySlug(slug);
+        if (!board) {
+            return next(new HttpError(404, "Not Found"));
+        }
+
+        const policy = getBoardPolicy(board.slug);
+        const { isAuthenticated } = getViewerContext(req);
+        if (policy.read === "auth" && !isAuthenticated) {
+            return next(new HttpError(401, "Unauthorized"));
         }
 
         const viewModel = await buildBoardSlugViewModel(req, slug);
@@ -596,6 +610,17 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
 
         if (!Number.isFinite(displayId) || displayId <= 0) {
             return next(new HttpError(404, "Not Found"));
+        }
+
+        const board = await findBoardBySlug(slug);
+        if (!board) {
+            return next(new HttpError(404, "Not Found"));
+        }
+
+        const readPolicy = getBoardPolicy(board.slug);
+        const { isAuthenticated } = getViewerContext(req);
+        if (readPolicy.read === "auth" && !isAuthenticated) {
+            return next(new HttpError(401, "Unauthorized"));
         }
 
         const postRows = await sequelize.query<BoardPostRow>(
