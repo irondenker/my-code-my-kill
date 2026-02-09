@@ -84,3 +84,37 @@ body:not(.d-flex) footer {
     width: min(100%, 920px);
     margin-inline: auto;
 }
+
+main.landing-cover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(2rem, 5vw, 4rem) 1rem;
+}
+
+.landing-content {
+    width: min(100%, 720px);
+    padding: clamp(2rem, 4vw, 3rem) clamp(1.25rem, 3vw, 2.75rem);
+}
+
+.landing-logo {
+    width: clamp(76px, 13vw, 112px);
+    height: auto;
+}
+
+.landing-title {
+    margin-top: 1rem;
+    margin-bottom: 0.9rem;
+    font-size: clamp(1.8rem, 4.2vw, 2.8rem);
+    font-weight: 700;
+    letter-spacing: 0.015em;
+    line-height: 1.1;
+    color: rgb(var(--bs-emphasis-color-rgb));
+}
+
+.landing-description {
+    margin: 0;
+    font-size: clamp(0.9rem, 1.6vw, 1rem);
+    line-height: 1.6;
+    color: rgb(var(--bs-tertiary-color-rgb));
+}
