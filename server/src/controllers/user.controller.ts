@@ -76,6 +76,7 @@ export async function getProfileEditForm(req: Request, res: Response, next: Next
 
         return res.render("settings/profile", {
             formError: null,
+            avatarError: null,
             profile: {
                 username: profile.username,
                 displayName: profile.displayName,
@@ -109,6 +110,7 @@ export async function postProfileEdit(req: Request, res: Response, next: NextFun
         if (displayName && displayName.length > 50) {
             return res.status(422).render("settings/profile", {
                 formError: "Display name must be 50 characters or less.",
+                avatarError: null,
                 profile: { ...profile, displayName, email, phoneNumber, bio },
             });
         }
@@ -116,6 +118,7 @@ export async function postProfileEdit(req: Request, res: Response, next: NextFun
         if (email && !isValidEmail(email)) {
             return res.status(422).render("settings/profile", {
                 formError: "Email format is invalid.",
+                avatarError: null,
                 profile: { ...profile, displayName, email, phoneNumber, bio },
             });
         }
@@ -123,6 +126,7 @@ export async function postProfileEdit(req: Request, res: Response, next: NextFun
         if (phoneNumber && (phoneNumber.length > 30 || !isValidPhone(phoneNumber))) {
             return res.status(422).render("settings/profile", {
                 formError: "Phone number format is invalid.",
+                avatarError: null,
                 profile: { ...profile, displayName, email, phoneNumber, bio },
             });
         }
@@ -130,6 +134,7 @@ export async function postProfileEdit(req: Request, res: Response, next: NextFun
         if (bio && bio.length > 500) {
             return res.status(422).render("settings/profile", {
                 formError: "Bio must be 500 characters or less.",
+                avatarError: null,
                 profile: { ...profile, displayName, email, phoneNumber, bio },
             });
         }

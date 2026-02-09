@@ -10,7 +10,9 @@ const upload = multer({ storage: multer.memoryStorage() });
 const csrfProtection = csrf();
 
 router.get("/@:username", getUserProfile);
+router.get("/setting/profile", requireAuthRedirect, getProfileEditForm);
 router.get("/settings/profile", requireAuthRedirect, getProfileEditForm);
+router.post("/setting/profile", requireAuthRedirect, postProfileEdit);
 router.post("/settings/profile", requireAuthRedirect, postProfileEdit);
 router.post(
     "/users/avatar",
