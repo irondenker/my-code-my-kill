@@ -1,8 +1,18 @@
-# My Code, My Kill
->
-> 웹페이지 제작 및 모의해킹 실습 프로젝트
+﻿# My Code, My Kill
 
-## 😊 Commit Emoji
+|![My Code, My Kill Logo](./docs/assets/logo-mark.svg)|
+|:---------------------------------------------------:|
+
+> **제대로 쌓아올리고,
+제대로 무너뜨립니다.**
+
+---
+
+## Abstract
+
+`My Code, My Kill`은 웹 보안 취약점을 직접 재현하고 분석하며 대응까지 이어가는 실습형 프로젝트입니다.
+
+## Commit Emoji Guide
 
 | emoji | commit message | when to use it              |
 | :---: | :------------: | :-------------------------: |
@@ -26,79 +36,33 @@
 
 -->
 
-## 🔗 Project Links
+## Docs Hub
 
-👉 **GitHub Repository**  
-<https://github.com/irondenker/my-code-my-kill>  
+### Quick Start
 
-👉 **Proj. Blog**  
-<https://irondenker.tistory.com/category/Projects>
+| 문서 | 설명 |
+| --- | --- |
+| [`docs/first-run-docker.md`](./docs/first-run-docker.md) | 로컬 Docker 첫 실행 가이드 |
+| [`docs/first-run-vm.md`](./docs/first-run-vm.md) | VM 첫 실행 가이드 |
 
-## ⚙️ Getting Started
+### Scripts
 
-### ⚙️ Config
+| 문서 | 설명 |
+| --- | --- |
+| [`docs/how-to-docker.md`](./docs/how-to-docker.md) | Docker 운영 명령 모음 |
 
-1. [Docker](https://www.docker.com/) 설치(필수)
+### Guides
 
-2. Repository 다운로드:
-    - `Download ZIP manually` or `git clone`
+| 문서 | 설명 |
+| --- | --- |
+| [`docs/xss-filter-guide.md`](./docs/xss-filter-guide.md) | XSS 실습 설정 가이드 |
 
-3. 프로젝트 루트 경로로 이동:
-    - `.../my-code-my-kill` or `.../my-code-my-kill-main`
+## Links
 
-4. '.env' && '.env.production' -> '/server' 경로에 옮겨놓기
-    - 없을 경우 자체 구성
+- [GitHub](https://github.com/irondenker/my-code-my-kill)
+- [Project Blog](https://irondenker.tistory.com/category/Projects)
 
-5. `Terminal`에서 아래 명령어 입력
-
-```bash
-docker compose -f docker-compose.prod.yml up --build
-```
-
-### 🎮 Controls
-
-```bash
-
-# 컨테이너 켜기(단순 켜기, 빌드 과정 / 강제 리빌드 없음)
-docker compose -f docker-compose.prod.yml up
-# 컨테이너 끄기
-docker compose -f docker-compose.prod.yml down
-# 컨테이너 강제 리빌드 후 켜기
-docker compose up -f --force-recreate
-
-```
-
-### 💻 Dev (Docker)
-
-``` bash
-#개발용 세팅 (세부 설정 사항은 위와 같음)
-docker compose up -d --build
-docker compose -d up
-docker compose -d down
-docker compose up -d --force-recreate
-```
-
-### 🏠 Local
-
-``` bash
-### 로컬에 Node.js 설치 필요!
-
-#로컬 nodemon 켜기
-npm run dev
-#로컬에서 build 후 켜기(Nginx 미적용)
-npm start
-```
-
-## 👀 References
-
-- <https://getbootstrap.com/docs/5.3/examples/>
-- <https://www.toptal.com/developers/gitignore>
-- <https://techicons.dev/>
-- <https://www.flaticon.com/kr/>
-- <https://www.svgrepo.com/>
-- <https://icons.getbootstrap.com/>
-
-## 📄 License
+## License
 
 This project is licensed under the MIT License.  
-See the [LICENSE](./LICENSE) file for details.
+See [`LICENSE`](./LICENSE) for details.

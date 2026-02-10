@@ -2,16 +2,19 @@
 
 이 프로젝트의 XSS 관련 동작은 `server/lab-options.json`으로 제어합니다.
 
-## 관련 파일 경로
+## 메인 설정 파일 경로
 
-- 메인 설정: `server/lab-options.json`
+**`server/lab-options.json`**
+
+## 기타 연관 파일 경로
+
 - 설정 파서: `server/src/config/lab-options.ts`
 - 커스텀 이스케이퍼: `server/src/utils/xss-escape.util.ts`
 - 게시글 렌더링: `server/views/board/show.ejs`
 - 클라이언트 전달 스크립트: `server/views/partials/scripts.ejs`
 - Bootstrap 동작 제어: `server/public/assets/js/app.js`
 
-## xssInjection 구조
+## `xssInjection` 구조
 
 `xssInjection`은 공통 옵션 1개와 사이드별 옵션 2개로 구성됩니다.
 
