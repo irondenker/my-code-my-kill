@@ -22,19 +22,21 @@
                         <li><a class="dropdown-item" href="/board/qna">Q&A</a></li>
                     </ul>
                 </li>
-                <li>
-                    <a href="#" class="nav-link px-2 link-body-emphasis">UI</a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link px-2 link-body-emphasis dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Labs
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/labs/ssti">SSTI Lab</a></li>
+                    </ul>
                 </li>
                 <li>
                     <a href="/api-docs" class="nav-link px-2 link-body-emphasis">API Docs</a>
                 </li>
-                <li>
-                    <a href="#" class="nav-link px-2 link-body-emphasis">T&Cs</a>
-                </li>
             </ul>
 
             <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search">
-                <input type="search" class="form-control" placeholder="Search..." aria-label="Search" />
+                <input type="search" class="form-control" placeholder="Search..." aria-label="Search" disabled/>
             </form>
 
             <div class="d-flex align-items-center gap-2">
@@ -42,14 +44,7 @@
                     <% const headerAvatarUrl = sessionProfileImageUrl; %>
                     <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                         <% if (headerAvatarUrl) { %>
-                        <img
-                            src="<%= headerAvatarUrl %>"
-                            alt="Profile"
-                            width="32"
-                            height="32"
-                            class="rounded-circle"
-                            style="object-fit: cover;"
-                        />
+                        <img src="<%= headerAvatarUrl %>" alt="Profile" width="32" height="32" class="rounded-circle" style="object-fit: cover;" />
                         <% } else { %>
                         <svg class="rounded-circle" width="32" height="32" aria-hidden="true">
                             <use xlink:href="/assets/icons/icons.svg#people-circle"></use>

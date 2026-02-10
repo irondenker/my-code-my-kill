@@ -9,6 +9,7 @@ import adminRouter from "./routes/admin.routes.js";
 import rootRouter from "./routes/root.routes.js";
 import apiDocsRouter from "./routes/api-docs.routes.js";
 import occurRouter from "./routes/occur.routes.js";
+import labSstiRouter from "./routes/lab-ssti.routes.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import { HttpError } from "./utils/http-error.js";
 import { getLabOptions } from "./config/lab-options.js";
@@ -106,6 +107,7 @@ export function createApp() {
     app.use(boardRouter);
     app.use(apiDocsRouter);
     app.use(occurRouter);
+    app.use(labSstiRouter);
 
     app.use("/", rootRouter);
 
@@ -124,5 +126,4 @@ export function createApp() {
 
     return app;
 }
-
 

@@ -30,6 +30,7 @@ export type XssInjectionOptions = {
 
 export type LabOptions = {
     sqli: boolean;
+    ssti: boolean;
     debugErrorRoutes: boolean;
     xssInjection: XssInjectionOptions;
 };
@@ -57,6 +58,7 @@ const DEFAULT_XSS_INJECTION_OPTIONS: XssInjectionOptions = {
 
 const DEFAULT_LAB_OPTIONS: LabOptions = {
     sqli: false,
+    ssti: false,
     debugErrorRoutes: false,
     xssInjection: { ...DEFAULT_XSS_INJECTION_OPTIONS },
 };
@@ -72,6 +74,7 @@ function cloneDefaultXssSideOptions(): XssSideOptions {
 function getDefaultLabOptions(): LabOptions {
     return {
         sqli: DEFAULT_LAB_OPTIONS.sqli,
+        ssti: DEFAULT_LAB_OPTIONS.ssti,
         debugErrorRoutes: DEFAULT_LAB_OPTIONS.debugErrorRoutes,
         xssInjection: {
             storedXss: DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
@@ -244,6 +247,7 @@ function loadLabOptions(): LabOptions {
         const options = parsed as Record<string, unknown>;
         return {
             sqli: parseBooleanOption(options.sqli, "sqli", DEFAULT_LAB_OPTIONS.sqli),
+            ssti: parseBooleanOption(options.ssti, "ssti", DEFAULT_LAB_OPTIONS.ssti),
             debugErrorRoutes: parseBooleanOption(
                 options.debugErrorRoutes,
                 "debugErrorRoutes",

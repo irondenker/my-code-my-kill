@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+    <%- include("../partials/head", {
+        title: "Labs",
+        styles: [
+            "/assets/css/color-modes.css",
+        ],
+    }) %>
+    <body>
+        <%- include("../partials/theme-toggle") %>
+        <%- include("../partials/header") %>
+
+        <main class="container py-4 board-page">
+            <div class="board-layout">
+                <div class="board-content-width board-header">
+                    <h1 class="board-title fw-bold text-body-emphasis">실습 목록</h1>
+                    <p class="board-description text-muted">사용 가능한 보안 실습 기능을 확인하세요.</p>
+                </div>
+
+                <div class="list-group board-list shadow-sm">
+                    <a
+                        href="/labs/ssti"
+                        class="list-group-item list-group-item-action d-flex gap-3 p-3 align-items-center justify-content-between"
+                    >
+                        <div class="d-flex gap-3 align-items-center">
+                            <svg class="bi flex-shrink-0" alt="" width="32" height="32">
+                                <use xlink:href="/assets/icons/icons.svg#plain-post"></use>
+                            </svg>
+                            <div class="d-flex flex-column">
+                                <div class="fw-semibold">SSTI 실습</div>
+                                <small class="text-muted">EJS 템플릿 문자열을 렌더링하는 실습</small>
+                            </div>
+                        </div>
+                        <span class="badge <%= sstiEnabled ? 'text-bg-success' : 'text-bg-secondary' %>">
+                            <%= sstiEnabled ? 'Enabled' : 'Disabled' %>
+                        </span>
+                    </a>
+                </div>
+            </div>
+        </main>
+
+        <%- include("../partials/footer") %>
+        <%- include("../partials/scripts", {
+            scripts: [
+                "/assets/js/color-modes.js",
+            ],
+        }) %>
+    </body>
+</html>
