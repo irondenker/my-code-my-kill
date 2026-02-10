@@ -264,3 +264,4 @@ server/public/uploads/posts/files/*
 !server/public/uploads/posts/files/.gitkeep
 
 backups/
+lab-options.json
