@@ -3,7 +3,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/logo-mark-light.svg">
-    <img src="./docs/assets/logo-mark-dark.svg" alt="my code my kill logo" width="300">
+    <img src="./docs/assets/logo-mark-dark.svg" alt="my code my kill logo" width="200">
   </picture>
 </p>
 
