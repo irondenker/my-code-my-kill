@@ -1,5 +1,36 @@
 {
-  "storedXss": false,
   "sqli": false,
-  "debugErrorRoutes": false
+  "debugErrorRoutes": false,
+  "xssInjection": {
+    "storedXss": false,
+    "clientSide": {
+      "sanitizeEnabled": true,
+      "defaultRuleToggles": {
+        "ampersand": true,
+        "lessThan": true,
+        "greaterThan": true,
+        "doubleQuote": true,
+        "singleQuote": true,
+        "backtick": true
+      },
+      "customRules": [
+        { "from": "&", "to": "&amp;" }
+      ]
+    },
+    "serverSide": {
+      "sanitizeEnabled": true,
+      "defaultRuleToggles": {
+        "ampersand": true,
+        "lessThan": true,
+        "greaterThan": true,
+        "doubleQuote": true,
+        "singleQuote": true,
+        "backtick": true
+      },
+      "customRules": [
+        { "from": "<", "to": "&lt;" },
+        { "from": ">", "to": "&gt;" }
+      ]
+    }
+  }
 }

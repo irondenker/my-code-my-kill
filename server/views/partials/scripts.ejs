@@ -1,6 +1,7 @@
 <!-- Page Scripts -->
 <script>
-    window.__LAB_STORED_XSS__ = <%= labStoredXssEnabled ? "true" : "false" %>;
+    window.__XSS_CLIENT_SIDE_SANITIZE_ENABLED__ = <%= clientSideSanitizeEnabled ? "true" : "false" %>;
+    window.__XSS_CLIENT_SIDE_OPTIONS__ = <%- JSON.stringify(xssClientSideOptions).replace(/</g, "\\u003c") %>;
 </script>
 <% const _scripts = typeof scripts !== "undefined" ? scripts : []; %>
 <% _scripts.forEach(function (src) { %>

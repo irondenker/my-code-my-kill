@@ -1,15 +1,87 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export type LabOptions = {
+export type EscapeRule = {
+    from: string;
+    to: string;
+};
+
+export type DefaultEscapeRuleToggleKey =
+    | "ampersand"
+    | "lessThan"
+    | "greaterThan"
+    | "doubleQuote"
+    | "singleQuote"
+    | "backtick";
+
+export type DefaultEscapeRuleToggles = Record<DefaultEscapeRuleToggleKey, boolean>;
+
+export type XssSideOptions = {
+    sanitizeEnabled: boolean;
+    defaultRuleToggles: DefaultEscapeRuleToggles;
+    customRules: EscapeRule[];
+};
+
+export type XssInjectionOptions = {
     storedXss: boolean;
+    clientSide: XssSideOptions;
+    serverSide: XssSideOptions;
+};
+
+export type LabOptions = {
     sqli: boolean;
     debugErrorRoutes: boolean;
+    xssInjection: XssInjectionOptions;
 };
 
 const LAB_OPTIONS_PATH = path.join(process.cwd(), "lab-options.json");
 
-function parseBooleanOption(value: unknown, key: keyof LabOptions): boolean {
+const DEFAULT_XSS_SIDE_OPTIONS: XssSideOptions = {
+    sanitizeEnabled: true,
+    defaultRuleToggles: {
+        ampersand: true,
+        lessThan: true,
+        greaterThan: true,
+        doubleQuote: true,
+        singleQuote: true,
+        backtick: true,
+    },
+    customRules: [],
+};
+
+const DEFAULT_XSS_INJECTION_OPTIONS: XssInjectionOptions = {
+    storedXss: false,
+    clientSide: { ...DEFAULT_XSS_SIDE_OPTIONS },
+    serverSide: { ...DEFAULT_XSS_SIDE_OPTIONS },
+};
+
+const DEFAULT_LAB_OPTIONS: LabOptions = {
+    sqli: false,
+    debugErrorRoutes: false,
+    xssInjection: { ...DEFAULT_XSS_INJECTION_OPTIONS },
+};
+
+function cloneDefaultXssSideOptions(): XssSideOptions {
+    return {
+        sanitizeEnabled: DEFAULT_XSS_SIDE_OPTIONS.sanitizeEnabled,
+        defaultRuleToggles: { ...DEFAULT_XSS_SIDE_OPTIONS.defaultRuleToggles },
+        customRules: [...DEFAULT_XSS_SIDE_OPTIONS.customRules],
+    };
+}
+
+function getDefaultLabOptions(): LabOptions {
+    return {
+        sqli: DEFAULT_LAB_OPTIONS.sqli,
+        debugErrorRoutes: DEFAULT_LAB_OPTIONS.debugErrorRoutes,
+        xssInjection: {
+            storedXss: DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
+            clientSide: cloneDefaultXssSideOptions(),
+            serverSide: cloneDefaultXssSideOptions(),
+        },
+    };
+}
+
+function parseBooleanOption(value: unknown, key: string, fallback = false): boolean {
     if (typeof value === "boolean") {
         return value;
     }
@@ -25,9 +97,138 @@ function parseBooleanOption(value: unknown, key: keyof LabOptions): boolean {
     }
 
     if (typeof value !== "undefined") {
-        console.warn(`[CONFIG] Invalid lab option "${key}" in ${LAB_OPTIONS_PATH}. Using false.`);
+        console.warn(`[CONFIG] Invalid lab option "${key}" in ${LAB_OPTIONS_PATH}. Using ${String(fallback)}.`);
     }
-    return false;
+    return fallback;
+}
+
+function parseEscapeRuleList(value: unknown, key: string): EscapeRule[] {
+    if (typeof value === "undefined") {
+        return [];
+    }
+
+    if (!Array.isArray(value)) {
+        console.warn(`[CONFIG] Invalid lab option "${key}" in ${LAB_OPTIONS_PATH}. Using empty array.`);
+        return [];
+    }
+
+    const parsed: EscapeRule[] = [];
+    value.forEach((entry, index) => {
+        if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+            console.warn(`[CONFIG] Invalid lab option "${key}[${index}]" in ${LAB_OPTIONS_PATH}. Expected object.`);
+            return;
+        }
+
+        const rule = entry as Record<string, unknown>;
+        if (typeof rule.from !== "string" || typeof rule.to !== "string") {
+            console.warn(`[CONFIG] Invalid lab option "${key}[${index}]" in ${LAB_OPTIONS_PATH}. "from" and "to" must be strings.`);
+            return;
+        }
+
+        if (!rule.from) {
+            console.warn(`[CONFIG] Invalid lab option "${key}[${index}]" in ${LAB_OPTIONS_PATH}. "from" cannot be empty.`);
+            return;
+        }
+
+        parsed.push({
+            from: rule.from,
+            to: rule.to,
+        });
+    });
+
+    return parsed;
+}
+
+function parseXssSideOptions(value: unknown, keyPrefix: "xssInjection.clientSide" | "xssInjection.serverSide"): XssSideOptions {
+    if (typeof value === "undefined") {
+        return cloneDefaultXssSideOptions();
+    }
+
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        console.warn(`[CONFIG] Invalid lab option "${keyPrefix}" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        return cloneDefaultXssSideOptions();
+    }
+
+    const options = value as Record<string, unknown>;
+    const rawToggles = options.defaultRuleToggles;
+    const parsedToggles =
+        rawToggles && typeof rawToggles === "object" && !Array.isArray(rawToggles)
+            ? (rawToggles as Record<string, unknown>)
+            : {};
+    if (typeof rawToggles !== "undefined" && (!rawToggles || typeof rawToggles !== "object" || Array.isArray(rawToggles))) {
+        console.warn(`[CONFIG] Invalid lab option "${keyPrefix}.defaultRuleToggles" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+    }
+
+    return {
+        sanitizeEnabled: parseBooleanOption(
+            options.sanitizeEnabled,
+            `${keyPrefix}.sanitizeEnabled`,
+            DEFAULT_XSS_SIDE_OPTIONS.sanitizeEnabled,
+        ),
+        defaultRuleToggles: {
+            ampersand: parseBooleanOption(
+                parsedToggles.ampersand,
+                `${keyPrefix}.defaultRuleToggles.ampersand`,
+                DEFAULT_XSS_SIDE_OPTIONS.defaultRuleToggles.ampersand,
+            ),
+            lessThan: parseBooleanOption(
+                parsedToggles.lessThan,
+                `${keyPrefix}.defaultRuleToggles.lessThan`,
+                DEFAULT_XSS_SIDE_OPTIONS.defaultRuleToggles.lessThan,
+            ),
+            greaterThan: parseBooleanOption(
+                parsedToggles.greaterThan,
+                `${keyPrefix}.defaultRuleToggles.greaterThan`,
+                DEFAULT_XSS_SIDE_OPTIONS.defaultRuleToggles.greaterThan,
+            ),
+            doubleQuote: parseBooleanOption(
+                parsedToggles.doubleQuote,
+                `${keyPrefix}.defaultRuleToggles.doubleQuote`,
+                DEFAULT_XSS_SIDE_OPTIONS.defaultRuleToggles.doubleQuote,
+            ),
+            singleQuote: parseBooleanOption(
+                parsedToggles.singleQuote,
+                `${keyPrefix}.defaultRuleToggles.singleQuote`,
+                DEFAULT_XSS_SIDE_OPTIONS.defaultRuleToggles.singleQuote,
+            ),
+            backtick: parseBooleanOption(
+                parsedToggles.backtick,
+                `${keyPrefix}.defaultRuleToggles.backtick`,
+                DEFAULT_XSS_SIDE_OPTIONS.defaultRuleToggles.backtick,
+            ),
+        },
+        customRules: parseEscapeRuleList(options.customRules, `${keyPrefix}.customRules`),
+    };
+}
+
+function parseXssInjectionOptions(value: unknown): XssInjectionOptions {
+    if (typeof value === "undefined") {
+        return {
+            storedXss: DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
+            clientSide: cloneDefaultXssSideOptions(),
+            serverSide: cloneDefaultXssSideOptions(),
+        };
+    }
+
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        console.warn(`[CONFIG] Invalid lab option "xssInjection" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        return {
+            storedXss: DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
+            clientSide: cloneDefaultXssSideOptions(),
+            serverSide: cloneDefaultXssSideOptions(),
+        };
+    }
+
+    const options = value as Record<string, unknown>;
+    return {
+        storedXss: parseBooleanOption(
+            options.storedXss,
+            "xssInjection.storedXss",
+            DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
+        ),
+        clientSide: parseXssSideOptions(options.clientSide, "xssInjection.clientSide"),
+        serverSide: parseXssSideOptions(options.serverSide, "xssInjection.serverSide"),
+    };
 }
 
 function loadLabOptions(): LabOptions {
@@ -37,26 +238,22 @@ function loadLabOptions(): LabOptions {
 
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
             console.warn(`[CONFIG] Invalid lab options format in ${LAB_OPTIONS_PATH}. Using defaults.`);
-            return {
-                storedXss: false,
-                sqli: false,
-                debugErrorRoutes: false,
-            };
+            return getDefaultLabOptions();
         }
 
         const options = parsed as Record<string, unknown>;
         return {
-            storedXss: parseBooleanOption(options.storedXss, "storedXss"),
-            sqli: parseBooleanOption(options.sqli, "sqli"),
-            debugErrorRoutes: parseBooleanOption(options.debugErrorRoutes, "debugErrorRoutes"),
+            sqli: parseBooleanOption(options.sqli, "sqli", DEFAULT_LAB_OPTIONS.sqli),
+            debugErrorRoutes: parseBooleanOption(
+                options.debugErrorRoutes,
+                "debugErrorRoutes",
+                DEFAULT_LAB_OPTIONS.debugErrorRoutes,
+            ),
+            xssInjection: parseXssInjectionOptions(options.xssInjection),
         };
     } catch (err) {
         console.warn(`[CONFIG] Failed to load ${LAB_OPTIONS_PATH}. Using defaults.`);
-        return {
-            storedXss: false,
-            sqli: false,
-            debugErrorRoutes: false,
-        };
+        return getDefaultLabOptions();
     }
 }
 

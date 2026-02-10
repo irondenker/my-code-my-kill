@@ -12,10 +12,15 @@ import occurRouter from "./routes/occur.routes.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import { HttpError } from "./utils/http-error.js";
 import { getLabOptions } from "./config/lab-options.js";
+import { createXssEscaper } from "./utils/xss-escape.util.js";
 
 const isProd = process.env.NODE_ENV === "production";
 const sessionSecret = process.env.SESSION_SECRET ?? "dev-only-change-me";
-const labStoredXssEnabled = getLabOptions().storedXss;
+const labOptions = getLabOptions();
+const clientSideSanitizeEnabled = labOptions.xssInjection.clientSide.sanitizeEnabled;
+const serverSideSanitizeEnabled = labOptions.xssInjection.serverSide.sanitizeEnabled;
+const labStoredXssEnabled = labOptions.xssInjection.storedXss;
+const escapeForXss = createXssEscaper(labOptions.xssInjection.serverSide);
 if (isProd && sessionSecret === "dev-only-change-me") {
     throw new Error("Missing SESSION_SECRET in production.");
 }
@@ -24,7 +29,7 @@ const cookieSecure: boolean | "auto" = isProd ? "auto" : false;
 
 export function createApp() {
     const app = express();
-    if (isProd && labStoredXssEnabled) {
+    if (isProd && !serverSideSanitizeEnabled && labStoredXssEnabled) {
         console.warn("[SECURITY_LAB] Stored XSS lab mode is enabled in production.");
     }
 
@@ -79,6 +84,10 @@ export function createApp() {
         res.locals.sessionUsername = req.session.username ?? null;
         res.locals.sessionUserRole = req.session.userRole ?? null;
         res.locals.labStoredXssEnabled = labStoredXssEnabled;
+        res.locals.clientSideSanitizeEnabled = clientSideSanitizeEnabled;
+        res.locals.serverSideSanitizeEnabled = serverSideSanitizeEnabled;
+        res.locals.xssClientSideOptions = labOptions.xssInjection.clientSide;
+        res.locals.escapeForXss = escapeForXss;
         const profileImageUrl = req.session.profileImageUrl;
         res.locals.sessionProfileImageUrl =
             profileImageUrl && !profileImageUrl.startsWith("/")
