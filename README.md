@@ -62,6 +62,15 @@
 - [GitHub](https://github.com/irondenker/my-code-my-kill)
 - [Project Blog](https://irondenker.tistory.com/category/Projects)
 
+## References
+
+- <https://getbootstrap.com/docs/5.3/examples/>
+- <https://www.toptal.com/developers/gitignore>
+- <https://techicons.dev/>
+- <https://www.flaticon.com/kr/>
+- <https://www.svgrepo.com/>
+- <https://icons.getbootstrap.com/>
+
 ## License
 
 This project is licensed under the MIT License.  
