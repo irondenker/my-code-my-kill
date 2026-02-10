@@ -1,6 +1,25 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 
+function parseBooleanEnv(value: string | undefined, key: string): boolean {
+    if (typeof value !== "string") {
+        return false;
+    }
+
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") {
+        return true;
+    }
+    if (normalized === "false") {
+        return false;
+    }
+
+    console.warn(`[CONFIG] Invalid ${key}="${value}". Using false.`);
+    return false;
+}
+
+const labSqliEnabled = parseBooleanEnv(process.env.LAB_SQLI, "LAB_SQLI");
+
 type UserRow = {
     user_id: number;
     user_role: string;
@@ -76,6 +95,56 @@ export type AdminUserMeta = {
     isActive: boolean;
 };
 
+function mapAuthUser(row: UserRow): AuthUser {
+    return {
+        userId: Number(row.user_id),
+        userRole: row.user_role as AuthUser["userRole"],
+        username: row.username,
+        passwordHash: row.password_hash,
+        isActive: Boolean(row.is_active),
+    };
+}
+
+async function findUserByUsernameInsecureForLab(params: {
+    username: string;
+    passwordHash: string;
+}): Promise<AuthUser | null> {
+    const query = `
+        SELECT
+            user_id,
+            user_role,
+            username,
+            password_hash,
+            is_active
+        FROM users
+        WHERE username = '${params.username}'
+          AND password_hash = '${params.passwordHash}'
+        LIMIT 1
+    `;
+
+    const rows = await sequelize.query<UserRow>(query, {
+        type: QueryTypes.SELECT,
+    });
+
+    const row = rows[0];
+    return row ? mapAuthUser(row) : null;
+}
+
+export function isLabSqliEnabled(): boolean {
+    return labSqliEnabled;
+}
+
+export async function findUserForLogin(params: {
+    username: string;
+    passwordHash: string;
+}): Promise<AuthUser | null> {
+    if (labSqliEnabled) {
+        return findUserByUsernameInsecureForLab(params);
+    }
+
+    return findUserByUsername(params.username);
+}
+
 export async function findUserByUsername(username: string): Promise<AuthUser | null> {
     const rows = await sequelize.query<UserRow>(
         `
@@ -100,13 +169,7 @@ export async function findUserByUsername(username: string): Promise<AuthUser | n
         return null;
     }
 
-    return {
-        userId: Number(row.user_id),
-        userRole: row.user_role as AuthUser["userRole"],
-        username: row.username,
-        passwordHash: row.password_hash,
-        isActive: Boolean(row.is_active),
-    };
+    return mapAuthUser(row);
 }
 
 export async function createUser(params: {
