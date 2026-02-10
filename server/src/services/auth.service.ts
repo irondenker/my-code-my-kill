@@ -1,24 +1,8 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
+import { getLabOptions } from "../config/lab-options.js";
 
-function parseBooleanEnv(value: string | undefined, key: string): boolean {
-    if (typeof value !== "string") {
-        return false;
-    }
-
-    const normalized = value.trim().toLowerCase();
-    if (normalized === "true") {
-        return true;
-    }
-    if (normalized === "false") {
-        return false;
-    }
-
-    console.warn(`[CONFIG] Invalid ${key}="${value}". Using false.`);
-    return false;
-}
-
-const labSqliEnabled = parseBooleanEnv(process.env.LAB_SQLI, "LAB_SQLI");
+const labSqliEnabled = getLabOptions().sqli;
 
 type UserRow = {
     user_id: number;

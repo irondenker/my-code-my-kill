@@ -7,29 +7,14 @@ import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
 import adminRouter from "./routes/admin.routes.js";
 import rootRouter from "./routes/root.routes.js";
+import apiDocsRouter from "./routes/api-docs.routes.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import { HttpError } from "./utils/http-error.js";
-
-function parseBooleanEnv(value: string | undefined, key: string): boolean {
-    if (typeof value !== "string") {
-        return false;
-    }
-
-    const normalized = value.trim().toLowerCase();
-    if (normalized === "true") {
-        return true;
-    }
-    if (normalized === "false") {
-        return false;
-    }
-
-    console.warn(`[CONFIG] Invalid ${key}="${value}". Using false.`);
-    return false;
-}
+import { getLabOptions } from "./config/lab-options.js";
 
 const isProd = process.env.NODE_ENV === "production";
 const sessionSecret = process.env.SESSION_SECRET ?? "dev-only-change-me";
-const labStoredXssEnabled = parseBooleanEnv(process.env.LAB_STORED_XSS, "LAB_STORED_XSS");
+const labStoredXssEnabled = getLabOptions().storedXss;
 if (isProd && sessionSecret === "dev-only-change-me") {
     throw new Error("Missing SESSION_SECRET in production.");
 }
@@ -109,6 +94,7 @@ export function createApp() {
     app.use(userRouter);
     app.use(adminRouter);
     app.use(boardRouter);
+    app.use(apiDocsRouter);
 
     app.use("/", rootRouter);
 
