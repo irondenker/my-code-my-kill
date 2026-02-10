@@ -45,6 +45,26 @@ body {
     gap: 24px;
 }
 
+.legal-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 44px;
+    z-index: 2;
+    border-top: 1px solid rgba(151, 174, 206, 0.35);
+    background: rgba(5, 13, 24, 0.45);
+    backdrop-filter: blur(4px);
+}
+
+.legal-copy {
+    margin: 0;
+    line-height: 44px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(216, 230, 248, 0.8);
+}
+
 .error {
     width: min(520px, 94vw);
     padding: 28px 26px 24px;
@@ -271,5 +291,9 @@ body {
     .container {
         transform: scale(0.72);
         transform-origin: top center;
+    }
+    .legal-copy {
+        font-size: 10px;
+        padding: 0 8px;
     }
 }
