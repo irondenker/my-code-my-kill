@@ -1,7 +1,7 @@
 ﻿# My Code, My Kill
 
-|![My Code, My Kill Logo](./docs/assets/logo-mark.svg)|
-|:---------------------------------------------------:|
+![My Code, My Kill Logo](./docs/assets/logo-mark.svg)
+
 
 > **제대로 쌓아올리고,
 제대로 무너뜨립니다.**
