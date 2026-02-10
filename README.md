@@ -1,4 +1,6 @@
-﻿<p align="center">
+﻿# My Code, My Kill
+
+<p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/logo-mark-light.svg">
     <img src="./docs/assets/logo-mark-dark.svg" alt="my code my kill logo" width="300">
@@ -6,14 +8,13 @@
 </p>
 
 <h3 align="center">
- "쌓아올리고, 무너뜨리다."
+   "쌓아올리고, 무너뜨리다."
+   <br/>
 </h3>
 
----
-
-# My Code, My Kill
-
 ![My Code, My Kill Screenshot](./docs/assets/screenshot.png)
+
+---
 
 ## Abstract
 
