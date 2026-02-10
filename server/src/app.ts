@@ -12,6 +12,7 @@ import { HttpError } from "./utils/http-error.js";
 
 const isProd = process.env.NODE_ENV === "production";
 const sessionSecret = process.env.SESSION_SECRET ?? "dev-only-change-me";
+const labStoredXssEnabled = process.env.LAB_STORED_XSS === "true";
 if (isProd && sessionSecret === "dev-only-change-me") {
     throw new Error("Missing SESSION_SECRET in production.");
 }
@@ -20,6 +21,10 @@ const cookieSecure: boolean | "auto" = isProd ? "auto" : false;
 
 export function createApp() {
     const app = express();
+    if (isProd && labStoredXssEnabled) {
+        console.warn("[SECURITY_LAB] Stored XSS lab mode is enabled in production.");
+    }
+
     if (trustProxy) {
         app.set("trust proxy", 1);
     }
@@ -70,6 +75,7 @@ export function createApp() {
         res.locals.sessionUser = req.session.userId ?? null;
         res.locals.sessionUsername = req.session.username ?? null;
         res.locals.sessionUserRole = req.session.userRole ?? null;
+        res.locals.labStoredXssEnabled = labStoredXssEnabled;
         const profileImageUrl = req.session.profileImageUrl;
         res.locals.sessionProfileImageUrl =
             profileImageUrl && !profileImageUrl.startsWith("/")

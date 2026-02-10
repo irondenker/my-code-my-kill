@@ -24,11 +24,24 @@ services:
       NODE_ENV: development
       DB_HOST: db
       DB_PORT: 5432
+      LAB_STORED_XSS: "${LAB_STORED_XSS:-false}"
     depends_on:
       - db
     volumes:
       - ./server:/app
       - server_node_modules:/app/node_modules
+    networks:
+      - default
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./server/views/errors:/var/www/errors:ro
+      - ./server/public:/var/www/public:ro
     networks:
       - default
 

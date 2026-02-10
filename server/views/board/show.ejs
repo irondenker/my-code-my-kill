@@ -48,7 +48,11 @@
                     </div>
                     <% } %>
 
+                    <% if (labStoredXssEnabled) { %>
+                    <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7;"><%- post.content %></div>
+                    <% } else { %>
                     <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7;"><%= post.content %></div>
+                    <% } %>
                 </div>
             </article>
 
