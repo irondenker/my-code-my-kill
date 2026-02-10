@@ -97,3 +97,8 @@ npm start
 - <https://www.flaticon.com/kr/>
 - <https://www.svgrepo.com/>
 - <https://icons.getbootstrap.com/>
+
+## 📄 License
+
+This project is licensed under the MIT License.  
+See the [LICENSE](./LICENSE) file for details.
