@@ -10,9 +10,26 @@ import rootRouter from "./routes/root.routes.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import { HttpError } from "./utils/http-error.js";
 
+function parseBooleanEnv(value: string | undefined, key: string): boolean {
+    if (typeof value !== "string") {
+        return false;
+    }
+
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") {
+        return true;
+    }
+    if (normalized === "false") {
+        return false;
+    }
+
+    console.warn(`[CONFIG] Invalid ${key}="${value}". Using false.`);
+    return false;
+}
+
 const isProd = process.env.NODE_ENV === "production";
 const sessionSecret = process.env.SESSION_SECRET ?? "dev-only-change-me";
-const labStoredXssEnabled = process.env.LAB_STORED_XSS === "true";
+const labStoredXssEnabled = parseBooleanEnv(process.env.LAB_STORED_XSS, "LAB_STORED_XSS");
 if (isProd && sessionSecret === "dev-only-change-me") {
     throw new Error("Missing SESSION_SECRET in production.");
 }

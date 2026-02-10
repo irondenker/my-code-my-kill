@@ -103,20 +103,22 @@ function getSessionActor(req: Request): { userId: number; username: string | nul
     };
 }
 
-function getUsersPageSuccessMessage(req: Request): string | null {
-    if (req.query?.created === "1") {
-        return "User account has been created.";
+function consumeAdminUsersFlashMessage(req: Request): string | null {
+    const value = req.session.adminUsersFlashMessage;
+    if (typeof value !== "string" || value.length === 0) {
+        return null;
     }
-    if (req.query?.deleted === "1") {
-        return "User account has been deleted.";
+    delete req.session.adminUsersFlashMessage;
+    return value;
+}
+
+function consumeAdminBoardsFlashMessage(req: Request): string | null {
+    const value = req.session.adminBoardsFlashMessage;
+    if (typeof value !== "string" || value.length === 0) {
+        return null;
     }
-    if (req.query?.statusUpdated === "1") {
-        return "User status has been updated.";
-    }
-    if (req.query?.roleUpdated === "1") {
-        return "User role has been updated.";
-    }
-    return null;
+    delete req.session.adminBoardsFlashMessage;
+    return value;
 }
 
 async function renderAdminUsersIndex(
@@ -135,7 +137,7 @@ async function renderAdminUsersIndex(
         users,
         adminCount,
         formError: options?.formError ?? null,
-        formSuccess: options?.formSuccess ?? getUsersPageSuccessMessage(req),
+        formSuccess: options?.formSuccess ?? consumeAdminUsersFlashMessage(req),
         createFormValue: options?.createFormValue ?? {
             username: "",
             role: "user",
@@ -145,6 +147,7 @@ async function renderAdminUsersIndex(
 }
 
 async function renderAdminBoardsIndex(
+    req: Request,
     res: Response,
     options?: {
         formError?: string | null;
@@ -156,7 +159,7 @@ async function renderAdminBoardsIndex(
     return res.render("admin/boards/index", {
         boards,
         formError: options?.formError ?? null,
-        formSuccess: options?.formSuccess ?? null,
+        formSuccess: options?.formSuccess ?? consumeAdminBoardsFlashMessage(req),
         formValue: options?.formValue ?? {
             slug: "",
             name: "",
@@ -284,7 +287,8 @@ export async function postAdminUserCreate(req: Request, res: Response, next: Nex
             userAgent: getRequestUserAgent(req),
         });
 
-        return res.redirect("/admin/users?created=1");
+        req.session.adminUsersFlashMessage = "User account has been created.";
+        return res.redirect("/admin/users");
     } catch (err) {
         return next(err);
     }
@@ -342,7 +346,8 @@ export async function postAdminUserDelete(req: Request, res: Response, next: Nex
             userAgent: getRequestUserAgent(req),
         });
 
-        return res.redirect("/admin/users?deleted=1");
+        req.session.adminUsersFlashMessage = "User account has been deleted.";
+        return res.redirect("/admin/users");
     } catch (err) {
         return next(err);
     }
@@ -381,7 +386,8 @@ export async function postAdminUserStatus(req: Request, res: Response, next: Nex
 
         const isActive = status === "active";
         if (target.isActive === isActive) {
-            return res.redirect("/admin/users?statusUpdated=1");
+            req.session.adminUsersFlashMessage = "User status has been updated.";
+            return res.redirect("/admin/users");
         }
 
         const updated = await updateUserActiveStatus({ userId, isActive });
@@ -404,7 +410,8 @@ export async function postAdminUserStatus(req: Request, res: Response, next: Nex
             userAgent: getRequestUserAgent(req),
         });
 
-        return res.redirect("/admin/users?statusUpdated=1");
+        req.session.adminUsersFlashMessage = "User status has been updated.";
+        return res.redirect("/admin/users");
     } catch (err) {
         return next(err);
     }
@@ -431,7 +438,8 @@ export async function postAdminUserRole(req: Request, res: Response, next: NextF
 
         const requestedRole = role as "admin" | "user";
         if (target.userRole === requestedRole) {
-            return res.redirect("/admin/users?roleUpdated=1");
+            req.session.adminUsersFlashMessage = "User role has been updated.";
+            return res.redirect("/admin/users");
         }
 
         if (
@@ -476,7 +484,8 @@ export async function postAdminUserRole(req: Request, res: Response, next: NextF
             userAgent: getRequestUserAgent(req),
         });
 
-        return res.redirect("/admin/users?roleUpdated=1");
+        req.session.adminUsersFlashMessage = "User role has been updated.";
+        return res.redirect("/admin/users");
     } catch (err) {
         return next(err);
     }
@@ -498,15 +507,7 @@ export async function getAdminAuditLogsPage(req: Request, res: Response, next: N
 
 export async function getAdminBoardsPage(req: Request, res: Response, next: NextFunction) {
     try {
-        const formSuccess = req.query?.created === "1"
-            ? "Board has been created."
-            : req.query?.updated === "1"
-                ? "Board has been updated."
-                : null;
-
-        return await renderAdminBoardsIndex(res, {
-            formSuccess,
-        });
+        return await renderAdminBoardsIndex(req, res);
     } catch (err) {
         return next(err);
     }
@@ -599,7 +600,8 @@ export async function postAdminBoardCreate(req: Request, res: Response, next: Ne
             createAccess,
         });
 
-        return res.redirect("/admin/boards?created=1");
+        req.session.adminBoardsFlashMessage = "Board has been created.";
+        return res.redirect("/admin/boards");
     } catch (err) {
         return next(err);
     }
@@ -706,7 +708,8 @@ export async function postAdminBoardEdit(req: Request, res: Response, next: Next
             return next(new HttpError(404, "Not Found"));
         }
 
-        return res.redirect("/admin/boards?updated=1");
+        req.session.adminBoardsFlashMessage = "Board has been updated.";
+        return res.redirect("/admin/boards");
     } catch (err) {
         return next(err);
     }

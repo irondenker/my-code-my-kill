@@ -24,7 +24,6 @@ services:
       NODE_ENV: development
       DB_HOST: db
       DB_PORT: 5432
-      LAB_STORED_XSS: "${LAB_STORED_XSS:-false}"
     depends_on:
       - db
     volumes:

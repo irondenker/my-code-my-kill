@@ -6,5 +6,8 @@ declare module "express-session" {
         userRole?: "admin" | "user";
         username?: string;
         profileImageUrl?: string | null;
+        boardFlashMessage?: string;
+        adminUsersFlashMessage?: string;
+        adminBoardsFlashMessage?: string;
     }
 }

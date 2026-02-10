@@ -582,6 +582,10 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
         }
 
         if (deleted) {
+            if (req.method === "POST") {
+                req.session.boardFlashMessage = "Post has been deleted.";
+                return res.redirect(`/board/${encodeURIComponent(slug)}`);
+            }
             return res.status(204).send();
         }
 

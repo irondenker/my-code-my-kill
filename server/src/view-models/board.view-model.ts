@@ -14,6 +14,15 @@ function parsePositiveInt(rawValue: unknown, fallback: number): number {
     return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
 }
 
+function consumeBoardFlashMessage(req: Request): string | null {
+    const value = req.session.boardFlashMessage;
+    if (typeof value !== "string" || value.length === 0) {
+        return null;
+    }
+    delete req.session.boardFlashMessage;
+    return value;
+}
+
 function getViewerContext(req: Request) {
     const userId = Number(req.session.userId);
     const isAuthenticated = Number.isFinite(userId) && userId > 0;
@@ -65,6 +74,7 @@ export async function buildBoardIndexViewModel(req: Request) {
         boardSlug: null,
         boardDisplayName: "Boards",
         boardDescription: null,
+        formSuccess: null,
         canCreate: false,
         boards,
     };
@@ -73,6 +83,7 @@ export async function buildBoardIndexViewModel(req: Request) {
 export async function buildBoardSlugViewModel(req: Request, slug: string) {
     const board = await findBoardBySlug(slug);
     const page = parsePositiveInt(req.query.page, 1);
+    const formSuccess = consumeBoardFlashMessage(req);
 
     const totalCount = await countBoardPostsBySlug(slug);
     const limit = PAGINATION_DEFAULT_LIMIT;
@@ -99,6 +110,7 @@ export async function buildBoardSlugViewModel(req: Request, slug: string) {
         boardSlug: slug,
         boardDisplayName: board?.name ?? slug,
         boardDescription: board?.description ?? null,
+        formSuccess,
         canCreate: canCreateForBoard(req, board),
         postOutlines,
         pagination: {

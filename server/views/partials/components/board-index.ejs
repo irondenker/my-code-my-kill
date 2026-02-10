@@ -15,6 +15,28 @@
             <% if (boardDesc) { %>
             <p class="board-description text-muted"><%= boardDesc %></p>
             <% } %>
+            <% if (formSuccess) { %>
+            <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+                <div
+                    class="toast text-bg-success border-0"
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    data-auto-toast="true"
+                    data-bs-delay="2500"
+                >
+                    <div class="d-flex">
+                        <div class="toast-body"><%= formSuccess %></div>
+                        <button
+                            type="button"
+                            class="btn-close btn-close-white me-2 m-auto"
+                            data-bs-dismiss="toast"
+                            aria-label="Close"
+                        ></button>
+                    </div>
+                </div>
+            </div>
+            <% } %>
             <% if (canCreate && boardSlug) { %>
             <div class="board-actions">
                 <a class="btn btn-primary" href="/board/<%= boardSlug %>/new">New post</a>

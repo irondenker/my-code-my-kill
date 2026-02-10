@@ -1,4 +1,7 @@
-<!-- 페이지별 JS -->
+<!-- Page Scripts -->
+<script>
+    window.__LAB_STORED_XSS__ = <%= labStoredXssEnabled ? "true" : "false" %>;
+</script>
 <% const _scripts = typeof scripts !== "undefined" ? scripts : []; %>
 <% _scripts.forEach(function (src) { %>
     <script src="<%= src %>" defer></script>
