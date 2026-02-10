@@ -1,4 +1,5 @@
 {
   "storedXss": false,
-  "sqli": false
+  "sqli": false,
+  "debugErrorRoutes": false
 }

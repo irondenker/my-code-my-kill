@@ -8,6 +8,7 @@ import userRouter from "./routes/user.routes.js";
 import adminRouter from "./routes/admin.routes.js";
 import rootRouter from "./routes/root.routes.js";
 import apiDocsRouter from "./routes/api-docs.routes.js";
+import occurRouter from "./routes/occur.routes.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import { HttpError } from "./utils/http-error.js";
 import { getLabOptions } from "./config/lab-options.js";
@@ -34,8 +35,8 @@ export function createApp() {
     app.set("view engine", "ejs");
     app.use(express.static("public"));
     const errorStaticRoot = path.join(process.cwd(), "views", "errors");
-    ["403", "404", "500", "503", "504"].forEach((status) => {
-        app.use(`/errors/${status}`, express.static(path.join(errorStaticRoot, status)));
+    ["403", "404", "500", "503", "504", "edge"].forEach((errorResource) => {
+        app.use(`/errors/${errorResource}`, express.static(path.join(errorStaticRoot, errorResource)));
     });
 
 
@@ -95,6 +96,7 @@ export function createApp() {
     app.use(adminRouter);
     app.use(boardRouter);
     app.use(apiDocsRouter);
+    app.use(occurRouter);
 
     app.use("/", rootRouter);
 

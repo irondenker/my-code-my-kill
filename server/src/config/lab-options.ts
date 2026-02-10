@@ -4,6 +4,7 @@ import path from "node:path";
 export type LabOptions = {
     storedXss: boolean;
     sqli: boolean;
+    debugErrorRoutes: boolean;
 };
 
 const LAB_OPTIONS_PATH = path.join(process.cwd(), "lab-options.json");
@@ -39,6 +40,7 @@ function loadLabOptions(): LabOptions {
             return {
                 storedXss: false,
                 sqli: false,
+                debugErrorRoutes: false,
             };
         }
 
@@ -46,12 +48,14 @@ function loadLabOptions(): LabOptions {
         return {
             storedXss: parseBooleanOption(options.storedXss, "storedXss"),
             sqli: parseBooleanOption(options.sqli, "sqli"),
+            debugErrorRoutes: parseBooleanOption(options.debugErrorRoutes, "debugErrorRoutes"),
         };
     } catch (err) {
         console.warn(`[CONFIG] Failed to load ${LAB_OPTIONS_PATH}. Using defaults.`);
         return {
             storedXss: false,
             sqli: false,
+            debugErrorRoutes: false,
         };
     }
 }
