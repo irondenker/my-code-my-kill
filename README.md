@@ -1,10 +1,17 @@
 ﻿# My Code, My Kill
 
-![My Code, My Kill Logo](./docs/assets/logo-mark.svg)
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/logo-mark-light.svg">
+    <img src="./docs/assets/logo-mark-dark.svg" alt="my code my kill logo" width="300">
+  </picture>
+</p>
 
+<h2 align="center">
+ 쌓아올리고, 무너뜨리다.
+</h2>
 
-> **제대로 쌓아올리고,
-제대로 무너뜨립니다.**
+![My Code, My Kill Screenshot](./docs/assets/screenshot.png)
 
 ---
 
