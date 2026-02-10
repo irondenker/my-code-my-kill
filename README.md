@@ -9,8 +9,9 @@
 
 <h3 align="center">
    "쌓아올리고, 무너뜨리다."
-   <br/>
 </h3>
+
+---
 
 ![My Code, My Kill Screenshot](./docs/assets/screenshot.png)
 
