@@ -50,26 +50,26 @@
 
 ## 1) 설정 파일 준비 (`.example` -> 실제 설정 파일)
 
-`server/` 디렉터리에서 아래 파일을 준비합니다.
+`server/examples/` 디렉터리에 있는 예시 파일을 `server/`로 복사하여 아래 파일을 준비합니다.
 
-- `.env.example` -> `.env`
-- `.env.production.example` -> `.env.production`
-- `lab-options.json.example` -> `lab-options.json`
+- `server/examples/.env.example` -> `server/.env`
+- `server/examples/.env.production.example` -> `server/.env.production`
+- `server/examples/lab-options.json.example` -> `server/lab-options.json`
 
 PowerShell (Windows)
 
 ```powershell
-Copy-Item server/.env.example server/.env
-Copy-Item server/.env.production.example server/.env.production
-Copy-Item server/lab-options.json.example server/lab-options.json
+Copy-Item server/examples/.env.example server/.env
+Copy-Item server/examples/.env.production.example server/.env.production
+Copy-Item server/examples/lab-options.json.example server/lab-options.json
 ```
 
 Bash (Linux/macOS)
 
 ```bash
-cp server/.env.example server/.env
-cp server/.env.production.example server/.env.production
-cp server/lab-options.json.example server/lab-options.json
+cp server/examples/.env.example server/.env
+cp server/examples/.env.production.example server/.env.production
+cp server/examples/lab-options.json.example server/lab-options.json
 ```
 
 이미 파일이 있으면 덮어쓰기 전에 값을 백업하거나 비교하세요.
