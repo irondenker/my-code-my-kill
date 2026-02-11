@@ -39,10 +39,32 @@ export function createApp() {
     }
 
     app.set("view engine", "ejs");
-    app.use(express.static("public"));
+    const publicDir = path.join(process.cwd(), "public");
+    const postFileUploadDir = path.join(publicDir, "uploads", "posts", "files");
+    app.use(
+        express.static(publicDir, {
+            setHeaders(res, filePath) {
+                // Helps prevent content-type sniffing attacks against uploaded files.
+                res.setHeader("X-Content-Type-Options", "nosniff");
+
+                // Force attachments to download instead of rendering inline in the browser.
+                if (filePath.startsWith(postFileUploadDir + path.sep)) {
+                    const filename = path.basename(filePath);
+                    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+                }
+            },
+        })
+    );
     const errorStaticRoot = path.join(process.cwd(), "views", "errors");
     ["403", "404", "500", "503", "504", "edge"].forEach((errorResource) => {
-        app.use(`/errors/${errorResource}`, express.static(path.join(errorStaticRoot, errorResource)));
+        app.use(
+            `/errors/${errorResource}`,
+            express.static(path.join(errorStaticRoot, errorResource), {
+                setHeaders(res) {
+                    res.setHeader("X-Content-Type-Options", "nosniff");
+                },
+            })
+        );
     });
 
 
@@ -126,4 +148,3 @@ export function createApp() {
 
     return app;
 }
-

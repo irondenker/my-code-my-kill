@@ -28,11 +28,17 @@ export type XssInjectionOptions = {
     serverSide: XssSideOptions;
 };
 
+export type UploadValidationOptions = {
+    extensionCheckEnabled: boolean;
+    magicNumberCheckEnabled: boolean;
+};
+
 export type LabOptions = {
     sqli: boolean;
     ssti: boolean;
     debugErrorRoutes: boolean;
     xssInjection: XssInjectionOptions;
+    uploadValidation: UploadValidationOptions;
 };
 
 const LAB_OPTIONS_PATH = path.join(process.cwd(), "lab-options.json");
@@ -61,6 +67,10 @@ const DEFAULT_LAB_OPTIONS: LabOptions = {
     ssti: false,
     debugErrorRoutes: false,
     xssInjection: { ...DEFAULT_XSS_INJECTION_OPTIONS },
+    uploadValidation: {
+        extensionCheckEnabled: true,
+        magicNumberCheckEnabled: true,
+    },
 };
 
 function cloneDefaultXssSideOptions(): XssSideOptions {
@@ -80,6 +90,10 @@ function getDefaultLabOptions(): LabOptions {
             storedXss: DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
             clientSide: cloneDefaultXssSideOptions(),
             serverSide: cloneDefaultXssSideOptions(),
+        },
+        uploadValidation: {
+            extensionCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheckEnabled,
+            magicNumberCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheckEnabled,
         },
     };
 }
@@ -234,6 +248,37 @@ function parseXssInjectionOptions(value: unknown): XssInjectionOptions {
     };
 }
 
+function parseUploadValidationOptions(value: unknown): UploadValidationOptions {
+    if (typeof value === "undefined") {
+        return {
+            extensionCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheckEnabled,
+            magicNumberCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheckEnabled,
+        };
+    }
+
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        console.warn(`[CONFIG] Invalid lab option "uploadValidation" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        return {
+            extensionCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheckEnabled,
+            magicNumberCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheckEnabled,
+        };
+    }
+
+    const options = value as Record<string, unknown>;
+    return {
+        extensionCheckEnabled: parseBooleanOption(
+            options.extensionCheckEnabled,
+            "uploadValidation.extensionCheckEnabled",
+            DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheckEnabled,
+        ),
+        magicNumberCheckEnabled: parseBooleanOption(
+            options.magicNumberCheckEnabled,
+            "uploadValidation.magicNumberCheckEnabled",
+            DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheckEnabled,
+        ),
+    };
+}
+
 function loadLabOptions(): LabOptions {
     try {
         const raw = fs.readFileSync(LAB_OPTIONS_PATH, "utf8");
@@ -254,6 +299,7 @@ function loadLabOptions(): LabOptions {
                 DEFAULT_LAB_OPTIONS.debugErrorRoutes,
             ),
             xssInjection: parseXssInjectionOptions(options.xssInjection),
+            uploadValidation: parseUploadValidationOptions(options.uploadValidation),
         };
     } catch (err) {
         console.warn(`[CONFIG] Failed to load ${LAB_OPTIONS_PATH}. Using defaults.`);

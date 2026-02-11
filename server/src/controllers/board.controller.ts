@@ -7,6 +7,14 @@ import sharp from "sharp";
 import { sequelize } from "../db/index.js";
 import { HttpError } from "../utils/http-error.js";
 import {
+    isExtensionCheckEnabled,
+    isMagicNumberCheckEnabled,
+    resolveAttachmentExpectation,
+    validateAllowedExtension,
+    validateMagicNumberForAttachment,
+    validateMagicNumberForImage,
+} from "../utils/upload-validation.util.js";
+import {
     type BoardMeta,
     createBoardPost,
     doesPostExistBySlugDisplayId,
@@ -142,6 +150,9 @@ function createUploadName(prefix: string, extension: string) {
 }
 
 async function storePostImage(file: Express.Multer.File): Promise<string> {
+    if (isMagicNumberCheckEnabled()) {
+        validateMagicNumberForImage(file.buffer);
+    }
     if (!IMAGE_MIME_TYPES.has(file.mimetype)) {
         throw new Error("Unsupported image type.");
     }
@@ -184,8 +195,19 @@ async function storePostAttachment(file: Express.Multer.File): Promise<string> {
     }
 
     const extension = path.extname(file.originalname).toLowerCase();
-    if (!FILE_EXTENSIONS.has(extension)) {
-        throw new Error("Unsupported attachment extension.");
+    if (isExtensionCheckEnabled()) {
+        validateAllowedExtension(file.originalname, FILE_EXTENSIONS);
+    }
+    if (isMagicNumberCheckEnabled()) {
+        const expectation = resolveAttachmentExpectation({
+            extension,
+            mimetype: file.mimetype,
+            trustExtension: isExtensionCheckEnabled(),
+        });
+        if (!expectation) {
+            throw new Error("Unsupported attachment type.");
+        }
+        validateMagicNumberForAttachment(file.buffer, expectation);
     }
 
     await ensurePostUploadDirs();

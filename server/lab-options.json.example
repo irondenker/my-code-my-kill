@@ -1,6 +1,10 @@
 {
   "sqli": false,
   "debugErrorRoutes": false,
+  "uploadValidation": {
+    "extensionCheckEnabled": true,
+    "magicNumberCheckEnabled": true
+  },
   "xssInjection": {
     "storedXss": false,
     "clientSide": {
@@ -14,7 +18,10 @@
         "backtick": true
       },
       "customRules": [
-        { "from": "&", "to": "&amp;" }
+        {
+          "from": "&",
+          "to": "&amp;"
+        }
       ]
     },
     "serverSide": {
@@ -28,8 +35,14 @@
         "backtick": true
       },
       "customRules": [
-        { "from": "<", "to": "&lt;" },
-        { "from": ">", "to": "&gt;" }
+        {
+          "from": "<",
+          "to": "&lt;"
+        },
+        {
+          "from": ">",
+          "to": "&gt;"
+        }
       ]
     }
   }

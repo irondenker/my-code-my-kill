@@ -6,6 +6,7 @@ import csrf from "csurf";
 import { findUserProfileById, updateUserProfileImage } from "../services/auth.service.js";
 import { ALLOWED_MIME_TYPES, MAX_DIMENSION, MAX_FILE_SIZE_BYTES, MIN_DIMENSION, OUTPUT_QUALITY, OUTPUT_SIZE, UPLOAD_DIR } from "../constants/upload.constants.js";
 import { HttpError } from "../utils/http-error.js";
+import { isMagicNumberCheckEnabled, validateMagicNumberForImage } from "../utils/upload-validation.util.js";
 
 const csrfForRender = csrf({ ignoreMethods: ["POST"] });
 
@@ -64,6 +65,14 @@ export async function postAvatarUpload(req: Request, res: Response, next: NextFu
         const file = req.file;
         if (!file) {
             return renderAvatarError(req, res, next, 400, "Avatar file is required.");
+        }
+
+        if (isMagicNumberCheckEnabled()) {
+            try {
+                validateMagicNumberForImage(file.buffer);
+            } catch {
+                return renderAvatarError(req, res, next, 422, "Invalid image data.");
+            }
         }
 
         if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
