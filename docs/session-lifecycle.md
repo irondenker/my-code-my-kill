@@ -229,11 +229,6 @@
   - `getBoardEditForm`
     - `isOwner`: 수정하려는 글 작성자의 `userId`와 `viewerUserId`가 일치하는지 여부 확인
       - `viewerUserId` 값의 출처: `req.session.userRole`
-        - `서버 세션 메모리`에서 값을 가져옴.
-        - `req.session.userRole`은 **클라이언트에 상에 저장하지 않음.**
-          - `req`,`res`,`localStorage` 등 클라이언트에서 **위변조 가능한 형태로 있지 않음.**
-        - `req.session.userRole`은 서버 상에 **`const` 변수**로 저장
-          - `const` 변수의 `불변성` 여부 확인 필요 (`Java`에서의 `String`처럼 `불변성`을 가지고 있는가?)
 
 - **참고: 프로젝트 내 관련 코드**
 
