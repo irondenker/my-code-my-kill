@@ -19,19 +19,20 @@ This file records third-party code, templates, fonts, and assets used in this re
 - `license`: MIT (repository license declaration)
 - `local modifications`: UI copy replacement, fallback routing behavior, code-specific messaging, edge template extension
 - `required attribution`: Include MIT copyright and permission notice in repository/distributions
-- `license copy`: `licenses/PecceG2-HTML_Template_http_codes-MIT.txt`
+- `license copy`: `third-party/PecceG2-HTML_Template_http_codes-MIT.txt`
 - `notes`: Keep this notice file and the MIT license copy with distributed source.
 
-### Entry: Oxygen Font Webfont Reference
+### Entry: Spoqa Han Sans Neo Webfont
 
-- `status`: unverified
-- `component`: `server/views/errors/**/oxygen.fonts.css`
-- `upstream author`: Google Fonts / Oxygen typeface contributors
-- `upstream source`: <https://fonts.googleapis.com> / <https://fonts.gstatic.com>
-- `license`: TODO (confirm exact font license and redistribution requirements)
-- `local modifications`: local CSS wrapper and usage in error pages
-- `required attribution`: TODO (fill based on confirmed license)
-- `notes`: Confirm whether current self-host/reference method is compliant for distribution model.
+- `status`: verified
+- `component`: `server/public/assets/fonts/SpoqaHanSansNeo-*.woff2`, `server/public/assets/css/fonts.css`
+- `upstream author`: Spoqa (spoqa.com)
+- `upstream source`: Spoqa Han Sans Neo distribution package used by this repository
+- `license`: SIL Open Font License 1.1 (OFL-1.1)
+- `local modifications`: self-hosted webfont wiring, format conversion/packaging for local serving
+- `required attribution`: include copyright notice, Reserved Font Name notice, and OFL-1.1 license text with distributions
+- `license copy`: `third-party/SpoqaHanSansNeo-OFL-1.1.txt`
+- `notes`: Reserved Font Name includes `Spoqa Han Sans`, `Spoqa Han Sans JP`, `Spoqa Han Sans Neo`.
 
 ## Project Copyright
 

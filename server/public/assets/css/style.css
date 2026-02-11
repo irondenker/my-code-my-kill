@@ -1,4 +1,10 @@
+:root {
+    --app-font-family: "Spoqa Han Sans Neo", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
+    --bs-font-sans-serif: var(--app-font-family);
+    --bs-body-font-family: var(--app-font-family);
+}
 body {
+    font-family: var(--app-font-family);
     /* padding-bottom: 1rem; */
     color: rgb(var(--bs-tertiary-color-rgb));
 }
@@ -118,3 +124,4 @@ main.landing-cover {
     line-height: 1.6;
     color: rgb(var(--bs-tertiary-color-rgb));
 }
+

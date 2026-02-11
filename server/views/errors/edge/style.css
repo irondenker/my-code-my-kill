@@ -7,7 +7,7 @@ body {
 
 body {
     overflow: hidden;
-    font-family: "Oxygen", "Segoe UI", Arial, sans-serif;
+    font-family: var(--app-font-family);
     color: #e6eef8;
     background:
         radial-gradient(1200px 500px at 18% 14%, rgba(40, 176, 249, 0.25), transparent 70%),
@@ -85,7 +85,7 @@ body {
 
 .error h1 {
     margin: 0;
-    font-family: "Quicksand", "Oxygen", sans-serif;
+    font-family: var(--app-font-family);
     font-size: clamp(48px, 8vw, 86px);
     line-height: 1;
     letter-spacing: 0.04em;
@@ -297,3 +297,4 @@ body {
         padding: 0 8px;
     }
 }
+

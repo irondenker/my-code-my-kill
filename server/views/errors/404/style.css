@@ -2,12 +2,12 @@ body,
 html {
     padding: 0;
     margin: 0;
-    font-family: 'Quicksand', sans-serif;
+    font-family: var(--app-font-family);
     font-weight: 400;
     overflow: hidden;
 }
 p {
-    font-family: 'Oxygen', sans-serif;
+    font-family: var(--app-font-family);
 }
 
 .code .centered{
