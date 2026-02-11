@@ -1,5 +1,8 @@
 {
   "sqli": false,
+  "csrf": {
+    "enabled": true
+  },
   "debugErrorRoutes": false,
   "uploadValidation": {
     "extensionCheckEnabled": true,

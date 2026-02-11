@@ -21,6 +21,7 @@ const labOptions = getLabOptions();
 const clientSideSanitizeEnabled = labOptions.xssInjection.clientSide.sanitizeEnabled;
 const serverSideSanitizeEnabled = labOptions.xssInjection.serverSide.sanitizeEnabled;
 const labStoredXssEnabled = labOptions.xssInjection.storedXss;
+const csrfEnabled = labOptions.csrf.enabled;
 const escapeForXss = createXssEscaper(labOptions.xssInjection.serverSide);
 if (isProd && sessionSecret === "dev-only-change-me") {
     throw new Error("Missing SESSION_SECRET in production.");
@@ -32,6 +33,9 @@ export function createApp() {
     const app = express();
     if (isProd && !serverSideSanitizeEnabled && labStoredXssEnabled) {
         console.warn("[SECURITY_LAB] Stored XSS lab mode is enabled in production.");
+    }
+    if (isProd && !csrfEnabled) {
+        console.warn("[SECURITY_LAB] CSRF protection is disabled in production.");
     }
 
     if (trustProxy) {
@@ -85,19 +89,21 @@ export function createApp() {
     );
 
     const csrfProtection = csrf();
-    app.use((req, res, next) => {
-        const isMultipartPost =
-            req.method === "POST" &&
-            (req.path === "/users/avatar" ||
-                /^\/board\/[^/]+$/.test(req.path) ||
-                /^\/board\/[^/]+\/\d+\/edit$/.test(req.path));
+    if (csrfEnabled) {
+        app.use((req, res, next) => {
+            const isMultipartPost =
+                req.method === "POST" &&
+                (req.path === "/users/avatar" ||
+                    /^\/board\/[^/]+$/.test(req.path) ||
+                    /^\/board\/[^/]+\/\d+\/edit$/.test(req.path));
 
-        if (isMultipartPost) {
-            return next();
-        }
+            if (isMultipartPost) {
+                return next();
+            }
 
-        return csrfProtection(req, res, next);
-    });
+            return csrfProtection(req, res, next);
+        });
+    }
 
     app.use((req, res, next) => {
         res.locals.csrfToken = typeof req.csrfToken === "function" ? req.csrfToken() : null;

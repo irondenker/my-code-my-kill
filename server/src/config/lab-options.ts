@@ -33,10 +33,15 @@ export type UploadValidationOptions = {
     magicNumberCheckEnabled: boolean;
 };
 
+export type CsrfOptions = {
+    enabled: boolean;
+};
+
 export type LabOptions = {
     sqli: boolean;
     ssti: boolean;
     debugErrorRoutes: boolean;
+    csrf: CsrfOptions;
     xssInjection: XssInjectionOptions;
     uploadValidation: UploadValidationOptions;
 };
@@ -66,6 +71,9 @@ const DEFAULT_LAB_OPTIONS: LabOptions = {
     sqli: false,
     ssti: false,
     debugErrorRoutes: false,
+    csrf: {
+        enabled: true,
+    },
     xssInjection: { ...DEFAULT_XSS_INJECTION_OPTIONS },
     uploadValidation: {
         extensionCheckEnabled: true,
@@ -86,6 +94,9 @@ function getDefaultLabOptions(): LabOptions {
         sqli: DEFAULT_LAB_OPTIONS.sqli,
         ssti: DEFAULT_LAB_OPTIONS.ssti,
         debugErrorRoutes: DEFAULT_LAB_OPTIONS.debugErrorRoutes,
+        csrf: {
+            enabled: DEFAULT_LAB_OPTIONS.csrf.enabled,
+        },
         xssInjection: {
             storedXss: DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
             clientSide: cloneDefaultXssSideOptions(),
@@ -279,6 +290,30 @@ function parseUploadValidationOptions(value: unknown): UploadValidationOptions {
     };
 }
 
+function parseCsrfOptions(value: unknown): CsrfOptions {
+    if (typeof value === "undefined") {
+        return {
+            enabled: DEFAULT_LAB_OPTIONS.csrf.enabled,
+        };
+    }
+
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        console.warn(`[CONFIG] Invalid lab option "csrf" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        return {
+            enabled: DEFAULT_LAB_OPTIONS.csrf.enabled,
+        };
+    }
+
+    const options = value as Record<string, unknown>;
+    return {
+        enabled: parseBooleanOption(
+            options.enabled,
+            "csrf.enabled",
+            DEFAULT_LAB_OPTIONS.csrf.enabled,
+        ),
+    };
+}
+
 function loadLabOptions(): LabOptions {
     try {
         const raw = fs.readFileSync(LAB_OPTIONS_PATH, "utf8");
@@ -298,6 +333,7 @@ function loadLabOptions(): LabOptions {
                 "debugErrorRoutes",
                 DEFAULT_LAB_OPTIONS.debugErrorRoutes,
             ),
+            csrf: parseCsrfOptions(options.csrf),
             xssInjection: parseXssInjectionOptions(options.xssInjection),
             uploadValidation: parseUploadValidationOptions(options.uploadValidation),
         };
