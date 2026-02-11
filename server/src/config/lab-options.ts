@@ -72,7 +72,7 @@ const DEFAULT_LAB_OPTIONS: LabOptions = {
     ssti: false,
     debugErrorRoutes: false,
     csrf: {
-        enabled: true,
+        enabled: false,
     },
     xssInjection: { ...DEFAULT_XSS_INJECTION_OPTIONS },
     uploadValidation: {

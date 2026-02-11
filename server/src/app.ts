@@ -21,7 +21,7 @@ const labOptions = getLabOptions();
 const clientSideSanitizeEnabled = labOptions.xssInjection.clientSide.sanitizeEnabled;
 const serverSideSanitizeEnabled = labOptions.xssInjection.serverSide.sanitizeEnabled;
 const labStoredXssEnabled = labOptions.xssInjection.storedXss;
-const csrfEnabled = labOptions.csrf.enabled;
+const csrfLabEnabled = labOptions.csrf.enabled;
 const escapeForXss = createXssEscaper(labOptions.xssInjection.serverSide);
 if (isProd && sessionSecret === "dev-only-change-me") {
     throw new Error("Missing SESSION_SECRET in production.");
@@ -34,7 +34,7 @@ export function createApp() {
     if (isProd && !serverSideSanitizeEnabled && labStoredXssEnabled) {
         console.warn("[SECURITY_LAB] Stored XSS lab mode is enabled in production.");
     }
-    if (isProd && !csrfEnabled) {
+    if (isProd && csrfLabEnabled) {
         console.warn("[SECURITY_LAB] CSRF protection is disabled in production.");
     }
 
@@ -89,7 +89,7 @@ export function createApp() {
     );
 
     const csrfProtection = csrf();
-    if (csrfEnabled) {
+    if (!csrfLabEnabled) {
         app.use((req, res, next) => {
             const isMultipartPost =
                 req.method === "POST" &&

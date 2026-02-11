@@ -1,7 +1,7 @@
 {
   "sqli": false,
   "csrf": {
-    "enabled": true
+    "enabled": false
   },
   "debugErrorRoutes": false,
   "uploadValidation": {
