@@ -13,7 +13,7 @@ services:
   server:
     build:
       context: ./server
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
       target: runtime
     env_file:
       - ./server/.env.production
