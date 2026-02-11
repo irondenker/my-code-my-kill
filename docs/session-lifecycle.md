@@ -261,7 +261,6 @@
         const isOwner = viewerUserId === post.user_id;
         // ...
     }
-
     ```
 
 ## 6. 글 CRUD 권한 검증
@@ -308,20 +307,16 @@
     1. 취약 조건 만들기
         - updateBoardPost를 소유자 체크 없이 직접 호출하는 라우트를 하나 임시로 만듭니다.
         ( 예: `POST /api/posts/:postId`에서 `req.params.postId`만 받아 `updateBoardPost(...)` 호출)
-
     2. 테스트 계정 준비
         - `userA`, `userB` 두 계정 생성 후,
         - `userA`로 게시글 1개 작성
-
     3. 재현 절차
         - `userB`로 로그인
         - `POST /api/posts/{userA의 postId}` 요청 전송
-
     4. 취약 판정 기준
         - 정상 반응: `403`
         - 취약 반응: `200` or `302`
             - userA 글 내용이 바뀜 **(IDOR/권한 누락)**
-
     5. 현재 코드와의 차이
         - `board.controller.ts`
             - 현재 `isOwner`/`isAdmin` 검증 존재
