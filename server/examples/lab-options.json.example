@@ -1,52 +1,66 @@
 {
-  "sqli": false,
+  "debug": {
+    "errorRoutes": {
+      "enabled": false
+    }
+  },
+  "sqlInjection": {
+    "enabled": false
+  },
   "csrf": {
     "enabled": false
   },
-  "debugErrorRoutes": false,
   "uploadValidation": {
-    "extensionCheckEnabled": true,
-    "magicNumberCheckEnabled": true
-  },
-  "xssInjection": {
-    "storedXss": false,
-    "clientSide": {
-      "sanitizeEnabled": true,
-      "defaultRuleToggles": {
-        "ampersand": true,
-        "lessThan": true,
-        "greaterThan": true,
-        "doubleQuote": true,
-        "singleQuote": true,
-        "backtick": true
-      },
-      "customRules": [
-        {
-          "from": "&",
-          "to": "&amp;"
-        }
-      ]
+    "extensionCheck": {
+      "enabled": true
     },
-    "serverSide": {
-      "sanitizeEnabled": true,
-      "defaultRuleToggles": {
-        "ampersand": true,
-        "lessThan": true,
-        "greaterThan": true,
-        "doubleQuote": true,
-        "singleQuote": true,
-        "backtick": true
-      },
-      "customRules": [
-        {
-          "from": "<",
-          "to": "&lt;"
+    "magicNumberCheck": {
+      "enabled": true
+    }
+  },
+  "XSS": {
+    "stored": {
+      "enabled": false
+    },
+    "sanitize": {
+      "clientSide": {
+        "enabled": true,
+        "defaultRuleToggles": {
+          "ampersand": true,
+          "lessThan": true,
+          "greaterThan": true,
+          "doubleQuote": true,
+          "singleQuote": true,
+          "backtick": true
         },
-        {
-          "from": ">",
-          "to": "&gt;"
-        }
-      ]
+        "customRules": [
+          {
+            "from": "&",
+            "to": "&amp;"
+          }
+        ]
+      },
+      "serverSide": {
+        "enabled": true,
+        "defaultRuleToggles": {
+          "ampersand": true,
+          "lessThan": true,
+          "greaterThan": true,
+          "doubleQuote": true,
+          "singleQuote": true,
+          "backtick": true
+        },
+        "customRules": [
+          {
+            "from": "<",
+            "to": "&lt;"
+          },
+          {
+            "from": ">",
+            "to": "&gt;"
+          }
+        ]
+      }
     }
   }
 }

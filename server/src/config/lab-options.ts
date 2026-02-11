@@ -33,12 +33,16 @@ export type UploadValidationOptions = {
     magicNumberCheckEnabled: boolean;
 };
 
+export type SqlInjectionOptions = {
+    enabled: boolean;
+};
+
 export type CsrfOptions = {
     enabled: boolean;
 };
 
 export type LabOptions = {
-    sqli: boolean;
+    sqlInjection: SqlInjectionOptions;
     ssti: boolean;
     debugErrorRoutes: boolean;
     csrf: CsrfOptions;
@@ -68,7 +72,9 @@ const DEFAULT_XSS_INJECTION_OPTIONS: XssInjectionOptions = {
 };
 
 const DEFAULT_LAB_OPTIONS: LabOptions = {
-    sqli: false,
+    sqlInjection: {
+        enabled: false,
+    },
     ssti: false,
     debugErrorRoutes: false,
     csrf: {
@@ -91,7 +97,9 @@ function cloneDefaultXssSideOptions(): XssSideOptions {
 
 function getDefaultLabOptions(): LabOptions {
     return {
-        sqli: DEFAULT_LAB_OPTIONS.sqli,
+        sqlInjection: {
+            enabled: DEFAULT_LAB_OPTIONS.sqlInjection.enabled,
+        },
         ssti: DEFAULT_LAB_OPTIONS.ssti,
         debugErrorRoutes: DEFAULT_LAB_OPTIONS.debugErrorRoutes,
         csrf: {
@@ -167,7 +175,7 @@ function parseEscapeRuleList(value: unknown, key: string): EscapeRule[] {
     return parsed;
 }
 
-function parseXssSideOptions(value: unknown, keyPrefix: "xssInjection.clientSide" | "xssInjection.serverSide"): XssSideOptions {
+function parseXssSideOptions(value: unknown, keyPrefix: string): XssSideOptions {
     if (typeof value === "undefined") {
         return cloneDefaultXssSideOptions();
     }
@@ -178,6 +186,12 @@ function parseXssSideOptions(value: unknown, keyPrefix: "xssInjection.clientSide
     }
 
     const options = value as Record<string, unknown>;
+    const sanitizeEnabledRaw = typeof options.enabled !== "undefined"
+        ? options.enabled
+        : options.sanitizeEnabled;
+    const sanitizeEnabledKey = typeof options.enabled !== "undefined"
+        ? `${keyPrefix}.enabled`
+        : `${keyPrefix}.sanitizeEnabled`;
     const rawToggles = options.defaultRuleToggles;
     const parsedToggles =
         rawToggles && typeof rawToggles === "object" && !Array.isArray(rawToggles)
@@ -189,8 +203,8 @@ function parseXssSideOptions(value: unknown, keyPrefix: "xssInjection.clientSide
 
     return {
         sanitizeEnabled: parseBooleanOption(
-            options.sanitizeEnabled,
-            `${keyPrefix}.sanitizeEnabled`,
+            sanitizeEnabledRaw,
+            sanitizeEnabledKey,
             DEFAULT_XSS_SIDE_OPTIONS.sanitizeEnabled,
         ),
         defaultRuleToggles: {
@@ -229,63 +243,151 @@ function parseXssSideOptions(value: unknown, keyPrefix: "xssInjection.clientSide
     };
 }
 
+function getDefaultXssInjectionOptions(): XssInjectionOptions {
+    return {
+        storedXss: DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
+        clientSide: cloneDefaultXssSideOptions(),
+        serverSide: cloneDefaultXssSideOptions(),
+    };
+}
+
 function parseXssInjectionOptions(value: unknown): XssInjectionOptions {
     if (typeof value === "undefined") {
-        return {
-            storedXss: DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
-            clientSide: cloneDefaultXssSideOptions(),
-            serverSide: cloneDefaultXssSideOptions(),
-        };
+        return getDefaultXssInjectionOptions();
     }
 
     if (!value || typeof value !== "object" || Array.isArray(value)) {
-        console.warn(`[CONFIG] Invalid lab option "xssInjection" in ${LAB_OPTIONS_PATH}. Using defaults.`);
-        return {
-            storedXss: DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
-            clientSide: cloneDefaultXssSideOptions(),
-            serverSide: cloneDefaultXssSideOptions(),
-        };
+        console.warn(`[CONFIG] Invalid lab option "XSS" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        return getDefaultXssInjectionOptions();
     }
 
     const options = value as Record<string, unknown>;
+    const rawStored = options.stored;
+    const parsedStored =
+        rawStored && typeof rawStored === "object" && !Array.isArray(rawStored)
+            ? (rawStored as Record<string, unknown>)
+            : {};
+    if (typeof rawStored !== "undefined" && (!rawStored || typeof rawStored !== "object" || Array.isArray(rawStored))) {
+        console.warn(`[CONFIG] Invalid lab option "XSS.stored" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+    }
+
+    const rawSanitize = options.sanitize;
+    const parsedSanitize =
+        rawSanitize && typeof rawSanitize === "object" && !Array.isArray(rawSanitize)
+            ? (rawSanitize as Record<string, unknown>)
+            : {};
+    if (typeof rawSanitize !== "undefined" && (!rawSanitize || typeof rawSanitize !== "object" || Array.isArray(rawSanitize))) {
+        console.warn(`[CONFIG] Invalid lab option "XSS.sanitize" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+    }
+
     return {
         storedXss: parseBooleanOption(
-            options.storedXss,
-            "xssInjection.storedXss",
+            parsedStored.enabled,
+            "XSS.stored.enabled",
             DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
         ),
-        clientSide: parseXssSideOptions(options.clientSide, "xssInjection.clientSide"),
-        serverSide: parseXssSideOptions(options.serverSide, "xssInjection.serverSide"),
+        clientSide: parseXssSideOptions(parsedSanitize.clientSide, "XSS.sanitize.clientSide"),
+        serverSide: parseXssSideOptions(parsedSanitize.serverSide, "XSS.sanitize.serverSide"),
+    };
+}
+
+function getDefaultUploadValidationOptions(): UploadValidationOptions {
+    return {
+        extensionCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheckEnabled,
+        magicNumberCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheckEnabled,
     };
 }
 
 function parseUploadValidationOptions(value: unknown): UploadValidationOptions {
     if (typeof value === "undefined") {
-        return {
-            extensionCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheckEnabled,
-            magicNumberCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheckEnabled,
-        };
+        return getDefaultUploadValidationOptions();
     }
 
     if (!value || typeof value !== "object" || Array.isArray(value)) {
         console.warn(`[CONFIG] Invalid lab option "uploadValidation" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        return getDefaultUploadValidationOptions();
+    }
+
+    const options = value as Record<string, unknown>;
+    const rawExtensionCheck = options.extensionCheck;
+    const parsedExtensionCheck =
+        rawExtensionCheck && typeof rawExtensionCheck === "object" && !Array.isArray(rawExtensionCheck)
+            ? (rawExtensionCheck as Record<string, unknown>)
+            : {};
+    if (typeof rawExtensionCheck !== "undefined" && (!rawExtensionCheck || typeof rawExtensionCheck !== "object" || Array.isArray(rawExtensionCheck))) {
+        console.warn(`[CONFIG] Invalid lab option "uploadValidation.extensionCheck" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+    }
+
+    const rawMagicNumberCheck = options.magicNumberCheck;
+    const parsedMagicNumberCheck =
+        rawMagicNumberCheck && typeof rawMagicNumberCheck === "object" && !Array.isArray(rawMagicNumberCheck)
+            ? (rawMagicNumberCheck as Record<string, unknown>)
+            : {};
+    if (typeof rawMagicNumberCheck !== "undefined" && (!rawMagicNumberCheck || typeof rawMagicNumberCheck !== "object" || Array.isArray(rawMagicNumberCheck))) {
+        console.warn(`[CONFIG] Invalid lab option "uploadValidation.magicNumberCheck" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+    }
+
+    return {
+        extensionCheckEnabled: parseBooleanOption(
+            parsedExtensionCheck.enabled,
+            "uploadValidation.extensionCheck.enabled",
+            DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheckEnabled,
+        ),
+        magicNumberCheckEnabled: parseBooleanOption(
+            parsedMagicNumberCheck.enabled,
+            "uploadValidation.magicNumberCheck.enabled",
+            DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheckEnabled,
+        ),
+    };
+}
+
+function parseDebugErrorRoutesOption(value: unknown): boolean {
+    if (typeof value === "undefined") {
+        return DEFAULT_LAB_OPTIONS.debugErrorRoutes;
+    }
+
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        console.warn(`[CONFIG] Invalid lab option "debug" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        return DEFAULT_LAB_OPTIONS.debugErrorRoutes;
+    }
+
+    const options = value as Record<string, unknown>;
+    const rawErrorRoutes = options.errorRoutes;
+    const parsedErrorRoutes =
+        rawErrorRoutes && typeof rawErrorRoutes === "object" && !Array.isArray(rawErrorRoutes)
+            ? (rawErrorRoutes as Record<string, unknown>)
+            : {};
+    if (typeof rawErrorRoutes !== "undefined" && (!rawErrorRoutes || typeof rawErrorRoutes !== "object" || Array.isArray(rawErrorRoutes))) {
+        console.warn(`[CONFIG] Invalid lab option "debug.errorRoutes" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+    }
+
+    return parseBooleanOption(
+        parsedErrorRoutes.enabled,
+        "debug.errorRoutes.enabled",
+        DEFAULT_LAB_OPTIONS.debugErrorRoutes,
+    );
+}
+
+function parseSqlInjectionOptions(value: unknown): SqlInjectionOptions {
+    if (typeof value === "undefined") {
         return {
-            extensionCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheckEnabled,
-            magicNumberCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheckEnabled,
+            enabled: DEFAULT_LAB_OPTIONS.sqlInjection.enabled,
+        };
+    }
+
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        console.warn(`[CONFIG] Invalid lab option "sqlInjection" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        return {
+            enabled: DEFAULT_LAB_OPTIONS.sqlInjection.enabled,
         };
     }
 
     const options = value as Record<string, unknown>;
     return {
-        extensionCheckEnabled: parseBooleanOption(
-            options.extensionCheckEnabled,
-            "uploadValidation.extensionCheckEnabled",
-            DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheckEnabled,
-        ),
-        magicNumberCheckEnabled: parseBooleanOption(
-            options.magicNumberCheckEnabled,
-            "uploadValidation.magicNumberCheckEnabled",
-            DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheckEnabled,
+        enabled: parseBooleanOption(
+            options.enabled,
+            "sqlInjection.enabled",
+            DEFAULT_LAB_OPTIONS.sqlInjection.enabled,
         ),
     };
 }
@@ -326,15 +428,11 @@ function loadLabOptions(): LabOptions {
 
         const options = parsed as Record<string, unknown>;
         return {
-            sqli: parseBooleanOption(options.sqli, "sqli", DEFAULT_LAB_OPTIONS.sqli),
+            sqlInjection: parseSqlInjectionOptions(options.sqlInjection),
             ssti: parseBooleanOption(options.ssti, "ssti", DEFAULT_LAB_OPTIONS.ssti),
-            debugErrorRoutes: parseBooleanOption(
-                options.debugErrorRoutes,
-                "debugErrorRoutes",
-                DEFAULT_LAB_OPTIONS.debugErrorRoutes,
-            ),
+            debugErrorRoutes: parseDebugErrorRoutesOption(options.debug),
             csrf: parseCsrfOptions(options.csrf),
-            xssInjection: parseXssInjectionOptions(options.xssInjection),
+            xssInjection: parseXssInjectionOptions(options.XSS),
             uploadValidation: parseUploadValidationOptions(options.uploadValidation),
         };
     } catch (err) {

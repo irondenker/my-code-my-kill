@@ -2,7 +2,7 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 import { getLabOptions } from "../config/lab-options.js";
 
-const labSqliEnabled = getLabOptions().sqli;
+const sqlInjectionLabEnabled = getLabOptions().sqlInjection.enabled;
 
 type UserRow = {
     user_id: number;
@@ -114,15 +114,15 @@ async function findUserByUsernameInsecureForLab(params: {
     return row ? mapAuthUser(row) : null;
 }
 
-export function isLabSqliEnabled(): boolean {
-    return labSqliEnabled;
+export function isSqlInjectionLabEnabled(): boolean {
+    return sqlInjectionLabEnabled;
 }
 
 export async function findUserForLogin(params: {
     username: string;
     passwordHash: string;
 }): Promise<AuthUser | null> {
-    if (labSqliEnabled) {
+    if (sqlInjectionLabEnabled) {
         return findUserByUsernameInsecureForLab(params);
     }
 

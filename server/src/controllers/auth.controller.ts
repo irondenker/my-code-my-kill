@@ -4,7 +4,7 @@ import {
     findUserByUsername,
     findUserForLogin,
     findUserProfileById,
-    isLabSqliEnabled,
+    isSqlInjectionLabEnabled,
 } from "../services/auth.service.js";
 import { writeAdminAuditLog } from "../services/admin-audit.service.js";
 import { hashPassword, verifyPassword } from "../utils/password.util.js";
@@ -150,7 +150,7 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
             });
         }
 
-        const useLabSqli = isLabSqliEnabled();
+        const useLabSqli = isSqlInjectionLabEnabled();
         const user = await findUserForLogin({
             username,
             passwordHash: hashPassword(password),
