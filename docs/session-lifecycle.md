@@ -263,7 +263,7 @@
     }
     ```
 
-## 6. 글 CRUD 권한 검증
+## 6. `updateBoardPost` 잠재 취약점 발견
 
 - 코드 위치: `server/src/services/board.service.ts`
 - 메서드명: `updateBoardPost`
