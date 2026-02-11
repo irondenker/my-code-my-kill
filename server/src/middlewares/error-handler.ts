@@ -4,8 +4,14 @@ import path from 'node:path';
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
 
 const staticErrorStatuses = new Set([403, 404, 500, 503, 504]);
-const fallbackErrorPage = path.join(process.cwd(), "views", "errors", "edge", "index.html");
-const fallbackTemplate = fs.readFileSync(fallbackErrorPage, "utf8");
+const sharedErrorPage = path.join(process.cwd(), "views", "errors", "common", "index.html");
+const sharedTemplate = fs.readFileSync(sharedErrorPage, "utf8");
+
+function renderSharedErrorPage(status: number, source: "app" | "app-fallback") {
+    return sharedTemplate
+        .replace(/__ERROR_CODE__/g, String(status))
+        .replace(/__ERROR_SOURCE__/g, source);
+}
 
 export function errorHandler(
     err: any,
@@ -28,11 +34,7 @@ export function errorHandler(
         return res.redirect("/login");
     }
 
-    if (staticErrorStatuses.has(status)) {
-        const errorPage = path.join(process.cwd(), 'views', 'errors', String(status), 'index.html');
-        return res.status(status).sendFile(errorPage);
-    }
-
-    const fallbackHtml = fallbackTemplate.replace("__ERROR_CODE__", String(status));
-    return res.status(status).type("html").send(fallbackHtml);
+    const source = staticErrorStatuses.has(status) ? "app" : "app-fallback";
+    const html = renderSharedErrorPage(status, source);
+    return res.status(status).type("html").send(html);
 }

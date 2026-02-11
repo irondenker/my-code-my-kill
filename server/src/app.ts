@@ -56,16 +56,14 @@ export function createApp() {
         })
     );
     const errorStaticRoot = path.join(process.cwd(), "views", "errors");
-    ["403", "404", "500", "503", "504", "edge"].forEach((errorResource) => {
-        app.use(
-            `/errors/${errorResource}`,
-            express.static(path.join(errorStaticRoot, errorResource), {
-                setHeaders(res) {
-                    res.setHeader("X-Content-Type-Options", "nosniff");
-                },
-            })
-        );
-    });
+    app.use(
+        "/errors/common",
+        express.static(path.join(errorStaticRoot, "common"), {
+            setHeaders(res) {
+                res.setHeader("X-Content-Type-Options", "nosniff");
+            },
+        })
+    );
 
 
     app.use(express.urlencoded({ extended: false }));
