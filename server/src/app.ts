@@ -1,6 +1,5 @@
 ﻿import express from "express";
 import path from "node:path";
-import session from "express-session";
 import csrf from "csurf";
 import boardRouter from "./routes/board.routes.js";
 import authRouter from "./routes/auth.routes.js";
@@ -11,23 +10,19 @@ import apiDocsRouter from "./routes/api-docs.routes.js";
 import occurRouter from "./routes/occur.routes.js";
 import labSstiRouter from "./routes/lab-ssti.routes.js";
 import { errorHandler } from "./middlewares/error-handler.js";
+import { createSessionMiddleware } from "./middlewares/session.middleware.js";
 import { HttpError } from "./utils/http-error.js";
 import { getLabOptions } from "./config/lab-options.js";
 import { createXssEscaper } from "./utils/xss-escape.util.js";
 
 const isProd = process.env.NODE_ENV === "production";
-const sessionSecret = process.env.SESSION_SECRET ?? "dev-only-change-me";
 const labOptions = getLabOptions();
 const clientSideSanitizeEnabled = labOptions.xssInjection.clientSide.sanitizeEnabled;
 const serverSideSanitizeEnabled = labOptions.xssInjection.serverSide.sanitizeEnabled;
 const labStoredXssEnabled = labOptions.xssInjection.storedXss;
 const csrfLabEnabled = labOptions.csrf.enabled;
 const escapeForXss = createXssEscaper(labOptions.xssInjection.serverSide);
-if (isProd && sessionSecret === "dev-only-change-me") {
-    throw new Error("Missing SESSION_SECRET in production.");
-}
 const trustProxy = process.env.TRUST_PROXY === "true" || isProd;
-const cookieSecure: boolean | "auto" = isProd ? "auto" : false;
 
 export function createApp() {
     const app = express();
@@ -73,20 +68,7 @@ export function createApp() {
     app.use(express.urlencoded({ extended: false }));
     app.use(express.json());
 
-    app.use(
-        session({
-            name: "mcmk.sid",
-            secret: sessionSecret,
-            resave: false,
-            saveUninitialized: false,
-            cookie: {
-                httpOnly: true,
-                secure: cookieSecure,
-                sameSite: "lax",
-                maxAge: 1000 * 60 * 60 * 2,
-            },
-        })
-    );
+    app.use(createSessionMiddleware());
 
     const csrfProtection = csrf();
     if (!csrfLabEnabled) {

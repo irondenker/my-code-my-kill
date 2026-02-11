@@ -152,6 +152,3 @@ export async function postAvatarDelete(req: Request, res: Response, next: NextFu
         return next(err);
     }
 }
-
-
-
