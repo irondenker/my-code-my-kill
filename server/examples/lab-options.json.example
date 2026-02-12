@@ -7,6 +7,9 @@
   "sqlInjection": {
     "enabled": false
   },
+  "SSTI": {
+    "enabled": false
+  },
   "csrf": {
     "enabled": false
   },

@@ -416,6 +416,24 @@ function parseCsrfOptions(value: unknown): CsrfOptions {
     };
 }
 
+function parseSstiOption(value: unknown): boolean {
+    if (typeof value === "undefined") {
+        return DEFAULT_LAB_OPTIONS.ssti;
+    }
+
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        console.warn(`[CONFIG] Invalid lab option "SSTI" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        return DEFAULT_LAB_OPTIONS.ssti;
+    }
+
+    const options = value as Record<string, unknown>;
+    return parseBooleanOption(
+        options.enabled,
+        "SSTI.enabled",
+        DEFAULT_LAB_OPTIONS.ssti,
+    );
+}
+
 function loadLabOptions(): LabOptions {
     try {
         const raw = fs.readFileSync(LAB_OPTIONS_PATH, "utf8");
@@ -429,7 +447,7 @@ function loadLabOptions(): LabOptions {
         const options = parsed as Record<string, unknown>;
         return {
             sqlInjection: parseSqlInjectionOptions(options.sqlInjection),
-            ssti: parseBooleanOption(options.ssti, "ssti", DEFAULT_LAB_OPTIONS.ssti),
+            ssti: parseSstiOption(options.SSTI),
             debugErrorRoutes: parseDebugErrorRoutesOption(options.debug),
             csrf: parseCsrfOptions(options.csrf),
             xssInjection: parseXssInjectionOptions(options.XSS),
