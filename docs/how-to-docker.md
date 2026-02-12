@@ -37,7 +37,7 @@ docker compose -f docker-compose.prod.yml restart nginx
 
 ```bash
 docker compose -f docker-compose.prod.yml stop server
-docker compose -f docker-compose.prod.yml up -d server
+docker compose -f docker-compose.prod.yml up -d --build server
 ```
 
 ## 💻 Dev
@@ -71,6 +71,5 @@ docker compose restart server
 
 ```bash
 docker compose stop server
-docker compose up -d server
-Prod
+docker compose up -d --build server
 ```
