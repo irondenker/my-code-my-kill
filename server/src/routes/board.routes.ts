@@ -1,6 +1,7 @@
-import { Router } from "express";
+import { type NextFunction, type Request, type Response, Router } from "express";
 import multer from "multer";
 import csrf from "csurf";
+import { getLabOptions } from "../config/lab-options.js";
 import {
     deleteBoardPost,
     getBoardBySlug,
@@ -19,6 +20,10 @@ const upload = multer({
     limits: { fileSize: 20 * 1024 * 1024 },
 });
 const csrfProtection = csrf();
+const csrfLabEnabled = getLabOptions().csrf.enabled;
+const maybeCsrfProtection = csrfLabEnabled
+    ? (_req: Request, _res: Response, next: NextFunction) => next()
+    : csrfProtection;
 
 router.get("/board/:slug/new", requireAuthRedirect, getBoardCreateForm);
 router.post(
@@ -28,7 +33,7 @@ router.post(
         { name: "image", maxCount: 1 },
         { name: "attachment", maxCount: 1 },
     ]),
-    csrfProtection,
+    maybeCsrfProtection,
     postBoardCreate
 );
 router.get("/board/:slug/:displayId/edit", requireAuthRedirect, getBoardEditForm);
@@ -39,7 +44,7 @@ router.post(
         { name: "image", maxCount: 1 },
         { name: "attachment", maxCount: 1 },
     ]),
-    csrfProtection,
+    maybeCsrfProtection,
     postBoardEdit
 );
 router.post("/board/:slug/:displayId/delete", requireAuthRedirect, deleteBoardPost);
