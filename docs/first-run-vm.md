@@ -74,6 +74,40 @@ cp server/examples/lab-options.json.example server/lab-options.json
 
 이미 파일이 있으면 덮어쓰기 전에 값을 백업하거나 비교하세요.
 
+## 1.1) Ubuntu CLI에서 `server/lab-options.json` 수정 (vim)
+
+프로젝트 루트에서 아래 순서로 진행하세요.
+
+```bash
+cd /srv/my-code-my-kill
+vim server/lab-options.json
+```
+
+`vim` 기본 조작
+
+- 수정 시작: `i`
+- 저장 후 종료: `Esc` -> `:wq`
+- 저장하지 않고 종료: `Esc` -> `:q!`
+
+적용 방법
+
+- dev 실행 중일 때
+
+```bash
+docker compose -f docker-compose.yml restart server
+```
+
+- prod 실행 중일 때
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build server
+```
+
+참고
+
+- 현재 코드 기준으로 lab 옵션은 서버 시작 시 1회 로드됩니다. 파일만 수정하고 서버를 재시작/재빌드하지 않으면 반영되지 않습니다.
+- prod는 `server/Dockerfile.prod`에서 `lab-options.json`을 이미지에 포함하므로 `--build`가 필요합니다.
+
 ## 2) DB 볼륨 준비
 
 dev/prod 모두 외부 볼륨 `postgresql`을 사용합니다.

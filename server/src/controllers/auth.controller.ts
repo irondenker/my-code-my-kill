@@ -4,7 +4,6 @@ import {
     findUserByUsername,
     findUserForLogin,
     findUserProfileById,
-    isSqlInjectionLabEnabled,
 } from "../services/auth.service.js";
 import { writeAdminAuditLog } from "../services/admin-audit.service.js";
 import { hashPassword, verifyPassword } from "../utils/password.util.js";
@@ -150,12 +149,10 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
             });
         }
 
-        const useLabSqli = isSqlInjectionLabEnabled();
         const user = await findUserForLogin({
             username,
-            passwordHash: hashPassword(password),
         });
-        if (!user || (!useLabSqli && !verifyPassword(password, user.passwordHash))) {
+        if (!user || !verifyPassword(password, user.passwordHash)) {
             return res.status(401).render("auth/sign-in", {
                 formError: "Invalid username or password.",
                 nextPath: safeNextForView || null,

@@ -91,7 +91,6 @@ function mapAuthUser(row: UserRow): AuthUser {
 
 async function findUserByUsernameInsecureForLab(params: {
     username: string;
-    passwordHash: string;
 }): Promise<AuthUser | null> {
     const query = `
         SELECT
@@ -102,7 +101,6 @@ async function findUserByUsernameInsecureForLab(params: {
             is_active
         FROM users
         WHERE username = '${params.username}'
-          AND password_hash = '${params.passwordHash}'
         LIMIT 1
     `;
 
@@ -114,13 +112,8 @@ async function findUserByUsernameInsecureForLab(params: {
     return row ? mapAuthUser(row) : null;
 }
 
-export function isSqlInjectionLabEnabled(): boolean {
-    return sqlInjectionLabEnabled;
-}
-
 export async function findUserForLogin(params: {
     username: string;
-    passwordHash: string;
 }): Promise<AuthUser | null> {
     if (sqlInjectionLabEnabled) {
         return findUserByUsernameInsecureForLab(params);
