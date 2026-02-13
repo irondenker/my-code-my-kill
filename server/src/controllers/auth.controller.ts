@@ -52,6 +52,38 @@ async function writeAdminAuditLogSafely(
     }
 }
 
+/**
+ * 로그인 실패 이벤트를 감사 로그에 안전하게 기록합니다.
+ * 감사 로그 저장 실패가 인증 흐름을 중단시키지 않도록 내부에서 예외를 삼킵니다.
+ *
+ * @param req 요청 컨텍스트
+ * @param params 로그인 실패 상세 정보
+ */
+async function writeLoginFailedAuditLogSafely(
+    req: Request,
+    params: {
+        attemptedUsername: string | null;
+        reason: "missing_credentials" | "invalid_credentials" | "inactive_account";
+        targetUserId?: number | null;
+        targetUsername?: string | null;
+    }
+): Promise<void> {
+    await writeAdminAuditLogSafely({
+        action: "LOGIN_FAILED",
+        actorUserId: null,
+        actorUsername: params.attemptedUsername,
+        targetUserId: params.targetUserId ?? null,
+        targetUsername: params.targetUsername ?? params.attemptedUsername,
+        details: {
+            loginResult: "failure",
+            reason: params.reason,
+            attemptedUsername: params.attemptedUsername,
+        },
+        ipAddress: getRequestIp(req),
+        userAgent: getRequestUserAgent(req),
+    });
+}
+
 function renderLogin(res: Response, options: AuthRenderOptions = {}) {
     return res.render("auth/sign-in", {
         formError: options.formError ?? null,
@@ -143,6 +175,11 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
         const nextPath = getSafeRedirectPath(nextFromBody, "/board");
 
         if (!username || !password) {
+            await writeLoginFailedAuditLogSafely(req, {
+                attemptedUsername: username || null,
+                reason: "missing_credentials",
+                targetUsername: username || null,
+            });
             return res.status(400).render("auth/sign-in", {
                 formError: "Username and password are required.",
                 nextPath: safeNextForView || null,
@@ -153,12 +190,24 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
             username,
         });
         if (!user || !verifyPassword(password, user.passwordHash)) {
+            await writeLoginFailedAuditLogSafely(req, {
+                attemptedUsername: username,
+                reason: "invalid_credentials",
+                targetUserId: user?.userId ?? null,
+                targetUsername: user?.username ?? username,
+            });
             return res.status(401).render("auth/sign-in", {
                 formError: "Invalid username or password.",
                 nextPath: safeNextForView || null,
             });
         }
         if (!user.isActive) {
+            await writeLoginFailedAuditLogSafely(req, {
+                attemptedUsername: username,
+                reason: "inactive_account",
+                targetUserId: user.userId,
+                targetUsername: user.username,
+            });
             return res.status(403).render("auth/sign-in", {
                 formError: "This account is inactive. Contact an administrator.",
                 nextPath: safeNextForView || null,
