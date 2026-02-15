@@ -6,7 +6,7 @@
 
 `Debian`, `SUSE` 등의 운영체제에서 적용하시는 경우, 추후 등장하는 모든 명령어에 대해 호환성을 고려하시어 적절하게 변형 후 적용하십시오.
 
-코드 수정 및 로컬 환경(Windows, MacOS, Linux 등)에서 Docker 기반으로 구동을 원한다면, first-run-docker.md 문서를 확인하시기 바랍니다.
+코드 수정 및 로컬 환경(Windows, MacOS, Linux 등)에서 Docker 기반으로 구동을 원한다면, [first-run-docker.md](./first-run-docker.md) 문서를 확인하시기 바랍니다.
 
 ## 0) 시작 전 체크 (Ubuntu CLI)
 
