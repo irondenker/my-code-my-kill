@@ -29,7 +29,6 @@ import {
 } from "../utils/admin-user.policy.util.js";
 import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
 import { normalizeLowerString, normalizeNullableString, normalizeString } from "../utils/string.util.js";
-import { getPositiveIntParamOrThrow } from "./_shared/params.js";
 import type { AdminAuditContext } from "../services/admin.service.js";
 
 /**
@@ -60,6 +59,21 @@ function getSessionActor(req: Request): { userId: number; username: string | nul
         userId,
         username: normalizeNullableString(req.session.username),
     };
+}
+
+/**
+ * 라우트 파라미터를 양의 정수로 파싱하여 반환합니다.
+ * 유효하지 않으면 404를 던집니다.
+ *
+ * @throws HttpError(404)
+ */
+function getPositiveIntParamOrThrow(req: Request, paramName: string): number {
+    const raw = (req.params as Record<string, unknown>)[paramName];
+    const value = Number(raw);
+    if (!Number.isFinite(value) || value <= 0) {
+        throw new HttpError(404, "Not Found");
+    }
+    return Math.trunc(value);
 }
 
 /**

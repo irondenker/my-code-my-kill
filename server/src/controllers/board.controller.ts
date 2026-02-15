@@ -25,14 +25,14 @@ import {
     listBoards,
     deleteStoredPostAttachment,
     deleteStoredPostImage,
+    storePostAttachment,
+    storePostImage,
     softDeletePostBySlugDisplayId,
     softDeletePostBySlugDisplayIdAsAdmin,
     updateBoardPost,
 } from "../services/board.service.js";
 import { createPaginationMeta } from "../utils/board.util.js";
 import { PAGINATION_DEFAULT_LIMIT } from "../constants/board.constants.js";
-import { getPositiveIntParamOrThrow, getStringParamOrThrow } from "./_shared/params.js";
-import { cleanupBoardPostUploads, storeBoardPostUploads } from "./board/board.upload.js";
 
 /**
  * 게시글 컨트롤러입니다.
@@ -49,6 +49,86 @@ import { cleanupBoardPostUploads, storeBoardPostUploads } from "./board/board.up
 function parsePositiveInt(rawValue: unknown, fallback: number): number {
     const value = Number(rawValue);
     return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
+}
+
+/**
+ * 라우트 파라미터를 문자열로 정규화(trim)하여 반환합니다.
+ * 값이 비어 있으면 404를 던집니다.
+ *
+ * @throws HttpError(404)
+ */
+function getStringParamOrThrow(req: Request, paramName: string): string {
+    const value = String((req.params as Record<string, unknown>)[paramName] ?? "").trim();
+    if (!value) {
+        throw new HttpError(404, "Not Found");
+    }
+    return value;
+}
+
+/**
+ * 라우트 파라미터를 양의 정수로 파싱하여 반환합니다.
+ * 유효하지 않으면 404를 던집니다.
+ *
+ * @throws HttpError(404)
+ */
+function getPositiveIntParamOrThrow(req: Request, paramName: string): number {
+    const raw = (req.params as Record<string, unknown>)[paramName];
+    const value = Number(raw);
+    if (!Number.isFinite(value) || value <= 0) {
+        throw new HttpError(404, "Not Found");
+    }
+    return Math.trunc(value);
+}
+
+function getUploadedFile(req: Request, fieldName: string): Express.Multer.File | null {
+    const files = req.files;
+    if (!files) {
+        return null;
+    }
+    if (Array.isArray(files)) {
+        return files.find((file) => file.fieldname === fieldName) ?? null;
+    }
+    const fieldFiles = files[fieldName];
+    return fieldFiles?.[0] ?? null;
+}
+
+type StoredUploads = {
+    imageUrl: string | null;
+    fileUrl: string | null;
+};
+
+/**
+ * 요청에 포함된 업로드(image/attachment)를 저장합니다.
+ *
+ * - 저장 중 하나라도 실패하면, 이미 저장된 파일도 best-effort로 정리한 뒤 에러를 다시 던집니다.
+ * - 성공 시 저장된 경로(또는 null)를 반환합니다.
+ */
+async function storeBoardPostUploads(req: Request): Promise<StoredUploads> {
+    const imageFile = getUploadedFile(req, "image");
+    const attachmentFile = getUploadedFile(req, "attachment");
+    let imageUrl: string | null = null;
+    let fileUrl: string | null = null;
+
+    try {
+        if (imageFile) {
+            imageUrl = await storePostImage(imageFile);
+        }
+        if (attachmentFile) {
+            fileUrl = await storePostAttachment(attachmentFile);
+        }
+        return { imageUrl, fileUrl };
+    } catch (err) {
+        await cleanupBoardPostUploads({ imageUrl, fileUrl });
+        throw err;
+    }
+}
+
+/**
+ * 저장된 업로드 파일을 best-effort로 정리합니다.
+ * (파일이 null이거나 이미 삭제된 경우도 안전해야 합니다.)
+ */
+async function cleanupBoardPostUploads(uploads: StoredUploads): Promise<void> {
+    await Promise.all([deleteStoredPostImage(uploads.imageUrl), deleteStoredPostAttachment(uploads.fileUrl)]);
 }
 
 /**
