@@ -5,10 +5,11 @@ import {
     findUserForLogin,
     findUserProfileById,
 } from "../services/auth.service.js";
-import { writeAdminAuditLog } from "../services/admin-audit.service.js";
+import { logLoginFailed, logLoginSuccess, logLogoutSuccess } from "../services/auth-audit.service.js";
 import { hashPassword, verifyPassword } from "../utils/password.util.js";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
 import { isValidPassword, isValidUsername, normalizeString } from "../utils/auth.validation.js";
+import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
 import { regenerateSession, saveSession } from "../utils/session.util.js";
 
 type AuthRenderOptions = {
@@ -16,26 +17,11 @@ type AuthRenderOptions = {
     nextPath?: string | null;
 };
 
-function getRequestIp(req: Request): string | null {
-    const value = typeof req.ip === "string" ? req.ip.trim() : "";
-    return value || null;
-}
-
-function getRequestUserAgent(req: Request): string | null {
-    const value = req.get("user-agent");
-    if (typeof value !== "string") {
-        return null;
-    }
-    const trimmed = value.trim();
-    return trimmed || null;
-}
-
-function summarizeErrorMessage(error: unknown): string {
-    const raw = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
-    const compact = raw.replace(/\s+/g, " ").trim();
-    return compact.length > 180 ? `${compact.slice(0, 177)}...` : compact;
-}
-
+/**
+ * 세션을 안전하게 파기합니다.
+ *
+ * @param req Express 요청 객체
+ */
 function destroySession(req: Request): Promise<void> {
     return new Promise((resolve, reject) => {
         req.session.destroy((err) => {
@@ -47,51 +33,12 @@ function destroySession(req: Request): Promise<void> {
     });
 }
 
-async function writeAdminAuditLogSafely(
-    params: Parameters<typeof writeAdminAuditLog>[0]
-): Promise<void> {
-    try {
-        await writeAdminAuditLog(params);
-    } catch (err) {
-        // Audit logging must not break auth flow.
-        console.error(
-            `[AUDIT_LOG_ERROR] action=${params.action} reason="${summarizeErrorMessage(err)}"`
-        );
-    }
-}
-
 /**
- * 로그인 실패 이벤트를 감사 로그에 안전하게 기록합니다.
- * 감사 로그 저장 실패가 인증 흐름을 중단시키지 않도록 내부에서 예외를 삼킵니다.
+ * 로그인 페이지를 렌더링합니다.
  *
- * @param req 요청 컨텍스트
- * @param params 로그인 실패 상세 정보
+ * @param res Express 응답 객체
+ * @param options 뷰 옵션(에러 메시지, nextPath)
  */
-async function writeLoginFailedAuditLogSafely(
-    req: Request,
-    params: {
-        attemptedUsername: string | null;
-        reason: "missing_credentials" | "invalid_credentials" | "inactive_account";
-        targetUserId?: number | null;
-        targetUsername?: string | null;
-    }
-): Promise<void> {
-    await writeAdminAuditLogSafely({
-        action: "LOGIN_FAILED",
-        actorUserId: null,
-        actorUsername: params.attemptedUsername,
-        targetUserId: params.targetUserId ?? null,
-        targetUsername: params.targetUsername ?? params.attemptedUsername,
-        details: {
-            loginResult: "failure",
-            reason: params.reason,
-            attemptedUsername: params.attemptedUsername,
-        },
-        ipAddress: getRequestIp(req),
-        userAgent: getRequestUserAgent(req),
-    });
-}
-
 function renderLogin(res: Response, options: AuthRenderOptions = {}) {
     return res.render("auth/sign-in", {
         formError: options.formError ?? null,
@@ -99,12 +46,22 @@ function renderLogin(res: Response, options: AuthRenderOptions = {}) {
     });
 }
 
+/**
+ * 회원가입 페이지를 렌더링합니다.
+ *
+ * @param res Express 응답 객체
+ * @param options 뷰 옵션(에러 메시지)
+ */
 function renderRegister(res: Response, options: AuthRenderOptions = {}) {
     return res.render("auth/register", {
         formError: options.formError ?? null,
     });
 }
 
+/**
+ * 로그인 페이지를 표시합니다.
+ * `next` 쿼리 파라미터는 안전한 경로로만 허용합니다.
+ */
 export async function getLoginPage(req: Request, res: Response, next: NextFunction) {
     try {
         const nextPath = getSafeRedirectPath(req.query?.next, "");
@@ -114,6 +71,9 @@ export async function getLoginPage(req: Request, res: Response, next: NextFuncti
     }
 }
 
+/**
+ * 회원가입 페이지를 표시합니다.
+ */
 export async function getRegisterPage(req: Request, res: Response, next: NextFunction) {
     try {
         return renderRegister(res);
@@ -122,6 +82,15 @@ export async function getRegisterPage(req: Request, res: Response, next: NextFun
     }
 }
 
+/**
+ * 회원가입 요청을 처리합니다.
+ *
+ * 처리:
+ * - 입력 검증(username/password)
+ * - username 중복 검사
+ * - 비밀번호 해시 후 계정 생성
+ * - 세션 재생성(regenerate) 및 로그인 상태로 전환
+ */
 export async function postRegister(req: Request, res: Response, next: NextFunction) {
     try {
         const username = normalizeString(req.body?.username);
@@ -174,6 +143,19 @@ export async function postRegister(req: Request, res: Response, next: NextFuncti
     }
 }
 
+/**
+ * 로그인 요청을 처리합니다.
+ *
+ * 처리:
+ * - 입력 검증
+ * - 계정 조회/비밀번호 검증
+ * - 비활성 계정 차단
+ * - 세션 재생성(regenerate) 및 로그인 상태로 전환
+ * - 성공/실패에 대한 감사로그 기록
+ *
+ * 참고:
+ * - `next`는 open redirect 방지를 위해 `getSafeRedirectPath`로 제한합니다.
+ */
 export async function postLogin(req: Request, res: Response, next: NextFunction) {
     try {
         const username = normalizeString(req.body?.username);
@@ -181,12 +163,16 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
         const nextFromBody = normalizeString(req.body?.next);
         const safeNextForView = getSafeRedirectPath(nextFromBody, "");
         const nextPath = getSafeRedirectPath(nextFromBody, "/board");
+        const ipAddress = getRequestIp(req);
+        const userAgent = getRequestUserAgent(req);
 
         if (!username || !password) {
-            await writeLoginFailedAuditLogSafely(req, {
+            await logLoginFailed({
                 attemptedUsername: username || null,
                 reason: "missing_credentials",
                 targetUsername: username || null,
+                ipAddress,
+                userAgent,
             });
             return res.status(400).render("auth/sign-in", {
                 formError: "Username and password are required.",
@@ -198,11 +184,13 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
             username,
         });
         if (!user || !verifyPassword(password, user.passwordHash)) {
-            await writeLoginFailedAuditLogSafely(req, {
+            await logLoginFailed({
                 attemptedUsername: username,
                 reason: "invalid_credentials",
                 targetUserId: user?.userId ?? null,
                 targetUsername: user?.username ?? username,
+                ipAddress,
+                userAgent,
             });
             return res.status(401).render("auth/sign-in", {
                 formError: "Invalid username or password.",
@@ -210,11 +198,13 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
             });
         }
         if (!user.isActive) {
-            await writeLoginFailedAuditLogSafely(req, {
+            await logLoginFailed({
                 attemptedUsername: username,
                 reason: "inactive_account",
                 targetUserId: user.userId,
                 targetUsername: user.username,
+                ipAddress,
+                userAgent,
             });
             return res.status(403).render("auth/sign-in", {
                 formError: "This account is inactive. Contact an administrator.",
@@ -230,18 +220,12 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
         req.session.profileImageUrl = profile?.profileImageUrl ?? null;
         await saveSession(req);
 
-        await writeAdminAuditLogSafely({
-            action: "LOGIN",
-            actorUserId: user.userId,
-            actorUsername: user.username,
-            targetUserId: user.userId,
-            targetUsername: user.username,
-            details: {
-                loginResult: "success",
-                userRole: user.userRole,
-            },
-            ipAddress: getRequestIp(req),
-            userAgent: getRequestUserAgent(req),
+        await logLoginSuccess({
+            userId: user.userId,
+            username: user.username,
+            userRole: user.userRole,
+            ipAddress,
+            userAgent,
         });
 
         return res.redirect(nextPath);
@@ -250,25 +234,28 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
     }
 }
 
+/**
+ * 로그아웃 요청을 처리합니다.
+ *
+ * 처리:
+ * - (가능한 경우) 로그아웃 감사로그 기록
+ * - 세션 파기 및 쿠키 제거
+ */
 export async function postLogout(req: Request, res: Response, next: NextFunction) {
     try {
         const userId = typeof req.session.userId === "number" ? req.session.userId : null;
         const role = req.session.userRole;
         const username = normalizeString(req.session.username);
+        const ipAddress = getRequestIp(req);
+        const userAgent = getRequestUserAgent(req);
 
         if (userId !== null) {
-            await writeAdminAuditLogSafely({
-                action: "LOGOUT",
-                actorUserId: userId,
-                actorUsername: username || null,
-                targetUserId: userId,
-                targetUsername: username || null,
-                details: {
-                    logoutResult: "success",
-                    userRole: role ?? null,
-                },
-                ipAddress: getRequestIp(req),
-                userAgent: getRequestUserAgent(req),
+            await logLogoutSuccess({
+                userId,
+                username: username || null,
+                userRole: role ?? null,
+                ipAddress,
+                userAgent,
             });
         }
 

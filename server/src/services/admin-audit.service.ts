@@ -1,5 +1,6 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
+import { summarizeErrorMessage } from "../utils/error-summary.util.js";
 
 /**
  * 감사로그를 Node 콘솔에 어느 수준으로 출력할지 결정하는 레벨입니다.
@@ -27,19 +28,6 @@ function getAuditCliLogLevel(): AuditCliLogLevel {
  * 현재 프로세스에서 사용할 감사로그 콘솔 출력 레벨(서버 시작 시 1회 결정)입니다.
  */
 const auditCliLogLevel = getAuditCliLogLevel();
-
-/**
- * 에러 객체를 콘솔용 1줄 메시지로 요약합니다.
- * 긴 메시지는 잘라서 로그 폭주를 방지합니다.
- */
-function summarizeErrorMessage(error: unknown): string {
-    const raw =
-        error instanceof Error
-            ? `${error.name}: ${error.message}`
-            : String(error);
-    const compact = raw.replace(/\s+/g, " ").trim();
-    return compact.length > 180 ? `${compact.slice(0, 177)}...` : compact;
-}
 
 /**
  * 관리자 감사 로그에서 허용하는 액션 목록입니다.
@@ -296,6 +284,24 @@ export async function writeAdminAuditLog(params: {
             error: err,
         });
         throw err;
+    }
+}
+
+/**
+ * 감사로그 기록을 "절대 실패시키지 않는" 래퍼입니다.
+ * 인증/인가/에러 처리 흐름을 깨지 않기 위해 예외를 삼키고 1줄 요약만 남깁니다.
+ *
+ * @param params 감사 로그 작성 파라미터
+ */
+export async function writeAdminAuditLogSafely(
+    params: Parameters<typeof writeAdminAuditLog>[0]
+): Promise<void> {
+    try {
+        await writeAdminAuditLog(params);
+    } catch (err) {
+        console.error(
+            `[AUDIT_LOG_ERROR] action=${params.action} reason="${summarizeErrorMessage(err)}"`
+        );
     }
 }
 

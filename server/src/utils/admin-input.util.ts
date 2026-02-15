@@ -1,4 +1,4 @@
-import type { BoardCreateAccess, BoardReadAccess } from "./board.service.js";
+import type { BoardCreateAccess, BoardReadAccess } from "../services/board.service.js";
 
 /**
  * Admin 화면/컨트롤러에서 사용하는 입력값 정규화 및 검증 유틸 모음입니다.

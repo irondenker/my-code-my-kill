@@ -33,33 +33,14 @@ import {
     normalizeBoardSlug,
     normalizeNullable,
     normalizeString,
-} from "../services/admin-input.service.js";
-
-/**
- * 요청 IP를 문자열로 정규화합니다.
- *
- * @param req Express 요청 객체
- * @returns 공백 제거된 IP 또는 null
- */
-function getRequestIp(req: Request): string | null {
-    const value = typeof req.ip === "string" ? req.ip.trim() : "";
-    return value || null;
-}
-
-/**
- * 요청 User-Agent를 문자열로 정규화합니다.
- *
- * @param req Express 요청 객체
- * @returns 공백 제거된 User-Agent 또는 null
- */
-function getRequestUserAgent(req: Request): string | null {
-    const value = req.get("user-agent");
-    if (typeof value !== "string") {
-        return null;
-    }
-    const trimmed = value.trim();
-    return trimmed || null;
-}
+} from "../utils/admin-input.util.js";
+import {
+    mapDeleteUserResultToErrorMessage,
+    validateAdminUserDeletePolicy,
+    validateAdminUserRolePolicy,
+    validateAdminUserStatusPolicy,
+} from "../utils/admin-user.policy.util.js";
+import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
 
 /**
  * 현재 세션에서 감사로그 actor 정보를 구성합니다.
@@ -307,34 +288,33 @@ export async function postAdminUserDelete(req: Request, res: Response, next: Nex
             return next(new HttpError(404, "Not Found"));
         }
 
-        if (Number(req.session.userId) === userId) {
-            return await renderAdminUsersIndex(req, res, {
-                formError: "You cannot delete your own account.",
-            });
-        }
-
         const target = await findUserMetaForAdminById(userId);
         if (!target) {
             return next(new HttpError(404, "Not Found"));
         }
 
-        if (target.userRole === "admin") {
-            const adminCount = await countAdminUsers();
-            if (adminCount <= 1) {
-                return await renderAdminUsersIndex(req, res, {
-                    formError: "At least one admin account must remain.",
-                });
-            }
+        const actorUserId = Number(req.session.userId);
+        const adminCount = target.userRole === "admin" ? await countAdminUsers() : null;
+        const deletePolicy = validateAdminUserDeletePolicy({
+            actorUserId,
+            target: {
+                userId: target.userId,
+                userRole: target.userRole,
+                isActive: target.isActive,
+            },
+            ...(adminCount === null ? {} : { adminCount }),
+        });
+        if (!deletePolicy.ok) {
+            return await renderAdminUsersIndex(req, res, { formError: deletePolicy.message });
         }
 
         const deleted = await deleteUserForAdmin(userId);
         if (deleted === "not_found") {
             return next(new HttpError(404, "Not Found"));
         }
-        if (deleted === "has_posts") {
-            return await renderAdminUsersIndex(req, res, {
-                formError: "Users with posts cannot be deleted. Deactivate instead.",
-            });
+        const deleteError = mapDeleteUserResultToErrorMessage(deleted);
+        if (deleteError) {
+            return await renderAdminUsersIndex(req, res, { formError: deleteError });
         }
 
         const actor = getSessionActor(req);
@@ -377,25 +357,25 @@ export async function postAdminUserStatus(req: Request, res: Response, next: Nex
             });
         }
 
-        if (Number(req.session.userId) === userId && status === "inactive") {
-            return await renderAdminUsersIndex(req, res, {
-                formError: "You cannot deactivate your own admin account.",
-            });
-        }
-
         const target = await findUserMetaForAdminById(userId);
         if (!target) {
             return next(new HttpError(404, "Not Found"));
         }
 
-        if (status === "inactive" && target.userRole === "admin") {
-            return await renderAdminUsersIndex(req, res, {
-                formError: "Admin accounts cannot be deactivated.",
-            });
-        }
-
         const isActive = status === "active";
-        if (target.isActive === isActive) {
+        const statusPolicy = validateAdminUserStatusPolicy({
+            actorUserId: Number(req.session.userId),
+            target: {
+                userId: target.userId,
+                userRole: target.userRole,
+                isActive: target.isActive,
+            },
+            nextStatus: status,
+        });
+        if (!statusPolicy.ok) {
+            return await renderAdminUsersIndex(req, res, { formError: statusPolicy.message });
+        }
+        if ("noChange" in statusPolicy && statusPolicy.noChange) {
             req.session.adminUsersFlashMessage = "User status has been updated.";
             return res.redirect("/admin/users");
         }
@@ -451,28 +431,25 @@ export async function postAdminUserRole(req: Request, res: Response, next: NextF
         }
 
         const requestedRole = role as "admin" | "user";
-        if (target.userRole === requestedRole) {
+        const adminCount = target.userRole === "admin" && requestedRole === "user"
+            ? await countAdminUsers()
+            : null;
+        const rolePolicy = validateAdminUserRolePolicy({
+            actorUserId: Number(req.session.userId),
+            target: {
+                userId: target.userId,
+                userRole: target.userRole,
+                isActive: target.isActive,
+            },
+            requestedRole,
+            ...(adminCount === null ? {} : { adminCount }),
+        });
+        if (!rolePolicy.ok) {
+            return await renderAdminUsersIndex(req, res, { formError: rolePolicy.message });
+        }
+        if ("noChange" in rolePolicy && rolePolicy.noChange) {
             req.session.adminUsersFlashMessage = "User role has been updated.";
             return res.redirect("/admin/users");
-        }
-
-        if (
-            Number(req.session.userId) === userId &&
-            target.userRole === "admin" &&
-            requestedRole === "user"
-        ) {
-            return await renderAdminUsersIndex(req, res, {
-                formError: "You cannot revoke your own admin role.",
-            });
-        }
-
-        if (target.userRole === "admin" && requestedRole === "user") {
-            const adminCount = await countAdminUsers();
-            if (adminCount <= 1) {
-                return await renderAdminUsersIndex(req, res, {
-                    formError: "At least one admin account must remain.",
-                });
-            }
         }
 
         const updated = await updateUserRole({
