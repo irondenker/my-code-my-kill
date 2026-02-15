@@ -1,8 +1,19 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 
+/**
+ * 감사로그를 Node 콘솔에 어느 수준으로 출력할지 결정하는 레벨입니다.
+ *
+ * - `none`: 콘솔 출력 없음
+ * - `errors`: 실패(오류)만 출력
+ * - `all`: 성공/실패 모두 출력
+ */
 type AuditCliLogLevel = "none" | "errors" | "all";
 
+/**
+ * `AUDIT_CLI_LOG_LEVEL` 환경변수를 해석하여 콘솔 출력 레벨을 결정합니다.
+ * 유효하지 않은 값이면 안전하게 `none`으로 폴백합니다.
+ */
 function getAuditCliLogLevel(): AuditCliLogLevel {
     const raw = String(process.env.AUDIT_CLI_LOG_LEVEL ?? "none").trim().toLowerCase();
     if (raw === "none" || raw === "errors" || raw === "all") {
@@ -12,8 +23,15 @@ function getAuditCliLogLevel(): AuditCliLogLevel {
     return "none";
 }
 
+/**
+ * 현재 프로세스에서 사용할 감사로그 콘솔 출력 레벨(서버 시작 시 1회 결정)입니다.
+ */
 const auditCliLogLevel = getAuditCliLogLevel();
 
+/**
+ * 에러 객체를 콘솔용 1줄 메시지로 요약합니다.
+ * 긴 메시지는 잘라서 로그 폭주를 방지합니다.
+ */
 function summarizeErrorMessage(error: unknown): string {
     const raw =
         error instanceof Error
@@ -124,7 +142,9 @@ function sanitizeDetails(value: unknown): Record<string, unknown> {
 
 /**
  * 감사 로그 저장 결과를 Node CLI(JSON 1줄)로 출력합니다.
- * 성공은 stdout, 실패는 stderr로 분리합니다.
+ *
+ * - 성공: stdout에 JSON 1줄(`[AUDIT] {...}`)
+ * - 실패: stderr에 요약 1줄(`[AUDIT][ERROR] ...`)
  *
  * @param params 출력할 감사 이벤트 정보
  */

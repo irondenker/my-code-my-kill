@@ -3,8 +3,6 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 import { HttpError } from "../utils/http-error.js";
 import {
-    type BoardCreateAccess,
-    type BoardReadAccess,
     createBoard,
     findBoardById,
     findBoardBySlug,
@@ -24,65 +22,36 @@ import {
 import { writeAdminAuditLog, listAdminAuditLogs } from "../services/admin-audit.service.js";
 import { hashPassword } from "../utils/password.util.js";
 import { isValidPassword, isValidUsername } from "../utils/auth.validation.js";
+import {
+    type BoardFormValue,
+    type UserCreateFormValue,
+    isBoardCreateAccess,
+    isBoardReadAccess,
+    isValidBoardSlug,
+    normalizeBoardCreateAccess,
+    normalizeBoardReadAccess,
+    normalizeBoardSlug,
+    normalizeNullable,
+    normalizeString,
+} from "../services/admin-input.service.js";
 
-const BOARD_READ_ACCESS_VALUES: readonly BoardReadAccess[] = ["public", "auth", "admin", "owner_or_admin"];
-const BOARD_CREATE_ACCESS_VALUES: readonly BoardCreateAccess[] = ["auth", "admin"];
-
-function normalizeString(value: unknown): string {
-    return typeof value === "string" ? value.trim() : "";
-}
-
-function normalizeNullable(value: unknown): string | null {
-    const trimmed = normalizeString(value);
-    return trimmed ? trimmed : null;
-}
-
-function normalizeBoardSlug(value: unknown): string {
-    return normalizeString(value).toLowerCase();
-}
-
-function normalizeBoardReadAccess(value: unknown): string {
-    return normalizeString(value).toLowerCase();
-}
-
-function normalizeBoardCreateAccess(value: unknown): string {
-    return normalizeString(value).toLowerCase();
-}
-
-function isBoardReadAccess(value: string): value is BoardReadAccess {
-    return BOARD_READ_ACCESS_VALUES.includes(value as BoardReadAccess);
-}
-
-function isBoardCreateAccess(value: string): value is BoardCreateAccess {
-    return BOARD_CREATE_ACCESS_VALUES.includes(value as BoardCreateAccess);
-}
-
-function isValidBoardSlug(value: string): boolean {
-    if (value.length < 2 || value.length > 50) {
-        return false;
-    }
-    return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
-}
-
-type BoardFormValue = {
-    slug: string;
-    name: string;
-    description: string;
-    readAccess: BoardReadAccess;
-    createAccess: BoardCreateAccess;
-};
-
-type UserCreateFormValue = {
-    username: string;
-    role: "user" | "admin";
-    status: "active" | "inactive";
-};
-
+/**
+ * 요청 IP를 문자열로 정규화합니다.
+ *
+ * @param req Express 요청 객체
+ * @returns 공백 제거된 IP 또는 null
+ */
 function getRequestIp(req: Request): string | null {
     const value = typeof req.ip === "string" ? req.ip.trim() : "";
     return value || null;
 }
 
+/**
+ * 요청 User-Agent를 문자열로 정규화합니다.
+ *
+ * @param req Express 요청 객체
+ * @returns 공백 제거된 User-Agent 또는 null
+ */
 function getRequestUserAgent(req: Request): string | null {
     const value = req.get("user-agent");
     if (typeof value !== "string") {
@@ -92,6 +61,12 @@ function getRequestUserAgent(req: Request): string | null {
     return trimmed || null;
 }
 
+/**
+ * 현재 세션에서 감사로그 actor 정보를 구성합니다.
+ * 세션이 유효하지 않으면 401 에러를 던집니다.
+ *
+ * @param req Express 요청 객체
+ */
 function getSessionActor(req: Request): { userId: number; username: string | null } {
     const userId = Number(req.session.userId);
     if (!Number.isFinite(userId) || userId <= 0) {
@@ -103,6 +78,10 @@ function getSessionActor(req: Request): { userId: number; username: string | nul
     };
 }
 
+/**
+ * 유저 관리 페이지 플래시 메시지를 소비합니다.
+ * 한 번 읽으면 세션에서 삭제하여 중복 노출을 방지합니다.
+ */
 function consumeAdminUsersFlashMessage(req: Request): string | null {
     const value = req.session.adminUsersFlashMessage;
     if (typeof value !== "string" || value.length === 0) {
@@ -112,6 +91,10 @@ function consumeAdminUsersFlashMessage(req: Request): string | null {
     return value;
 }
 
+/**
+ * 보드 관리 페이지 플래시 메시지를 소비합니다.
+ * 한 번 읽으면 세션에서 삭제하여 중복 노출을 방지합니다.
+ */
 function consumeAdminBoardsFlashMessage(req: Request): string | null {
     const value = req.session.adminBoardsFlashMessage;
     if (typeof value !== "string" || value.length === 0) {
@@ -121,6 +104,10 @@ function consumeAdminBoardsFlashMessage(req: Request): string | null {
     return value;
 }
 
+/**
+ * 어드민 유저 관리 인덱스 화면을 렌더링합니다.
+ * (목록 조회 + 플래시 메시지/에러/폼 값 바인딩)
+ */
 async function renderAdminUsersIndex(
     req: Request,
     res: Response,
@@ -146,6 +133,10 @@ async function renderAdminUsersIndex(
     });
 }
 
+/**
+ * 어드민 보드 관리 인덱스 화면을 렌더링합니다.
+ * (목록 조회 + 플래시 메시지/에러/폼 값 바인딩)
+ */
 async function renderAdminBoardsIndex(
     req: Request,
     res: Response,
@@ -170,6 +161,10 @@ async function renderAdminBoardsIndex(
     });
 }
 
+/**
+ * 어드민 대시보드 화면을 렌더링합니다.
+ * (기본 통계: 사용자 수/활성 게시글 수/보드 수)
+ */
 export async function getAdminDashboard(_req: Request, res: Response, next: NextFunction) {
     try {
         const [usersCountRows, postsCountRows, boardsCountRows] = await Promise.all([
@@ -196,6 +191,9 @@ export async function getAdminDashboard(_req: Request, res: Response, next: Next
     }
 }
 
+/**
+ * 어드민 유저 관리 페이지를 렌더링합니다.
+ */
 export async function getAdminUsersPage(req: Request, res: Response, next: NextFunction) {
     try {
         return await renderAdminUsersIndex(req, res);
@@ -204,6 +202,10 @@ export async function getAdminUsersPage(req: Request, res: Response, next: NextF
     }
 }
 
+/**
+ * 어드민 유저 생성 요청을 처리합니다.
+ * 입력 검증 후 계정을 생성하고, 감사로그를 기록합니다.
+ */
 export async function postAdminUserCreate(req: Request, res: Response, next: NextFunction) {
     try {
         const username = normalizeString(req.body?.username);
@@ -294,6 +296,10 @@ export async function postAdminUserCreate(req: Request, res: Response, next: Nex
     }
 }
 
+/**
+ * 어드민 유저 삭제 요청을 처리합니다.
+ * 자기 자신 삭제 금지, 최소 1명 admin 유지, 게시글 소유자 삭제 제한 등의 정책을 적용합니다.
+ */
 export async function postAdminUserDelete(req: Request, res: Response, next: NextFunction) {
     try {
         const userId = Number(req.params.userId);
@@ -353,6 +359,10 @@ export async function postAdminUserDelete(req: Request, res: Response, next: Nex
     }
 }
 
+/**
+ * 어드민 유저 활성/비활성 상태 변경 요청을 처리합니다.
+ * 자기 자신 비활성화 금지, admin 비활성화 금지 정책을 적용합니다.
+ */
 export async function postAdminUserStatus(req: Request, res: Response, next: NextFunction) {
     try {
         const userId = Number(req.params.userId);
@@ -417,6 +427,10 @@ export async function postAdminUserStatus(req: Request, res: Response, next: Nex
     }
 }
 
+/**
+ * 어드민 유저 역할(user/admin) 변경 요청을 처리합니다.
+ * 자기 자신의 admin 권한 회수 금지, 최소 1명 admin 유지 정책을 적용합니다.
+ */
 export async function postAdminUserRole(req: Request, res: Response, next: NextFunction) {
     try {
         const userId = Number(req.params.userId);
@@ -491,6 +505,10 @@ export async function postAdminUserRole(req: Request, res: Response, next: NextF
     }
 }
 
+/**
+ * 어드민 감사로그 조회 페이지를 렌더링합니다.
+ * limit 쿼리 파라미터를 안전하게 정규화하여 적용합니다.
+ */
 export async function getAdminAuditLogsPage(req: Request, res: Response, next: NextFunction) {
     try {
         const queryLimit = Number(req.query?.limit);
@@ -505,6 +523,9 @@ export async function getAdminAuditLogsPage(req: Request, res: Response, next: N
     }
 }
 
+/**
+ * 어드민 보드 관리 페이지를 렌더링합니다.
+ */
 export async function getAdminBoardsPage(req: Request, res: Response, next: NextFunction) {
     try {
         return await renderAdminBoardsIndex(req, res);
@@ -513,6 +534,10 @@ export async function getAdminBoardsPage(req: Request, res: Response, next: Next
     }
 }
 
+/**
+ * 어드민 보드 생성 요청을 처리합니다.
+ * 입력 검증 후 보드를 생성하고, 플래시 메시지로 결과를 전달합니다.
+ */
 export async function postAdminBoardCreate(req: Request, res: Response, next: NextFunction) {
     try {
         const slug = normalizeBoardSlug(req.body?.slug);
@@ -607,6 +632,9 @@ export async function postAdminBoardCreate(req: Request, res: Response, next: Ne
     }
 }
 
+/**
+ * 어드민 보드 수정 폼 페이지를 렌더링합니다.
+ */
 export async function getAdminBoardEditPage(req: Request, res: Response, next: NextFunction) {
     try {
         const boardId = Number(req.params.boardId);
@@ -635,6 +663,10 @@ export async function getAdminBoardEditPage(req: Request, res: Response, next: N
     }
 }
 
+/**
+ * 어드민 보드 수정 요청을 처리합니다.
+ * 입력 검증 후 보드를 업데이트하고, 플래시 메시지로 결과를 전달합니다.
+ */
 export async function postAdminBoardEdit(req: Request, res: Response, next: NextFunction) {
     try {
         const boardId = Number(req.params.boardId);
