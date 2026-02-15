@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
 import {
     findUserForLogin,
     createUserForRegister,
@@ -79,24 +79,16 @@ function renderRegister(res: Response, options: AuthRenderOptions = {}) {
  * 로그인 페이지를 표시합니다.
  * `next` 쿼리 파라미터는 안전한 경로로만 허용합니다.
  */
-export async function getLoginPage(req: Request, res: Response, next: NextFunction) {
-    try {
-        const nextPath = getSafeRedirectPath(req.query?.next, "");
-        return renderLogin(res, { nextPath: nextPath || null });
-    } catch (err) {
-        return next(err);
-    }
+export async function getLoginPage(req: Request, res: Response) {
+    const nextPath = getSafeRedirectPath(req.query?.next, "");
+    return renderLogin(res, { nextPath: nextPath || null });
 }
 
 /**
  * 회원가입 페이지를 표시합니다.
  */
-export async function getRegisterPage(req: Request, res: Response, next: NextFunction) {
-    try {
-        return renderRegister(res);
-    } catch (err) {
-        return next(err);
-    }
+export async function getRegisterPage(_req: Request, res: Response) {
+    return renderRegister(res);
 }
 
 /**
@@ -108,56 +100,52 @@ export async function getRegisterPage(req: Request, res: Response, next: NextFun
  * - 비밀번호 해시 후 계정 생성
  * - 세션 재생성(regenerate) 및 로그인 상태로 전환
  */
-export async function postRegister(req: Request, res: Response, next: NextFunction) {
-    try {
-        const username = normalizeString(req.body?.username);
-        const password = String(req.body?.password ?? "");
+export async function postRegister(req: Request, res: Response) {
+    const username = normalizeString(req.body?.username);
+    const password = String(req.body?.password ?? "");
 
-        if (!username) {
-            return res.status(400).render("auth/register", {
-                formError: "Username is required.",
-            });
-        }
-
-        if (!password) {
-            return res.status(400).render("auth/register", {
-                formError: "Password is required.",
-            });
-        }
-
-        if (!isValidUsername(username)) {
-            return res.status(422).render("auth/register", {
-                formError: "Username must be 3-50 characters.",
-            });
-        }
-
-        if (!isValidPassword(password)) {
-            return res.status(422).render("auth/register", {
-                formError: "Password must be at least 8 characters.",
-            });
-        }
-
-        const existing = await findUserByUsernameForRegisterLookup(username);
-        if (existing) {
-            return res.status(409).render("auth/register", {
-                formError: "Username is already taken.",
-            });
-        }
-
-        const passwordHash = hashPassword(password);
-        const user = await createUserForRegister({ username, passwordHash });
-
-        await regenerateSession(req);
-        req.session.userId = user.userId;
-        req.session.userRole = user.userRole;
-        req.session.username = user.username;
-        req.session.profileImageUrl = null;
-        await saveSession(req);
-
-        return res.redirect("/board");
-    } catch (err) {
-        return next(err);
+    if (!username) {
+        return res.status(400).render("auth/register", {
+            formError: "Username is required.",
+        });
     }
+
+    if (!password) {
+        return res.status(400).render("auth/register", {
+            formError: "Password is required.",
+        });
+    }
+
+    if (!isValidUsername(username)) {
+        return res.status(422).render("auth/register", {
+            formError: "Username must be 3-50 characters.",
+        });
+    }
+
+    if (!isValidPassword(password)) {
+        return res.status(422).render("auth/register", {
+            formError: "Password must be at least 8 characters.",
+        });
+    }
+
+    const existing = await findUserByUsernameForRegisterLookup(username);
+    if (existing) {
+        return res.status(409).render("auth/register", {
+            formError: "Username is already taken.",
+        });
+    }
+
+    const passwordHash = hashPassword(password);
+    const user = await createUserForRegister({ username, passwordHash });
+
+    await regenerateSession(req);
+    req.session.userId = user.userId;
+    req.session.userRole = user.userRole;
+    req.session.username = user.username;
+    req.session.profileImageUrl = null;
+    await saveSession(req);
+
+    return res.redirect("/board");
 }
 
 /**
@@ -173,82 +161,78 @@ export async function postRegister(req: Request, res: Response, next: NextFuncti
  * 참고:
  * - `next`는 open redirect 방지를 위해 `getSafeRedirectPath`로 제한합니다.
  */
-export async function postLogin(req: Request, res: Response, next: NextFunction) {
-    try {
-        const username = normalizeString(req.body?.username);
-        const password = String(req.body?.password ?? "");
-        const nextFromBody = normalizeString(req.body?.next);
-        const safeNextForView = getSafeRedirectPath(nextFromBody, "");
-        const nextPath = getSafeRedirectPath(nextFromBody, "/board");
-        const ipAddress = getRequestIp(req);
-        const userAgent = getRequestUserAgent(req);
+export async function postLogin(req: Request, res: Response) {
+    const username = normalizeString(req.body?.username);
+    const password = String(req.body?.password ?? "");
+    const nextFromBody = normalizeString(req.body?.next);
+    const safeNextForView = getSafeRedirectPath(nextFromBody, "");
+    const nextPath = getSafeRedirectPath(nextFromBody, "/board");
+    const ipAddress = getRequestIp(req);
+    const userAgent = getRequestUserAgent(req);
 
-        if (!username || !password) {
-            await logLoginFailed({
-                attemptedUsername: username || null,
-                reason: "missing_credentials",
-                targetUsername: username || null,
-                ipAddress,
-                userAgent,
-            });
-            return res.status(400).render("auth/sign-in", {
-                formError: "Username and password are required.",
-                nextPath: safeNextForView || null,
-            });
-        }
-
-        const user = await findUserForLogin({
-            username,
-        });
-        if (!user || !verifyPassword(password, user.passwordHash)) {
-            await logLoginFailed({
-                attemptedUsername: username,
-                reason: "invalid_credentials",
-                targetUserId: user?.userId ?? null,
-                targetUsername: user?.username ?? username,
-                ipAddress,
-                userAgent,
-            });
-            return res.status(401).render("auth/sign-in", {
-                formError: "Invalid username or password.",
-                nextPath: safeNextForView || null,
-            });
-        }
-        if (!user.isActive) {
-            await logLoginFailed({
-                attemptedUsername: username,
-                reason: "inactive_account",
-                targetUserId: user.userId,
-                targetUsername: user.username,
-                ipAddress,
-                userAgent,
-            });
-            return res.status(403).render("auth/sign-in", {
-                formError: "This account is inactive. Contact an administrator.",
-                nextPath: safeNextForView || null,
-            });
-        }
-
-        await regenerateSession(req);
-        req.session.userId = user.userId;
-        req.session.userRole = user.userRole;
-        req.session.username = user.username;
-        const profile = await findUserProfileById(user.userId);
-        req.session.profileImageUrl = profile?.profileImageUrl ?? null;
-        await saveSession(req);
-
-        await logLoginSuccess({
-            userId: user.userId,
-            username: user.username,
-            userRole: user.userRole,
+    if (!username || !password) {
+        await logLoginFailed({
+            attemptedUsername: username || null,
+            reason: "missing_credentials",
+            targetUsername: username || null,
             ipAddress,
             userAgent,
         });
-
-        return res.redirect(nextPath);
-    } catch (err) {
-        return next(err);
+        return res.status(400).render("auth/sign-in", {
+            formError: "Username and password are required.",
+            nextPath: safeNextForView || null,
+        });
     }
+
+    const user = await findUserForLogin({
+        username,
+    });
+    if (!user || !verifyPassword(password, user.passwordHash)) {
+        await logLoginFailed({
+            attemptedUsername: username,
+            reason: "invalid_credentials",
+            targetUserId: user?.userId ?? null,
+            targetUsername: user?.username ?? username,
+            ipAddress,
+            userAgent,
+        });
+        return res.status(401).render("auth/sign-in", {
+            formError: "Invalid username or password.",
+            nextPath: safeNextForView || null,
+        });
+    }
+    if (!user.isActive) {
+        await logLoginFailed({
+            attemptedUsername: username,
+            reason: "inactive_account",
+            targetUserId: user.userId,
+            targetUsername: user.username,
+            ipAddress,
+            userAgent,
+        });
+        return res.status(403).render("auth/sign-in", {
+            formError: "This account is inactive. Contact an administrator.",
+            nextPath: safeNextForView || null,
+        });
+    }
+
+    await regenerateSession(req);
+    req.session.userId = user.userId;
+    req.session.userRole = user.userRole;
+    req.session.username = user.username;
+    const profile = await findUserProfileById(user.userId);
+    req.session.profileImageUrl = profile?.profileImageUrl ?? null;
+    await saveSession(req);
+
+    await logLoginSuccess({
+        userId: user.userId,
+        username: user.username,
+        userRole: user.userRole,
+        ipAddress,
+        userAgent,
+    });
+
+    return res.redirect(nextPath);
 }
 
 /**
@@ -258,28 +242,24 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
  * - (가능한 경우) 로그아웃 감사로그 기록
  * - 세션 파기 및 쿠키 제거
  */
-export async function postLogout(req: Request, res: Response, next: NextFunction) {
-    try {
-        const userId = typeof req.session.userId === "number" ? req.session.userId : null;
-        const role = req.session.userRole;
-        const username = normalizeString(req.session.username);
-        const ipAddress = getRequestIp(req);
-        const userAgent = getRequestUserAgent(req);
+export async function postLogout(req: Request, res: Response) {
+    const userId = typeof req.session.userId === "number" ? req.session.userId : null;
+    const role = req.session.userRole;
+    const username = normalizeString(req.session.username);
+    const ipAddress = getRequestIp(req);
+    const userAgent = getRequestUserAgent(req);
 
-        if (userId !== null) {
-            await logLogoutSuccess({
-                userId,
-                username: username || null,
-                userRole: role ?? null,
-                ipAddress,
-                userAgent,
-            });
-        }
-
-        await destroySession(req);
-        res.clearCookie("mcmk.sid");
-        return res.redirect("/");
-    } catch (err) {
-        return next(err);
+    if (userId !== null) {
+        await logLogoutSuccess({
+            userId,
+            username: username || null,
+            userRole: role ?? null,
+            ipAddress,
+            userAgent,
+        });
     }
+
+    await destroySession(req);
+    res.clearCookie("mcmk.sid");
+    return res.redirect("/");
 }
