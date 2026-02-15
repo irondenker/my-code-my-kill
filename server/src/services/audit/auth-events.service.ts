@@ -1,4 +1,4 @@
-import { writeAdminAuditLogSafely } from "./admin-audit.service.js";
+import { writeAdminAuditLogSafely } from "./admin-events.service.js";
 
 import type { LoginFailedReason } from "../../types/auth.types.js";
 

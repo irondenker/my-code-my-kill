@@ -14,14 +14,14 @@ export type {
     BoardPostRecord,
 } from "../types/board.types.js";
 
-// Board meta (boards)
+// Board management (boards)
 export {
     listBoards,
     findBoardBySlug,
     findBoardById,
     createBoard,
     updateBoard,
-} from "./board/board-meta.service.js";
+} from "./board/board-management.service.js";
 
 // Post read (posts: count/list/find/exists)
 export {
@@ -45,7 +45,7 @@ export {
 export {
     findBoardPostForShowBySlugDisplayId,
     findNeighborPosts,
-} from "./board/board-read.service.js";
+} from "./board/post-show.service.js";
 
 // Post upload (filesystem)
 export {

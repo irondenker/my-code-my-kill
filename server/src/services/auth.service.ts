@@ -13,5 +13,4 @@ export {
     findUserByUsernameForAdminLookup,
     createUserForRegister,
     createUserForAdmin,
-} from "./auth/auth-core.service.js";
-
+} from "./auth/auth-account.service.js";

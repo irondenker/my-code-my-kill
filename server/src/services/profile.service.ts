@@ -12,5 +12,4 @@ export {
     findPublicProfileByUsername,
     updateUserProfile,
     updateUserProfileImage,
-} from "./profile/profile.service.js";
-
+} from "./profile/profile-management.service.js";

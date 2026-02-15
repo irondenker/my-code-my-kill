@@ -13,5 +13,4 @@ export {
     countAdminUsers,
     updateUserRole,
     deleteUserForAdmin,
-} from "./admin/admin-user.service.js";
-
+} from "./admin/user-management.service.js";

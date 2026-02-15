@@ -9,9 +9,9 @@ import {
     type AdminAuditLogRow,
     type AdminAuditCliPayload,
     type EmitAdminAuditCliLogParams,
-} from "../../types/admin-audit.types.js";
+} from "../../types/admin-events.types.js";
 
-export type { AdminAuditAction, AdminAuditLog } from "../../types/admin-audit.types.js";
+export type { AdminAuditAction, AdminAuditLog } from "../../types/admin-events.types.js";
 
 /**
  * 어드민 감사로그(Admin Audit) 서비스입니다.

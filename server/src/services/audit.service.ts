@@ -6,6 +6,5 @@
  * - 실제 구현은 `services/audit/` 하위로 위임합니다.
  */
 
-export { writeAdminAuditLog, writeAdminAuditLogSafely, listAdminAuditLogs } from "./audit/admin-audit.service.js";
-export { logLoginFailed, logLoginSuccess, logLogoutSuccess } from "./audit/auth-audit.service.js";
-
+export { writeAdminAuditLog, writeAdminAuditLogSafely, listAdminAuditLogs } from "./audit/admin-events.service.js";
+export { logLoginFailed, logLoginSuccess, logLogoutSuccess } from "./audit/auth-events.service.js";
