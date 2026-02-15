@@ -20,6 +20,9 @@ import {
     findBoardPostForShowBySlugDisplayId,
     findNeighborPosts,
     findPostBySlugDisplayId,
+    countBoardPostsBySlug,
+    listBoardPostOutlinesBySlug,
+    listBoards,
     deleteStoredPostAttachment,
     deleteStoredPostImage,
     softDeletePostBySlugDisplayId,
@@ -28,7 +31,8 @@ import {
     storePostImage,
     updateBoardPost,
 } from "../services/board.service.js";
-import { buildBoardIndexViewModel, buildBoardSlugViewModel } from "../view-models/board.view-model.js";
+import { createPaginationMeta } from "../utils/board.util.js";
+import { PAGINATION_DEFAULT_LIMIT } from "../constants/board.constants.js";
 
 /**
  * 게시글 컨트롤러입니다.
@@ -60,6 +64,77 @@ function getUploadedFile(req: Request, fieldName: string): Express.Multer.File |
  */
 function getCsrfToken(req: Request): string | null {
     return typeof req.csrfToken === "function" ? req.csrfToken() : null;
+}
+
+/**
+ * 양의 정수를 파싱합니다.
+ * 숫자가 아니거나 1 미만이면 fallback을 반환합니다.
+ */
+function parsePositiveInt(rawValue: unknown, fallback: number): number {
+    const value = Number(rawValue);
+    return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
+}
+
+/**
+ * 보드 목록 화면에서 사용하는 플래시 메시지를 소비합니다.
+ * 한 번 읽으면 세션에서 삭제합니다.
+ */
+function consumeBoardFlashMessage(req: Request): string | null {
+    const value = req.session.boardFlashMessage;
+    if (typeof value !== "string" || value.length === 0) {
+        return null;
+    }
+    delete req.session.boardFlashMessage;
+    return value;
+}
+
+/**
+ * 보드 디렉토리(목록) 접근 여부를 판정합니다.
+ * readAccess 정책 중 `owner_or_admin`은 "게시글 단위" 정책이라 목록 접근엔 적용하지 않습니다.
+ */
+function canAccessBoardDirectory(req: Request, board: NonNullable<Awaited<ReturnType<typeof findBoardBySlug>>>): boolean {
+    const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
+
+    if (board.readAccess === "public") {
+        return true;
+    }
+    if (board.readAccess === "admin") {
+        return viewerContext.isAdmin;
+    }
+    return viewerContext.isAuthenticated;
+}
+
+/**
+ * 보드 목록/게시글 목록 화면에서 "글쓰기" 버튼 노출 여부를 판정합니다.
+ */
+function canCreateForBoard(req: Request, board: Awaited<ReturnType<typeof findBoardBySlug>>): boolean {
+    if (!board) {
+        return false;
+    }
+
+    const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
+    if (!viewerContext.isAuthenticated) {
+        return false;
+    }
+
+    return board.createAccess === "admin" ? viewerContext.isAdmin : true;
+}
+
+/**
+ * owner_or_admin 보드에서 특정 게시글(작성자) 열람 가능 여부를 판정합니다.
+ * 기타 readAccess는 컨트롤러에서 이미 처리되므로 여기서는 통과로 봅니다.
+ */
+function canReadPost(req: Request, board: Awaited<ReturnType<typeof findBoardBySlug>>, postUserId: number): boolean {
+    if (!board) {
+        return true;
+    }
+
+    if (board.readAccess !== "owner_or_admin") {
+        return true;
+    }
+
+    const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
+    return viewerContext.isAdmin || viewerContext.viewerUserId === postUserId;
 }
 
 /**
@@ -179,8 +254,16 @@ function renderBoardEdit(
  */
 export async function getBoardIndex(req: Request, res: Response, next: NextFunction) {
     try {
-        const viewModel = await buildBoardIndexViewModel(req);
-        return res.render('board/index', viewModel);
+        const boards = (await listBoards()).filter((board) => canAccessBoardDirectory(req, board));
+
+        return res.render("board/index", {
+            boardSlug: null,
+            boardDisplayName: "Boards",
+            boardDescription: null,
+            formSuccess: null,
+            canCreate: false,
+            boards,
+        });
     } catch (err) {
         return next(err);
     }
@@ -195,6 +278,7 @@ export async function getBoardBySlug(req: Request, res: Response, next: NextFunc
         const slug = getSlugParamOrThrow(req);
         const board = await requireBoardBySlug(slug);
 
+        // 1) 보드 단위 readAccess 정책을 먼저 평가합니다.
         const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
         const readAccessResult = getBoardReadAccessResult(board, viewerContext);
         if (readAccessResult === "unauthorized") {
@@ -204,8 +288,48 @@ export async function getBoardBySlug(req: Request, res: Response, next: NextFunc
             return next(new HttpError(403, "Forbidden"));
         }
 
-        const viewModel = await buildBoardSlugViewModel(req, slug);
-        return res.render("board/index", viewModel);
+        // 2) 페이지네이션 파라미터를 정규화하고, 목록 상단에 노출할 플래시 메시지를 소비합니다.
+        const page = parsePositiveInt(req.query.page, 1);
+        const formSuccess = consumeBoardFlashMessage(req);
+
+        // 3) 전체 개수 -> 페이지 메타 계산 -> 현재 페이지 오프셋 계산 순서로 목록을 조회합니다.
+        const totalCount = await countBoardPostsBySlug(slug);
+        const limit = PAGINATION_DEFAULT_LIMIT;
+
+        const totalPages = createPaginationMeta(totalCount, limit);
+        const offset = (page - 1) * limit;
+
+        const outlines = await listBoardPostOutlinesBySlug({
+            slug,
+            offset,
+            limit,
+        });
+
+        // 4) owner_or_admin 보드는 "게시글 단위"로 열람 가능 여부가 갈리므로,
+        //    목록에서는 열람 불가 글의 제목을 마스킹하고 "열기 가능 여부" 플래그를 내려줍니다.
+        const postOutlines = outlines.map((post) => {
+            const canOpen = canReadPost(req, board, post.userId);
+            return {
+                ...post,
+                title: canOpen ? post.title : "비밀글",
+                canOpen,
+            };
+        });
+
+        return res.render("board/index", {
+            boardSlug: slug,
+            boardDisplayName: board.name,
+            boardDescription: board.description ?? null,
+            formSuccess,
+            canCreate: canCreateForBoard(req, board),
+            postOutlines,
+            pagination: {
+                page,
+                totalPages,
+                totalCount,
+                limit,
+            },
+        });
     } catch (err) {
         return next(err);
     }
@@ -249,6 +373,7 @@ export async function postBoardCreate(req: Request, res: Response, next: NextFun
         const slug = getSlugParamOrThrow(req);
         const board = await requireBoardBySlug(slug);
 
+        // 1) 보드 createAccess 정책에 따라 생성 가능 여부를 판정합니다.
         const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
         const createAccess = getBoardCreateAccessResult(board, viewerContext);
         if (createAccess === "forbidden") {
@@ -258,10 +383,12 @@ export async function postBoardCreate(req: Request, res: Response, next: NextFun
             return res.status(401).redirect("/login");
         }
 
+        // 2) 여기서부터는 "인증된 사용자"가 전제입니다.
         if (!Number.isFinite(viewerContext.viewerUserId) || viewerContext.viewerUserId <= 0) {
             return next(new HttpError(401, "Unauthorized"));
         }
 
+        // 3) 입력값을 정규화/검증합니다.
         const title = String(req.body?.title ?? "").trim();
         const content = String(req.body?.content ?? "").trim();
 
@@ -287,6 +414,8 @@ export async function postBoardCreate(req: Request, res: Response, next: NextFun
             });
         }
 
+        // 4) 업로드 파일은 (DB 저장 전에) 먼저 파일 시스템에 저장합니다.
+        //    업로드 중 실패하면 이미 저장된 파일도 롤백 정리합니다.
         const imageFile = getUploadedFile(req, "image");
         const attachmentFile = getUploadedFile(req, "attachment");
         let savedImage: string | null = null;
@@ -312,6 +441,7 @@ export async function postBoardCreate(req: Request, res: Response, next: NextFun
             });
         }
 
+        // 5) DB 저장이 실패하면, 앞서 저장한 파일도 함께 정리합니다(누수 방지).
         let created;
         try {
             created = await createBoardPost({
@@ -386,12 +516,14 @@ export async function postBoardEdit(req: Request, res: Response, next: NextFunct
         const displayId = getDisplayIdParamOrThrow(req);
         const post = await requirePostBySlugDisplayId({ slug, displayId });
 
+        // 1) 보드 쓰기 정책 + 작성자/관리자 권한을 확인합니다.
         const policy = getBoardWritePolicy(slug);
         const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
         if (!canEditPost(policy, viewerContext, post.userId)) {
             return next(new HttpError(403, "Forbidden"));
         }
 
+        // 2) 입력값 정규화/검증 (검증 실패 시 "현재 업로드 상태"를 유지한 채로 폼을 재표시).
         const title = String(req.body?.title ?? "").trim();
         const content = String(req.body?.content ?? "").trim();
 
@@ -432,6 +564,8 @@ export async function postBoardEdit(req: Request, res: Response, next: NextFunct
             });
         }
 
+        // 3) 새 파일 업로드가 있는 경우에만 저장합니다.
+        //    저장 중 실패하면 새로 저장된 파일만 정리하고, 기존 파일은 건드리지 않습니다.
         const imageFile = getUploadedFile(req, "image");
         const attachmentFile = getUploadedFile(req, "attachment");
         let newImage: string | null = null;
@@ -462,6 +596,7 @@ export async function postBoardEdit(req: Request, res: Response, next: NextFunct
             });
         }
 
+        // 4) DB에는 "새 파일이 있으면 새 파일" 우선으로 반영합니다.
         const imageUrl = newImage ?? post.imageUrl ?? null;
         const fileUrl = newAttachment ?? post.fileUrl ?? null;
 
@@ -474,11 +609,13 @@ export async function postBoardEdit(req: Request, res: Response, next: NextFunct
         });
 
         if (!updated) {
+            // 업데이트 실패 시 새로 업로드한 파일만 정리합니다.
             await deleteStoredPostImage(newImage);
             await deleteStoredPostAttachment(newAttachment);
             return next(new HttpError(404, "Not Found"));
         }
 
+        // 5) 새 파일로 교체된 경우, 기존 파일은 best-effort로 정리합니다.
         if (newImage && post.imageUrl) {
             await deleteStoredPostImage(post.imageUrl);
         }
@@ -506,11 +643,14 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
     try {
         const slug = getSlugParamOrThrow(req);
         const displayId = getDisplayIdParamOrThrow(req);
+
+        // 삭제는 세션 기반 인증이 전제입니다.
         const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
         if (!viewerContext.isAuthenticated) {
             return next(new HttpError(401, "Unauthorized"));
         }
 
+        // 보드 삭제 정책(admin-only vs owner/admin)을 적용합니다.
         const policy = getBoardWritePolicy(slug);
         let deleted = false;
 
@@ -528,6 +668,8 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
         }
 
         if (deleted) {
+            // HTML 폼은 보통 POST로 오므로 redirect + 플래시를 사용하고,
+            // API/JS 호출은 DELETE로 오므로 204로 응답합니다.
             if (req.method === "POST") {
                 req.session.boardFlashMessage = "Post has been deleted.";
                 return res.redirect(`/board/${encodeURIComponent(slug)}`);
@@ -535,6 +677,7 @@ export async function deleteBoardPost(req: Request, res: Response, next: NextFun
             return res.status(204).send();
         }
 
+        // 삭제 실패의 원인이 "대상 없음"인지 "권한 없음"인지 구분해 응답합니다.
         const exists = await doesPostExistBySlugDisplayId({ slug, displayId });
         if (!exists) {
             return next(new HttpError(404, "Not Found"));
@@ -561,6 +704,7 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
 
         const board = await requireBoardBySlug(slug);
 
+        // 1) 보드 단위 readAccess 정책을 평가합니다.
         const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
         const readAccessResult = getBoardReadAccessResult(board, viewerContext);
         if (readAccessResult === "unauthorized") {
@@ -570,20 +714,26 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
             return next(new HttpError(403, "Forbidden"));
         }
 
+        // 2) 상세 조회는 게시글이 존재하는지 먼저 확인합니다.
         const { viewerUserId, isAdmin } = viewerContext;
         const post = await findBoardPostForShowBySlugDisplayId({ slug, displayId });
         if (!post) {
             return next(new HttpError(404, "Not Found"));
         }
 
+        // 3) owner_or_admin 보드의 경우 게시글 단위로 작성자/관리자만 접근 가능합니다.
         const canReadPost = canReadPostForBoard(board.readAccess, viewerContext, post.user_id);
         if (!canReadPost) {
             return next(new HttpError(403, "Forbidden"));
         }
 
+        // 4) 글쓰기 정책에 따라 "수정/삭제" UI 노출 여부를 계산합니다.
         const writePolicy = getBoardWritePolicy(slug);
         const canEdit = canEditPost(writePolicy, viewerContext, post.user_id);
         const canDelete = canDeletePost(writePolicy, viewerContext, post.user_id);
+
+        // 5) 이전/다음 글 링크는 readAccess 정책에 따라 조회 범위를 제한합니다.
+        //    owner_or_admin 보드에서 관리자가 아닌 경우, 본인 글만 이웃 글로 탐색합니다.
         const neighborParams: { boardId: number; displayId: number; viewerUserId?: number } = {
             boardId: post.board_id,
             displayId,
@@ -602,6 +752,6 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
             canDelete,
         });
     } catch (err) {
-        next(err);
+        return next(err);
     }
 }
