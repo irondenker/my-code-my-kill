@@ -1,4 +1,4 @@
-import type { BoardCreateAccess, BoardReadAccess } from "../services/board.service.js";
+import type { BoardCreateAccess, BoardReadAccess } from "../types/board.types.js";
 
 /**
  * Admin 화면/컨트롤러에서 사용하는 입력값 정규화 및 검증 유틸 모음입니다.
@@ -19,52 +19,6 @@ export const BOARD_READ_ACCESS_VALUES: readonly BoardReadAccess[] = ["public", "
  * type guard(`isBoardCreateAccess`)와 함께 사용합니다.
  */
 export const BOARD_CREATE_ACCESS_VALUES: readonly BoardCreateAccess[] = ["auth", "admin"];
-
-/**
- * 입력이 문자열이면 trim 처리하고, 그 외 타입이면 빈 문자열을 반환합니다.
- *
- * @param value 후보 입력값
- */
-export function normalizeString(value: unknown): string {
-    return typeof value === "string" ? value.trim() : "";
-}
-
-/**
- * 입력이 문자열이면 trim 처리 후 빈 문자열이 아니면 반환하고, 아니면 null을 반환합니다.
- *
- * @param value 후보 입력값
- */
-export function normalizeNullable(value: unknown): string | null {
-    const trimmed = normalizeString(value);
-    return trimmed ? trimmed : null;
-}
-
-/**
- * 보드 slug를 정규화합니다(소문자 강제).
- *
- * @param value 후보 slug
- */
-export function normalizeBoardSlug(value: unknown): string {
-    return normalizeString(value).toLowerCase();
-}
-
-/**
- * 보드 readAccess 값을 정규화합니다(소문자 강제).
- *
- * @param value 후보 readAccess
- */
-export function normalizeBoardReadAccess(value: unknown): string {
-    return normalizeString(value).toLowerCase();
-}
-
-/**
- * 보드 createAccess 값을 정규화합니다(소문자 강제).
- *
- * @param value 후보 createAccess
- */
-export function normalizeBoardCreateAccess(value: unknown): string {
-    return normalizeString(value).toLowerCase();
-}
 
 /**
  * 문자열이 `BoardReadAccess` 허용값인지 판정하는 type guard입니다.
@@ -110,14 +64,4 @@ export type BoardFormValue = {
     description: string;
     readAccess: BoardReadAccess;
     createAccess: BoardCreateAccess;
-};
-
-/**
- * 어드민 유저 생성 폼에서 사용하는 값 모델입니다.
- * (뷰 렌더링 시 사용)
- */
-export type UserCreateFormValue = {
-    username: string;
-    role: "user" | "admin";
-    status: "active" | "inactive";
 };

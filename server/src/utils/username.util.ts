@@ -3,13 +3,15 @@
  * (I/O 없이 동작하는 순수 함수만 둡니다.)
  */
 
+import { normalizeString } from "./string.util.js";
+
 /**
  * 라우트 param 등에서 username 값을 안전하게 문자열로 정규화합니다.
  *
  * @param value 후보 입력값
  */
 export function normalizeUsernameParam(value: unknown): string {
-    return typeof value === "string" ? value.trim() : "";
+    return normalizeString(value);
 }
 
 /**

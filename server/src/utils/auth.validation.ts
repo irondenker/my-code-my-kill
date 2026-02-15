@@ -4,15 +4,6 @@
  */
 
 /**
- * 입력이 문자열이면 trim 처리하고, 그 외 타입이면 빈 문자열로 정규화합니다.
- *
- * @param value 후보 입력값
- */
-export function normalizeString(value: unknown): string {
-    return typeof value === "string" ? value.trim() : "";
-}
-
-/**
  * username 문자열이 유효한 길이인지 판정합니다.
  *
  * @param username username(정규화된 문자열)
