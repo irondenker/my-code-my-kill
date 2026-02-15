@@ -1,7 +1,10 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
 import { summarizeErrorMessage } from "../../utils/error-summary.util.js";
+import { normalizeNullable } from "../../utils/admin-input.util.js";
 import { formatKvLine } from "../../utils/log-format.util.js";
+import { sanitizeRecord } from "../../utils/record.util.js";
+import { truncateNullableString } from "../../utils/string.util.js";
 import {
     ADMIN_AUDIT_ACTIONS,
     type AdminAuditAction,
@@ -51,48 +54,6 @@ function getAuditCliLogLevel(): AuditCliLogLevel {
  * 현재 프로세스에서 사용할 감사로그 콘솔 출력 레벨(서버 시작 시 1회 결정)입니다.
  */
 const auditCliLogLevel = getAuditCliLogLevel();
-
-/**
- * 입력값이 문자열이면 trim 후 비어 있지 않은 값만 반환합니다.
- *
- * @param value 정규화할 입력값
- * @returns 공백 제거된 문자열 또는 null
- */
-function normalizeNullable(value: unknown): string | null {
-    if (typeof value !== "string") {
-        return null;
-    }
-    const trimmed = value.trim();
-    return trimmed ? trimmed : null;
-}
-
-/**
- * 문자열 길이를 지정한 최대 길이로 제한합니다.
- *
- * @param value 길이 제한 대상 문자열
- * @param maxLength 허용 최대 길이
- * @returns 잘린 문자열 또는 null
- */
-function truncate(value: string | null, maxLength: number): string | null {
-    if (!value) {
-        return null;
-    }
-    return value.length > maxLength ? value.slice(0, maxLength) : value;
-}
-
-/**
- * details 필드를 안전한 객체 형태로 정규화합니다.
- * 객체가 아니거나 배열이면 빈 객체를 반환합니다.
- *
- * @param value details 후보 값
- * @returns JSON 저장 가능한 객체
- */
-function sanitizeDetails(value: unknown): Record<string, unknown> {
-    if (!value || typeof value !== "object" || Array.isArray(value)) {
-        return {};
-    }
-    return value as Record<string, unknown>;
-}
 
 /**
  * 감사 로그 콘솔(JSON 1줄) 출력 payload를 구성합니다.
@@ -200,11 +161,11 @@ type NormalizedAdminAuditLogWriteInput = {
 function normalizeAdminAuditLogWriteInput(params: Parameters<typeof writeAdminAuditLog>[0]): NormalizedAdminAuditLogWriteInput {
     const actorUserId = params.actorUserId ?? null;
     const targetUserId = params.targetUserId ?? null;
-    const actorUsername = truncate(normalizeNullable(params.actorUsername), 50);
-    const targetUsername = truncate(normalizeNullable(params.targetUsername), 50);
-    const ipAddress = truncate(normalizeNullable(params.ipAddress), 64);
-    const userAgent = truncate(normalizeNullable(params.userAgent), 255);
-    const details = sanitizeDetails(params.details);
+    const actorUsername = truncateNullableString(normalizeNullable(params.actorUsername), 50);
+    const targetUsername = truncateNullableString(normalizeNullable(params.targetUsername), 50);
+    const ipAddress = truncateNullableString(normalizeNullable(params.ipAddress), 64);
+    const userAgent = truncateNullableString(normalizeNullable(params.userAgent), 255);
+    const details = sanitizeRecord(params.details);
     const detailsJson = JSON.stringify(details);
 
     return {
@@ -394,7 +355,7 @@ export async function listAdminAuditLogs(limit = 200): Promise<AdminAuditLog[]> 
         actorUsername: row.actor_username ?? null,
         targetUserId: row.target_user_id === null ? null : Number(row.target_user_id),
         targetUsername: row.target_username ?? null,
-        details: sanitizeDetails(row.details),
+        details: sanitizeRecord(row.details),
         ipAddress: row.ip_address ?? null,
         userAgent: row.user_agent ?? null,
         createdAt: row.created_at,
