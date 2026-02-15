@@ -112,6 +112,22 @@ async function renderAdminUsersIndex(
 }
 
 /**
+ * 어드민 유저 관리 인덱스 화면을 렌더링합니다.
+ * (목록 조회 + 플래시 메시지/에러/폼 값 바인딩)
+ */
+export function getAdminUsersPage(req: Request, res: Response) {
+    return renderAdminUsersIndex(req, res);
+}
+
+/**
+ * 어드민 보드 관리 인덱스 화면을 렌더링합니다.
+ * (목록 조회 + 플래시 메시지/에러/폼 값 바인딩)
+ */
+export function getAdminBoardsPage(req: Request, res: Response) {
+    return renderAdminBoardsIndex(req, res);
+}
+
+/**
  * 어드민 보드 관리 인덱스 화면을 렌더링합니다.
  * (목록 조회 + 플래시 메시지/에러/폼 값 바인딩)
  */
@@ -136,6 +152,18 @@ async function renderAdminBoardsIndex(
             readAccess: "public",
             createAccess: "auth",
         },
+    });
+}
+
+function renderAdminUsersIndexError(
+    req: Request,
+    res: Response,
+    params: { status: number; message: string }
+) {
+    res.status(params.status);
+    return renderAdminUsersIndex(req, res, {
+        formError: params.message,
+        formSuccess: null,
     });
 }
 
@@ -175,17 +203,8 @@ export async function getAdminDashboard(_req: Request, res: Response) {
     });
 }
 
-/**
- * 어드민 유저 관리 페이지를 렌더링합니다.
- */
-export async function getAdminUsersPage(req: Request, res: Response) {
-    return await renderAdminUsersIndex(req, res);
-}
+// getAdminUsersPage is exported above (thin wrapper). Keep only one export to avoid confusion.
 
-/**
- * 어드민 유저 삭제 요청을 처리합니다.
- * 자기 자신 삭제 금지, 최소 1명 admin 유지, 게시글 소유자 삭제 제한 등의 정책을 적용합니다.
- */
 /**
  * 어드민 유저 활성/비활성 상태 변경 요청을 처리합니다.
  * 자기 자신 비활성화 금지, admin 비활성화 금지 정책을 적용합니다.
@@ -195,8 +214,9 @@ export async function postAdminUserStatus(req: Request, res: Response) {
 
     const status = normalizeString(req.body?.status);
     if (status !== "active" && status !== "inactive") {
-        return await renderAdminUsersIndex(req, res, {
-            formError: "Invalid status value.",
+        return renderAdminUsersIndexError(req, res, {
+            status: 422,
+            message: "Invalid status value.",
         });
     }
 
@@ -216,7 +236,10 @@ export async function postAdminUserStatus(req: Request, res: Response) {
         nextStatus: status,
     });
     if (!statusPolicy.ok) {
-        return await renderAdminUsersIndex(req, res, { formError: statusPolicy.message });
+        return renderAdminUsersIndexError(req, res, {
+            status: 422,
+            message: statusPolicy.message,
+        });
     }
     if ("noChange" in statusPolicy && statusPolicy.noChange) {
         req.session.adminUsersFlashMessage = "User status has been updated.";
@@ -244,8 +267,9 @@ export async function postAdminUserRole(req: Request, res: Response) {
 
     const role = normalizeString(req.body?.role);
     if (role !== "admin" && role !== "user") {
-        return await renderAdminUsersIndex(req, res, {
-            formError: "Invalid role value.",
+        return renderAdminUsersIndexError(req, res, {
+            status: 422,
+            message: "Invalid role value.",
         });
     }
 
@@ -267,7 +291,10 @@ export async function postAdminUserRole(req: Request, res: Response) {
         ...(adminCount === null ? {} : { adminCount }),
     });
     if (!rolePolicy.ok) {
-        return await renderAdminUsersIndex(req, res, { formError: rolePolicy.message });
+        return renderAdminUsersIndexError(req, res, {
+            status: 422,
+            message: rolePolicy.message,
+        });
     }
     if ("noChange" in rolePolicy && rolePolicy.noChange) {
         req.session.adminUsersFlashMessage = "User role has been updated.";
@@ -300,12 +327,7 @@ export async function getAdminAuditLogsPage(req: Request, res: Response) {
     });
 }
 
-/**
- * 어드민 보드 관리 페이지를 렌더링합니다.
- */
-export async function getAdminBoardsPage(req: Request, res: Response) {
-    return await renderAdminBoardsIndex(req, res);
-}
+// getAdminBoardsPage is exported above (thin wrapper). Keep only one export to avoid confusion.
 
 /**
  * 어드민 보드 생성 요청을 처리합니다.
@@ -326,76 +348,76 @@ export async function postAdminBoardCreate(req: Request, res: Response) {
     };
 
     if (!slug || !name) {
-        return res.status(400).render("admin/boards/index", {
-            boards: await listBoards(),
+        res.status(400);
+        return renderAdminBoardsIndex(req, res, {
             formError: "Slug and name are required.",
             formSuccess: null,
             formValue,
         });
     }
 
-        if (!isValidBoardSlug(slug)) {
-            return res.status(422).render("admin/boards/index", {
-                boards: await listBoards(),
-                formError: "Slug must be 2-50 chars and use lowercase letters, numbers, hyphens only.",
-                formSuccess: null,
-                formValue,
-            });
-        }
-
-        if (name.length > 100) {
-            return res.status(422).render("admin/boards/index", {
-                boards: await listBoards(),
-                formError: "Board name must be 100 characters or less.",
-                formSuccess: null,
-                formValue,
-            });
-        }
-
-        if (description && description.length > 255) {
-            return res.status(422).render("admin/boards/index", {
-                boards: await listBoards(),
-                formError: "Description must be 255 characters or less.",
-                formSuccess: null,
-                formValue,
-            });
-        }
-
-        if (!isBoardReadAccess(readAccess)) {
-            return res.status(422).render("admin/boards/index", {
-                boards: await listBoards(),
-                formError: "Invalid read access value.",
-                formSuccess: null,
-                formValue,
-            });
-        }
-
-        if (!isBoardCreateAccess(createAccess)) {
-            return res.status(422).render("admin/boards/index", {
-                boards: await listBoards(),
-                formError: "Invalid create access value.",
-                formSuccess: null,
-                formValue,
-            });
-        }
-
-        const existing = await findBoardBySlug(slug);
-        if (existing) {
-            return res.status(409).render("admin/boards/index", {
-                boards: await listBoards(),
-                formError: "This slug is already in use.",
-                formSuccess: null,
-                formValue,
-            });
-        }
-
-        await createBoard({
-            slug,
-            name,
-            description,
-            readAccess,
-            createAccess,
+    if (!isValidBoardSlug(slug)) {
+        res.status(422);
+        return renderAdminBoardsIndex(req, res, {
+            formError: "Slug must be 2-50 chars and use lowercase letters, numbers, hyphens only.",
+            formSuccess: null,
+            formValue,
         });
+    }
+
+    if (name.length > 100) {
+        res.status(422);
+        return renderAdminBoardsIndex(req, res, {
+            formError: "Board name must be 100 characters or less.",
+            formSuccess: null,
+            formValue,
+        });
+    }
+
+    if (description && description.length > 255) {
+        res.status(422);
+        return renderAdminBoardsIndex(req, res, {
+            formError: "Description must be 255 characters or less.",
+            formSuccess: null,
+            formValue,
+        });
+    }
+
+    if (!isBoardReadAccess(readAccess)) {
+        res.status(422);
+        return renderAdminBoardsIndex(req, res, {
+            formError: "Invalid read access value.",
+            formSuccess: null,
+            formValue,
+        });
+    }
+
+    if (!isBoardCreateAccess(createAccess)) {
+        res.status(422);
+        return renderAdminBoardsIndex(req, res, {
+            formError: "Invalid create access value.",
+            formSuccess: null,
+            formValue,
+        });
+    }
+
+    const existing = await findBoardBySlug(slug);
+    if (existing) {
+        res.status(409);
+        return renderAdminBoardsIndex(req, res, {
+            formError: "This slug is already in use.",
+            formSuccess: null,
+            formValue,
+        });
+    }
+
+    await createBoard({
+        slug,
+        name,
+        description,
+        readAccess,
+        createAccess,
+    });
 
     req.session.adminBoardsFlashMessage = "Board has been created.";
     return res.redirect("/admin/boards");
@@ -437,53 +459,54 @@ export async function postAdminBoardEdit(req: Request, res: Response) {
         throw new HttpError(404, "Not Found");
     }
 
-        const slug = normalizeLowerString(req.body?.slug);
-        const name = normalizeString(req.body?.name);
-        const description = normalizeNullableString(req.body?.description);
-        const readAccess = normalizeLowerString(req.body?.readAccess);
-        const createAccess = normalizeLowerString(req.body?.createAccess);
+    const slug = normalizeLowerString(req.body?.slug);
+    const name = normalizeString(req.body?.name);
+    const description = normalizeNullableString(req.body?.description);
+    const readAccess = normalizeLowerString(req.body?.readAccess);
+    const createAccess = normalizeLowerString(req.body?.createAccess);
 
-        const renderInvalid = (message: string) =>
-            res.status(422).render("admin/boards/edit", {
-                formError: message,
-                board: {
-                    boardId,
-                    slug,
-                    name,
-                    description: description ?? "",
-                    readAccess: isBoardReadAccess(readAccess) ? readAccess : existingBoard.readAccess,
-                    createAccess: isBoardCreateAccess(createAccess) ? createAccess : existingBoard.createAccess,
-                },
-            });
+    const renderInvalid = (message: string, status = 422) => {
+        return res.status(status).render("admin/boards/edit", {
+            formError: message,
+            board: {
+                boardId,
+                slug,
+                name,
+                description: description ?? "",
+                readAccess: isBoardReadAccess(readAccess) ? readAccess : existingBoard.readAccess,
+                createAccess: isBoardCreateAccess(createAccess) ? createAccess : existingBoard.createAccess,
+            },
+        });
+    };
 
-        if (!slug || !name) {
-            return renderInvalid("Slug and name are required.");
-        }
+    if (!slug || !name) {
+        return renderInvalid("Slug and name are required.", 400);
+    }
 
-        if (!isValidBoardSlug(slug)) {
-            return renderInvalid("Slug must be 2-50 chars and use lowercase letters, numbers, hyphens only.");
-        }
+    if (!isValidBoardSlug(slug)) {
+        return renderInvalid("Slug must be 2-50 chars and use lowercase letters, numbers, hyphens only.");
+    }
 
-        if (name.length > 100) {
-            return renderInvalid("Board name must be 100 characters or less.");
-        }
+    if (name.length > 100) {
+        return renderInvalid("Board name must be 100 characters or less.");
+    }
 
-        if (description && description.length > 255) {
-            return renderInvalid("Description must be 255 characters or less.");
-        }
+    if (description && description.length > 255) {
+        return renderInvalid("Description must be 255 characters or less.");
+    }
 
-        if (!isBoardReadAccess(readAccess)) {
-            return renderInvalid("Invalid read access value.");
-        }
+    if (!isBoardReadAccess(readAccess)) {
+        return renderInvalid("Invalid read access value.");
+    }
 
-        if (!isBoardCreateAccess(createAccess)) {
-            return renderInvalid("Invalid create access value.");
-        }
+    if (!isBoardCreateAccess(createAccess)) {
+        return renderInvalid("Invalid create access value.");
+    }
 
-        const slugOwner = await findBoardBySlug(slug);
-        if (slugOwner && slugOwner.boardId !== boardId) {
-            return renderInvalid("This slug is already in use.");
-        }
+    const slugOwner = await findBoardBySlug(slug);
+    if (slugOwner && slugOwner.boardId !== boardId) {
+        return renderInvalid("This slug is already in use.", 409);
+    }
 
     const updated = await updateBoard({
         boardId,
