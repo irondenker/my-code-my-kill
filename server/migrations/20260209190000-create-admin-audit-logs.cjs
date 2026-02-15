@@ -31,7 +31,6 @@ module.exports = {
               'ADMIN_LOGIN',
               'ADMIN_LOGOUT',
               'ACCOUNT_CREATED',
-              'ACCOUNT_DELETED',
               'ACCOUNT_ACTIVATED',
               'ACCOUNT_DEACTIVATED',
               'ADMIN_GRANTED',

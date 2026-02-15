@@ -14,3 +14,10 @@ export {
     updateUserRole,
     deleteUserForAdmin,
 } from "./admin/user-management.service.js";
+
+export {
+    adminUpdateUserRole,
+    adminUpdateUserStatus,
+} from "./admin/admin-user.usecases.service.js";
+
+export type { AdminAuditContext } from "./admin/admin-user.usecases.service.js";

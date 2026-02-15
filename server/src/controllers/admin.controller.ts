@@ -1,4 +1,4 @@
-import type { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 import { HttpError } from "../utils/http-error.js";
@@ -10,23 +10,15 @@ import {
     updateBoard,
 } from "../services/board.service.js";
 import {
-    createUserForAdmin,
-    findUserByUsernameForAdminLookup,
-} from "../services/auth.service.js";
-import {
+    adminUpdateUserRole,
+    adminUpdateUserStatus,
     countAdminUsers,
-    deleteUserForAdmin,
     findUserMetaForAdminById,
     listUsersForAdmin,
-    updateUserActiveStatus,
-    updateUserRole,
 } from "../services/admin.service.js";
-import { writeAdminAuditLog, listAdminAuditLogs } from "../services/audit.service.js";
-import { hashPassword } from "../utils/password.util.js";
-import { isValidPassword, isValidUsername } from "../utils/auth.validation.js";
+import { listAdminAuditLogs } from "../services/audit.service.js";
 import {
     type BoardFormValue,
-    type UserCreateFormValue,
     isBoardCreateAccess,
     isBoardReadAccess,
     isValidBoardSlug,
@@ -37,12 +29,12 @@ import {
     normalizeString,
 } from "../utils/admin-input.util.js";
 import {
-    mapDeleteUserResultToErrorMessage,
-    validateAdminUserDeletePolicy,
     validateAdminUserRolePolicy,
     validateAdminUserStatusPolicy,
 } from "../utils/admin-user.policy.util.js";
 import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
+import { getPositiveIntParamOrThrow } from "./_shared/params.js";
+import type { AdminAuditContext } from "../services/admin.service.js";
 
 /**
  * 어드민 컨트롤러입니다.
@@ -50,7 +42,7 @@ import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js
  * 책임:
  * - `req/res/session` 기반의 HTTP 흐름 제어(렌더링/리다이렉트/상태코드)
  * - 입력값 정규화/검증(형태만) 후 서비스 호출
- * - 감사로그 payload 구성(행위/actor/target/IP/UA)
+ * - 감사로그 컨텍스트(actor/IP/UA) 구성 후 유즈케이스 서비스로 위임
  *
  * 반대 책임(여기서 하지 않음):
  * - DB 쿼리 직접 구현(서비스로 위임)
@@ -110,7 +102,6 @@ async function renderAdminUsersIndex(
     options?: {
         formError?: string | null;
         formSuccess?: string | null;
-        createFormValue?: UserCreateFormValue;
     }
 ) {
     const users = await listUsersForAdmin();
@@ -121,11 +112,6 @@ async function renderAdminUsersIndex(
         adminCount,
         formError: options?.formError ?? null,
         formSuccess: options?.formSuccess ?? consumeAdminUsersFlashMessage(req),
-        createFormValue: options?.createFormValue ?? {
-            username: "",
-            role: "user",
-            status: "active",
-        },
     });
 }
 
@@ -157,402 +143,200 @@ async function renderAdminBoardsIndex(
     });
 }
 
+function buildAdminAuditContext(req: Request): AdminAuditContext {
+    const actor = getSessionActor(req);
+    return {
+        actorUserId: actor.userId,
+        actorUsername: actor.username,
+        ipAddress: getRequestIp(req),
+        userAgent: getRequestUserAgent(req),
+    };
+}
+
 /**
  * 어드민 대시보드 화면을 렌더링합니다.
  * (기본 통계: 사용자 수/활성 게시글 수/보드 수)
  */
-export async function getAdminDashboard(_req: Request, res: Response, next: NextFunction) {
-    try {
-        const [usersCountRows, postsCountRows, boardsCountRows] = await Promise.all([
-            sequelize.query<{ total_count: string }>("SELECT COUNT(*) AS total_count FROM users", {
-                type: QueryTypes.SELECT,
-            }),
-            sequelize.query<{ total_count: string }>("SELECT COUNT(*) AS total_count FROM posts WHERE use_yn = true", {
-                type: QueryTypes.SELECT,
-            }),
-            sequelize.query<{ total_count: string }>("SELECT COUNT(*) AS total_count FROM boards", {
-                type: QueryTypes.SELECT,
-            }),
-        ]);
+export async function getAdminDashboard(_req: Request, res: Response) {
+    const [usersCountRows, postsCountRows, boardsCountRows] = await Promise.all([
+        sequelize.query<{ total_count: string }>("SELECT COUNT(*) AS total_count FROM users", {
+            type: QueryTypes.SELECT,
+        }),
+        sequelize.query<{ total_count: string }>("SELECT COUNT(*) AS total_count FROM posts WHERE use_yn = true", {
+            type: QueryTypes.SELECT,
+        }),
+        sequelize.query<{ total_count: string }>("SELECT COUNT(*) AS total_count FROM boards", {
+            type: QueryTypes.SELECT,
+        }),
+    ]);
 
-        return res.render("admin/index", {
-            stats: {
-                users: Number(usersCountRows[0]?.total_count ?? 0),
-                posts: Number(postsCountRows[0]?.total_count ?? 0),
-                boards: Number(boardsCountRows[0]?.total_count ?? 0),
-            },
-        });
-    } catch (err) {
-        return next(err);
-    }
+    return res.render("admin/index", {
+        stats: {
+            users: Number(usersCountRows[0]?.total_count ?? 0),
+            posts: Number(postsCountRows[0]?.total_count ?? 0),
+            boards: Number(boardsCountRows[0]?.total_count ?? 0),
+        },
+    });
 }
 
 /**
  * 어드민 유저 관리 페이지를 렌더링합니다.
  */
-export async function getAdminUsersPage(req: Request, res: Response, next: NextFunction) {
-    try {
-        return await renderAdminUsersIndex(req, res);
-    } catch (err) {
-        return next(err);
-    }
-}
-
-/**
- * 어드민 유저 생성 요청을 처리합니다.
- * 입력 검증 후 계정을 생성하고, 감사로그를 기록합니다.
- */
-export async function postAdminUserCreate(req: Request, res: Response, next: NextFunction) {
-    try {
-        const username = normalizeString(req.body?.username);
-        const password = String(req.body?.password ?? "");
-        const role = normalizeString(req.body?.role);
-        const status = normalizeString(req.body?.status);
-        const createFormValue: UserCreateFormValue = {
-            username,
-            role: role === "admin" ? "admin" : "user",
-            status: status === "inactive" ? "inactive" : "active",
-        };
-
-        if (!username || !password) {
-            res.status(400);
-            return await renderAdminUsersIndex(req, res, {
-                formError: "Username and password are required.",
-                createFormValue,
-            });
-        }
-
-        if (!isValidUsername(username)) {
-            res.status(422);
-            return await renderAdminUsersIndex(req, res, {
-                formError: "Username must be 3-50 characters.",
-                createFormValue,
-            });
-        }
-
-        if (!isValidPassword(password)) {
-            res.status(422);
-            return await renderAdminUsersIndex(req, res, {
-                formError: "Password must be 8-128 characters.",
-                createFormValue,
-            });
-        }
-
-        if (role !== "admin" && role !== "user") {
-            res.status(422);
-            return await renderAdminUsersIndex(req, res, {
-                formError: "Invalid role value.",
-                createFormValue,
-            });
-        }
-
-        if (status !== "active" && status !== "inactive") {
-            res.status(422);
-            return await renderAdminUsersIndex(req, res, {
-                formError: "Invalid status value for new account.",
-                createFormValue,
-            });
-        }
-
-        const existing = await findUserByUsernameForAdminLookup(username);
-        if (existing) {
-            res.status(422);
-            return await renderAdminUsersIndex(req, res, {
-                formError: "Username is already taken.",
-                createFormValue,
-            });
-        }
-
-        const created = await createUserForAdmin({
-            username,
-            passwordHash: hashPassword(password),
-            userRole: role as "admin" | "user",
-            isActive: status === "active",
-        });
-
-        const actor = getSessionActor(req);
-        await writeAdminAuditLog({
-            action: "ACCOUNT_CREATED",
-            actorUserId: actor.userId,
-            actorUsername: actor.username,
-            targetUserId: created.userId,
-            targetUsername: created.username,
-            details: {
-                createdRole: created.userRole,
-                createdStatus: created.isActive ? "active" : "inactive",
-            },
-            ipAddress: getRequestIp(req),
-            userAgent: getRequestUserAgent(req),
-        });
-
-        req.session.adminUsersFlashMessage = "User account has been created.";
-        return res.redirect("/admin/users");
-    } catch (err) {
-        return next(err);
-    }
+export async function getAdminUsersPage(req: Request, res: Response) {
+    return await renderAdminUsersIndex(req, res);
 }
 
 /**
  * 어드민 유저 삭제 요청을 처리합니다.
  * 자기 자신 삭제 금지, 최소 1명 admin 유지, 게시글 소유자 삭제 제한 등의 정책을 적용합니다.
  */
-export async function postAdminUserDelete(req: Request, res: Response, next: NextFunction) {
-    try {
-        const userId = Number(req.params.userId);
-        if (!Number.isFinite(userId) || userId <= 0) {
-            return next(new HttpError(404, "Not Found"));
-        }
-
-        const target = await findUserMetaForAdminById(userId);
-        if (!target) {
-            return next(new HttpError(404, "Not Found"));
-        }
-
-        const actorUserId = Number(req.session.userId);
-        const adminCount = target.userRole === "admin" ? await countAdminUsers() : null;
-        const deletePolicy = validateAdminUserDeletePolicy({
-            actorUserId,
-            target: {
-                userId: target.userId,
-                userRole: target.userRole,
-                isActive: target.isActive,
-            },
-            ...(adminCount === null ? {} : { adminCount }),
-        });
-        if (!deletePolicy.ok) {
-            return await renderAdminUsersIndex(req, res, { formError: deletePolicy.message });
-        }
-
-        const deleted = await deleteUserForAdmin(userId);
-        if (deleted === "not_found") {
-            return next(new HttpError(404, "Not Found"));
-        }
-        const deleteError = mapDeleteUserResultToErrorMessage(deleted);
-        if (deleteError) {
-            return await renderAdminUsersIndex(req, res, { formError: deleteError });
-        }
-
-        const actor = getSessionActor(req);
-        await writeAdminAuditLog({
-            action: "ACCOUNT_DELETED",
-            actorUserId: actor.userId,
-            actorUsername: actor.username,
-            targetUserId: target.userId,
-            targetUsername: target.username,
-            details: {
-                deletedRole: target.userRole,
-                deletedStatus: target.isActive ? "active" : "inactive",
-            },
-            ipAddress: getRequestIp(req),
-            userAgent: getRequestUserAgent(req),
-        });
-
-        req.session.adminUsersFlashMessage = "User account has been deleted.";
-        return res.redirect("/admin/users");
-    } catch (err) {
-        return next(err);
-    }
-}
-
 /**
  * 어드민 유저 활성/비활성 상태 변경 요청을 처리합니다.
  * 자기 자신 비활성화 금지, admin 비활성화 금지 정책을 적용합니다.
  */
-export async function postAdminUserStatus(req: Request, res: Response, next: NextFunction) {
-    try {
-        const userId = Number(req.params.userId);
-        if (!Number.isFinite(userId) || userId <= 0) {
-            return next(new HttpError(404, "Not Found"));
-        }
+export async function postAdminUserStatus(req: Request, res: Response) {
+    const userId = getPositiveIntParamOrThrow(req, "userId");
 
-        const status = normalizeString(req.body?.status);
-        if (status !== "active" && status !== "inactive") {
-            return await renderAdminUsersIndex(req, res, {
-                formError: "Invalid status value.",
-            });
-        }
-
-        const target = await findUserMetaForAdminById(userId);
-        if (!target) {
-            return next(new HttpError(404, "Not Found"));
-        }
-
-        const isActive = status === "active";
-        const statusPolicy = validateAdminUserStatusPolicy({
-            actorUserId: Number(req.session.userId),
-            target: {
-                userId: target.userId,
-                userRole: target.userRole,
-                isActive: target.isActive,
-            },
-            nextStatus: status,
+    const status = normalizeString(req.body?.status);
+    if (status !== "active" && status !== "inactive") {
+        return await renderAdminUsersIndex(req, res, {
+            formError: "Invalid status value.",
         });
-        if (!statusPolicy.ok) {
-            return await renderAdminUsersIndex(req, res, { formError: statusPolicy.message });
-        }
-        if ("noChange" in statusPolicy && statusPolicy.noChange) {
-            req.session.adminUsersFlashMessage = "User status has been updated.";
-            return res.redirect("/admin/users");
-        }
+    }
 
-        const updated = await updateUserActiveStatus({ userId, isActive });
-        if (!updated) {
-            return next(new HttpError(404, "Not Found"));
-        }
+    const target = await findUserMetaForAdminById(userId);
+    if (!target) {
+        throw new HttpError(404, "Not Found");
+    }
 
-        const actor = getSessionActor(req);
-        await writeAdminAuditLog({
-            action: isActive ? "ACCOUNT_ACTIVATED" : "ACCOUNT_DEACTIVATED",
-            actorUserId: actor.userId,
-            actorUsername: actor.username,
-            targetUserId: target.userId,
-            targetUsername: target.username,
-            details: {
-                previousStatus: target.isActive ? "active" : "inactive",
-                currentStatus: isActive ? "active" : "inactive",
-            },
-            ipAddress: getRequestIp(req),
-            userAgent: getRequestUserAgent(req),
-        });
-
+    const isActive = status === "active";
+    const statusPolicy = validateAdminUserStatusPolicy({
+        actorUserId: Number(req.session.userId),
+        target: {
+            userId: target.userId,
+            userRole: target.userRole,
+            isActive: target.isActive,
+        },
+        nextStatus: status,
+    });
+    if (!statusPolicy.ok) {
+        return await renderAdminUsersIndex(req, res, { formError: statusPolicy.message });
+    }
+    if ("noChange" in statusPolicy && statusPolicy.noChange) {
         req.session.adminUsersFlashMessage = "User status has been updated.";
         return res.redirect("/admin/users");
-    } catch (err) {
-        return next(err);
     }
+
+    const updated = await adminUpdateUserStatus(buildAdminAuditContext(req), {
+        target,
+        nextIsActive: isActive,
+    });
+    if (!updated) {
+        throw new HttpError(404, "Not Found");
+    }
+
+    req.session.adminUsersFlashMessage = "User status has been updated.";
+    return res.redirect("/admin/users");
 }
 
 /**
  * 어드민 유저 역할(user/admin) 변경 요청을 처리합니다.
  * 자기 자신의 admin 권한 회수 금지, 최소 1명 admin 유지 정책을 적용합니다.
  */
-export async function postAdminUserRole(req: Request, res: Response, next: NextFunction) {
-    try {
-        const userId = Number(req.params.userId);
-        if (!Number.isFinite(userId) || userId <= 0) {
-            return next(new HttpError(404, "Not Found"));
-        }
+export async function postAdminUserRole(req: Request, res: Response) {
+    const userId = getPositiveIntParamOrThrow(req, "userId");
 
-        const role = normalizeString(req.body?.role);
-        if (role !== "admin" && role !== "user") {
-            return await renderAdminUsersIndex(req, res, {
-                formError: "Invalid role value.",
-            });
-        }
-
-        const target = await findUserMetaForAdminById(userId);
-        if (!target) {
-            return next(new HttpError(404, "Not Found"));
-        }
-
-        const requestedRole = role as "admin" | "user";
-        const adminCount = target.userRole === "admin" && requestedRole === "user"
-            ? await countAdminUsers()
-            : null;
-        const rolePolicy = validateAdminUserRolePolicy({
-            actorUserId: Number(req.session.userId),
-            target: {
-                userId: target.userId,
-                userRole: target.userRole,
-                isActive: target.isActive,
-            },
-            requestedRole,
-            ...(adminCount === null ? {} : { adminCount }),
+    const role = normalizeString(req.body?.role);
+    if (role !== "admin" && role !== "user") {
+        return await renderAdminUsersIndex(req, res, {
+            formError: "Invalid role value.",
         });
-        if (!rolePolicy.ok) {
-            return await renderAdminUsersIndex(req, res, { formError: rolePolicy.message });
-        }
-        if ("noChange" in rolePolicy && rolePolicy.noChange) {
-            req.session.adminUsersFlashMessage = "User role has been updated.";
-            return res.redirect("/admin/users");
-        }
+    }
 
-        const updated = await updateUserRole({
-            userId,
-            userRole: requestedRole,
-        });
-        if (!updated) {
-            return next(new HttpError(404, "Not Found"));
-        }
+    const target = await findUserMetaForAdminById(userId);
+    if (!target) {
+        throw new HttpError(404, "Not Found");
+    }
 
-        const actor = getSessionActor(req);
-        await writeAdminAuditLog({
-            action: requestedRole === "admin" ? "ADMIN_GRANTED" : "ADMIN_REVOKED",
-            actorUserId: actor.userId,
-            actorUsername: actor.username,
-            targetUserId: target.userId,
-            targetUsername: target.username,
-            details: {
-                previousRole: target.userRole,
-                currentRole: requestedRole,
-            },
-            ipAddress: getRequestIp(req),
-            userAgent: getRequestUserAgent(req),
-        });
-
+    const requestedRole = role as "admin" | "user";
+    const adminCount = target.userRole === "admin" && requestedRole === "user" ? await countAdminUsers() : null;
+    const rolePolicy = validateAdminUserRolePolicy({
+        actorUserId: Number(req.session.userId),
+        target: {
+            userId: target.userId,
+            userRole: target.userRole,
+            isActive: target.isActive,
+        },
+        requestedRole,
+        ...(adminCount === null ? {} : { adminCount }),
+    });
+    if (!rolePolicy.ok) {
+        return await renderAdminUsersIndex(req, res, { formError: rolePolicy.message });
+    }
+    if ("noChange" in rolePolicy && rolePolicy.noChange) {
         req.session.adminUsersFlashMessage = "User role has been updated.";
         return res.redirect("/admin/users");
-    } catch (err) {
-        return next(err);
     }
+
+    const updated = await adminUpdateUserRole(buildAdminAuditContext(req), {
+        target,
+        requestedRole,
+    });
+    if (!updated) {
+        throw new HttpError(404, "Not Found");
+    }
+
+    req.session.adminUsersFlashMessage = "User role has been updated.";
+    return res.redirect("/admin/users");
 }
 
 /**
  * 어드민 감사로그 조회 페이지를 렌더링합니다.
  * limit 쿼리 파라미터를 안전하게 정규화하여 적용합니다.
  */
-export async function getAdminAuditLogsPage(req: Request, res: Response, next: NextFunction) {
-    try {
-        const queryLimit = Number(req.query?.limit);
-        const limit = Number.isFinite(queryLimit) && queryLimit > 0 ? queryLimit : 200;
-        const logs = await listAdminAuditLogs(limit);
-        return res.render("admin/audit-logs/index", {
-            logs,
-            selectedLimit: Math.min(Math.max(Math.trunc(limit), 1), 500),
-        });
-    } catch (err) {
-        return next(err);
-    }
+export async function getAdminAuditLogsPage(req: Request, res: Response) {
+    const queryLimit = Number(req.query?.limit);
+    const limit = Number.isFinite(queryLimit) && queryLimit > 0 ? queryLimit : 200;
+    const logs = await listAdminAuditLogs(limit);
+    return res.render("admin/audit-logs/index", {
+        logs,
+        selectedLimit: Math.min(Math.max(Math.trunc(limit), 1), 500),
+    });
 }
 
 /**
  * 어드민 보드 관리 페이지를 렌더링합니다.
  */
-export async function getAdminBoardsPage(req: Request, res: Response, next: NextFunction) {
-    try {
-        return await renderAdminBoardsIndex(req, res);
-    } catch (err) {
-        return next(err);
-    }
+export async function getAdminBoardsPage(req: Request, res: Response) {
+    return await renderAdminBoardsIndex(req, res);
 }
 
 /**
  * 어드민 보드 생성 요청을 처리합니다.
  * 입력 검증 후 보드를 생성하고, 플래시 메시지로 결과를 전달합니다.
  */
-export async function postAdminBoardCreate(req: Request, res: Response, next: NextFunction) {
-    try {
-        const slug = normalizeBoardSlug(req.body?.slug);
-        const name = normalizeString(req.body?.name);
-        const description = normalizeNullable(req.body?.description);
-        const readAccess = normalizeBoardReadAccess(req.body?.readAccess);
-        const createAccess = normalizeBoardCreateAccess(req.body?.createAccess);
-        const formValue: BoardFormValue = {
-            slug,
-            name,
-            description: description ?? "",
-            readAccess: isBoardReadAccess(readAccess) ? readAccess : "public",
-            createAccess: isBoardCreateAccess(createAccess) ? createAccess : "auth",
-        };
+export async function postAdminBoardCreate(req: Request, res: Response) {
+    const slug = normalizeBoardSlug(req.body?.slug);
+    const name = normalizeString(req.body?.name);
+    const description = normalizeNullable(req.body?.description);
+    const readAccess = normalizeBoardReadAccess(req.body?.readAccess);
+    const createAccess = normalizeBoardCreateAccess(req.body?.createAccess);
+    const formValue: BoardFormValue = {
+        slug,
+        name,
+        description: description ?? "",
+        readAccess: isBoardReadAccess(readAccess) ? readAccess : "public",
+        createAccess: isBoardCreateAccess(createAccess) ? createAccess : "auth",
+    };
 
-        if (!slug || !name) {
-            return res.status(400).render("admin/boards/index", {
-                boards: await listBoards(),
-                formError: "Slug and name are required.",
-                formSuccess: null,
-                formValue,
-            });
-        }
+    if (!slug || !name) {
+        return res.status(400).render("admin/boards/index", {
+            boards: await listBoards(),
+            formError: "Slug and name are required.",
+            formSuccess: null,
+            formValue,
+        });
+    }
 
         if (!isValidBoardSlug(slug)) {
             return res.status(422).render("admin/boards/index", {
@@ -617,59 +401,45 @@ export async function postAdminBoardCreate(req: Request, res: Response, next: Ne
             createAccess,
         });
 
-        req.session.adminBoardsFlashMessage = "Board has been created.";
-        return res.redirect("/admin/boards");
-    } catch (err) {
-        return next(err);
-    }
+    req.session.adminBoardsFlashMessage = "Board has been created.";
+    return res.redirect("/admin/boards");
 }
 
 /**
  * 어드민 보드 수정 폼 페이지를 렌더링합니다.
  */
-export async function getAdminBoardEditPage(req: Request, res: Response, next: NextFunction) {
-    try {
-        const boardId = Number(req.params.boardId);
-        if (!Number.isFinite(boardId) || boardId <= 0) {
-            return next(new HttpError(404, "Not Found"));
-        }
+export async function getAdminBoardEditPage(req: Request, res: Response) {
+    const boardId = getPositiveIntParamOrThrow(req, "boardId");
 
-        const board = await findBoardById(boardId);
-        if (!board) {
-            return next(new HttpError(404, "Not Found"));
-        }
-
-        return res.render("admin/boards/edit", {
-            formError: null,
-            board: {
-                boardId: board.boardId,
-                slug: board.slug,
-                name: board.name,
-                description: board.description ?? "",
-                readAccess: board.readAccess,
-                createAccess: board.createAccess,
-            },
-        });
-    } catch (err) {
-        return next(err);
+    const board = await findBoardById(boardId);
+    if (!board) {
+        throw new HttpError(404, "Not Found");
     }
+
+    return res.render("admin/boards/edit", {
+        formError: null,
+        board: {
+            boardId: board.boardId,
+            slug: board.slug,
+            name: board.name,
+            description: board.description ?? "",
+            readAccess: board.readAccess,
+            createAccess: board.createAccess,
+        },
+    });
 }
 
 /**
  * 어드민 보드 수정 요청을 처리합니다.
  * 입력 검증 후 보드를 업데이트하고, 플래시 메시지로 결과를 전달합니다.
  */
-export async function postAdminBoardEdit(req: Request, res: Response, next: NextFunction) {
-    try {
-        const boardId = Number(req.params.boardId);
-        if (!Number.isFinite(boardId) || boardId <= 0) {
-            return next(new HttpError(404, "Not Found"));
-        }
+export async function postAdminBoardEdit(req: Request, res: Response) {
+    const boardId = getPositiveIntParamOrThrow(req, "boardId");
 
-        const existingBoard = await findBoardById(boardId);
-        if (!existingBoard) {
-            return next(new HttpError(404, "Not Found"));
-        }
+    const existingBoard = await findBoardById(boardId);
+    if (!existingBoard) {
+        throw new HttpError(404, "Not Found");
+    }
 
         const slug = normalizeBoardSlug(req.body?.slug);
         const name = normalizeString(req.body?.name);
@@ -719,22 +489,19 @@ export async function postAdminBoardEdit(req: Request, res: Response, next: Next
             return renderInvalid("This slug is already in use.");
         }
 
-        const updated = await updateBoard({
-            boardId,
-            slug,
-            name,
-            description,
-            readAccess,
-            createAccess,
-        });
+    const updated = await updateBoard({
+        boardId,
+        slug,
+        name,
+        description,
+        readAccess,
+        createAccess,
+    });
 
-        if (!updated) {
-            return next(new HttpError(404, "Not Found"));
-        }
-
-        req.session.adminBoardsFlashMessage = "Board has been updated.";
-        return res.redirect("/admin/boards");
-    } catch (err) {
-        return next(err);
+    if (!updated) {
+        throw new HttpError(404, "Not Found");
     }
+
+    req.session.adminBoardsFlashMessage = "Board has been updated.";
+    return res.redirect("/admin/boards");
 }

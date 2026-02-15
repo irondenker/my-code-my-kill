@@ -7,8 +7,6 @@ import {
     getAdminUsersPage,
     postAdminBoardCreate,
     postAdminBoardEdit,
-    postAdminUserCreate,
-    postAdminUserDelete,
     postAdminUserRole,
     postAdminUserStatus,
 } from "../controllers/admin.controller.js";
@@ -18,8 +16,6 @@ const router = Router();
 
 router.get("/admin", requireAdminRedirect, getAdminDashboard);
 router.get("/admin/users", requireAdminRedirect, getAdminUsersPage);
-router.post("/admin/users", requireAdminRedirect, postAdminUserCreate);
-router.post("/admin/users/:userId/delete", requireAdminRedirect, postAdminUserDelete);
 router.post("/admin/users/:userId/status", requireAdminRedirect, postAdminUserStatus);
 router.post("/admin/users/:userId/role", requireAdminRedirect, postAdminUserRole);
 router.get("/admin/audit-logs", requireAdminRedirect, getAdminAuditLogsPage);
