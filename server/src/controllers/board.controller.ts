@@ -32,7 +32,6 @@ import {
 import { createPaginationMeta } from "../utils/board.util.js";
 import { PAGINATION_DEFAULT_LIMIT } from "../constants/board.constants.js";
 import { getPositiveIntParamOrThrow, getStringParamOrThrow } from "./_shared/params.js";
-import { renderBoardCreate, renderBoardEdit } from "./board/board.render.js";
 import { cleanupBoardPostUploads, storeBoardPostUploads } from "./board/board.upload.js";
 
 /**
@@ -272,7 +271,7 @@ export async function postBoardCreate(req: Request, res: Response) {
 
     if (!title || !content) {
         res.status(400);
-        return renderBoardCreate(req, res, {
+        return res.render("board/new", {
             boardSlug: board.slug,
             boardDisplayName: board.name,
             formError: "Title and content are required.",
@@ -283,7 +282,7 @@ export async function postBoardCreate(req: Request, res: Response) {
 
     if (!isValidPostTitle(title) || !isValidPostContent(content)) {
         res.status(422);
-        return renderBoardCreate(req, res, {
+        return res.render("board/new", {
             boardSlug: board.slug,
             boardDisplayName: board.name,
             formError: "Title or content is invalid.",
@@ -299,7 +298,7 @@ export async function postBoardCreate(req: Request, res: Response) {
         uploads = await storeBoardPostUploads(req);
     } catch (err) {
         res.status(422);
-        return renderBoardCreate(req, res, {
+        return res.render("board/new", {
             boardSlug: board.slug,
             boardDisplayName: board.name,
             formError: err instanceof Error ? err.message : "Invalid upload.",
@@ -346,7 +345,7 @@ export async function getBoardEditForm(req: Request, res: Response) {
     const fileUrl = buildPostFileUrl(post.fileUrl);
     const imageName = post.imageUrl ? path.basename(post.imageUrl) : null;
 
-    return renderBoardEdit(req, res, {
+    return res.render("board/edit", {
         boardSlug: post.boardSlug,
         boardDisplayName: post.boardName,
         displayId: post.displayId,
@@ -392,7 +391,7 @@ export async function postBoardEdit(req: Request, res: Response) {
 
     if (!title || !content) {
         res.status(400);
-        return renderBoardEdit(req, res, {
+        return res.render("board/edit", {
             boardSlug: post.boardSlug,
             boardDisplayName: post.boardName,
             displayId: post.displayId,
@@ -408,7 +407,7 @@ export async function postBoardEdit(req: Request, res: Response) {
 
     if (!isValidPostTitle(title) || !isValidPostContent(content)) {
         res.status(422);
-        return renderBoardEdit(req, res, {
+        return res.render("board/edit", {
             boardSlug: post.boardSlug,
             boardDisplayName: post.boardName,
             displayId: post.displayId,
@@ -429,7 +428,7 @@ export async function postBoardEdit(req: Request, res: Response) {
         uploads = await storeBoardPostUploads(req);
     } catch (err) {
         res.status(422);
-        return renderBoardEdit(req, res, {
+        return res.render("board/edit", {
             boardSlug: post.boardSlug,
             boardDisplayName: post.boardName,
             displayId: post.displayId,
