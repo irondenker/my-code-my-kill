@@ -22,17 +22,13 @@ import {
     isBoardCreateAccess,
     isBoardReadAccess,
     isValidBoardSlug,
-    normalizeBoardCreateAccess,
-    normalizeBoardReadAccess,
-    normalizeBoardSlug,
-    normalizeNullable,
-    normalizeString,
 } from "../utils/admin-input.util.js";
 import {
     validateAdminUserRolePolicy,
     validateAdminUserStatusPolicy,
 } from "../utils/admin-user.policy.util.js";
 import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
+import { normalizeLowerString, normalizeNullableString, normalizeString } from "../utils/string.util.js";
 import { getPositiveIntParamOrThrow } from "./_shared/params.js";
 import type { AdminAuditContext } from "../services/admin.service.js";
 
@@ -62,7 +58,7 @@ function getSessionActor(req: Request): { userId: number; username: string | nul
     }
     return {
         userId,
-        username: normalizeNullable(req.session.username),
+        username: normalizeNullableString(req.session.username),
     };
 }
 
@@ -316,11 +312,11 @@ export async function getAdminBoardsPage(req: Request, res: Response) {
  * 입력 검증 후 보드를 생성하고, 플래시 메시지로 결과를 전달합니다.
  */
 export async function postAdminBoardCreate(req: Request, res: Response) {
-    const slug = normalizeBoardSlug(req.body?.slug);
+    const slug = normalizeLowerString(req.body?.slug);
     const name = normalizeString(req.body?.name);
-    const description = normalizeNullable(req.body?.description);
-    const readAccess = normalizeBoardReadAccess(req.body?.readAccess);
-    const createAccess = normalizeBoardCreateAccess(req.body?.createAccess);
+    const description = normalizeNullableString(req.body?.description);
+    const readAccess = normalizeLowerString(req.body?.readAccess);
+    const createAccess = normalizeLowerString(req.body?.createAccess);
     const formValue: BoardFormValue = {
         slug,
         name,
@@ -441,11 +437,11 @@ export async function postAdminBoardEdit(req: Request, res: Response) {
         throw new HttpError(404, "Not Found");
     }
 
-        const slug = normalizeBoardSlug(req.body?.slug);
+        const slug = normalizeLowerString(req.body?.slug);
         const name = normalizeString(req.body?.name);
-        const description = normalizeNullable(req.body?.description);
-        const readAccess = normalizeBoardReadAccess(req.body?.readAccess);
-        const createAccess = normalizeBoardCreateAccess(req.body?.createAccess);
+        const description = normalizeNullableString(req.body?.description);
+        const readAccess = normalizeLowerString(req.body?.readAccess);
+        const createAccess = normalizeLowerString(req.body?.createAccess);
 
         const renderInvalid = (message: string) =>
             res.status(422).render("admin/boards/edit", {

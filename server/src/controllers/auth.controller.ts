@@ -8,7 +8,8 @@ import { findUserProfileById } from "../services/profile.service.js";
 import { logLoginFailed, logLoginSuccess, logLogoutSuccess } from "../services/audit.service.js";
 import { hashPassword, verifyPassword } from "../utils/password.util.js";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
-import { isValidPassword, isValidUsername, normalizeString } from "../utils/auth.validation.js";
+import { isValidPassword, isValidUsername } from "../utils/auth.validation.js";
+import { normalizeString } from "../utils/string.util.js";
 import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
 import { regenerateSession, saveSession } from "../utils/session.util.js";
 

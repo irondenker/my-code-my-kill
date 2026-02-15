@@ -1,10 +1,9 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
 import { summarizeErrorMessage } from "../../utils/error-summary.util.js";
-import { normalizeNullable } from "../../utils/admin-input.util.js";
 import { formatKvLine } from "../../utils/log-format.util.js";
 import { sanitizeRecord } from "../../utils/record.util.js";
-import { truncateNullableString } from "../../utils/string.util.js";
+import { normalizeNullableString, truncateNullableString } from "../../utils/string.util.js";
 import {
     ADMIN_AUDIT_ACTIONS,
     type AdminAuditAction,
@@ -161,10 +160,10 @@ type NormalizedAdminAuditLogWriteInput = {
 function normalizeAdminAuditLogWriteInput(params: Parameters<typeof writeAdminAuditLog>[0]): NormalizedAdminAuditLogWriteInput {
     const actorUserId = params.actorUserId ?? null;
     const targetUserId = params.targetUserId ?? null;
-    const actorUsername = truncateNullableString(normalizeNullable(params.actorUsername), 50);
-    const targetUsername = truncateNullableString(normalizeNullable(params.targetUsername), 50);
-    const ipAddress = truncateNullableString(normalizeNullable(params.ipAddress), 64);
-    const userAgent = truncateNullableString(normalizeNullable(params.userAgent), 255);
+    const actorUsername = truncateNullableString(normalizeNullableString(params.actorUsername), 50);
+    const targetUsername = truncateNullableString(normalizeNullableString(params.targetUsername), 50);
+    const ipAddress = truncateNullableString(normalizeNullableString(params.ipAddress), 64);
+    const userAgent = truncateNullableString(normalizeNullableString(params.userAgent), 255);
     const details = sanitizeRecord(params.details);
     const detailsJson = JSON.stringify(details);
 

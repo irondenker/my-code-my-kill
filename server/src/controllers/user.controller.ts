@@ -2,6 +2,7 @@
 import { findUserProfileById, findUserProfileByUsername, updateUserProfile } from "../services/profile.service.js";
 import { isPublicProfileHandle, normalizeUsernameParam } from "../utils/username.util.js";
 import { HttpError } from "../utils/http-error.js";
+import { normalizeNullableString } from "../utils/string.util.js";
 
 /**
  * 사용자 프로필(공개 페이지 + 설정 페이지) 컨트롤러입니다.
@@ -11,21 +12,6 @@ import { HttpError } from "../utils/http-error.js";
  * - 세션에 따른 노출 범위 제어(본인/관리자만 사적 정보 노출)
  * - 프로필 조회/수정은 `profile.service`로 위임
  */
-
-/**
- * 문자열 입력을 trim하여 반환합니다.
- */
-function normalizeString(value: unknown): string {
-    return typeof value === "string" ? value.trim() : "";
-}
-
-/**
- * 문자열을 trim 후 비어 있으면 null로 정규화합니다.
- */
-function normalizeNullable(value: unknown): string | null {
-    const trimmed = normalizeString(value);
-    return trimmed ? trimmed : null;
-}
 
 /**
  * 이메일 형식을 간단히 검증합니다.
@@ -136,10 +122,10 @@ export async function postProfileEdit(req: Request, res: Response) {
     }
 
     // 3) 입력값을 trim/nullable로 정규화합니다.
-    const displayName = normalizeNullable(req.body?.displayName);
-    const email = normalizeNullable(req.body?.email);
-    const phoneNumber = normalizeNullable(req.body?.phoneNumber);
-    const bio = normalizeNullable(req.body?.bio);
+    const displayName = normalizeNullableString(req.body?.displayName);
+    const email = normalizeNullableString(req.body?.email);
+    const phoneNumber = normalizeNullableString(req.body?.phoneNumber);
+    const bio = normalizeNullableString(req.body?.bio);
 
     // 4) 필드 단위 검증 후 실패 시 기존 값 + 입력값을 그대로 폼에 바인딩하여 재표시합니다.
     if (displayName && displayName.length > 50) {
