@@ -1,10 +1,14 @@
 import { writeAdminAuditLogSafely } from "./admin-audit.service.js";
 
-type LoginFailedReason = "missing_credentials" | "invalid_credentials" | "inactive_account";
+import type { LoginFailedReason } from "../types/auth.types.js";
 
 /**
  * 인증(Auth) 관련 감사로그를 기록하는 서비스입니다.
  * 컨트롤러에서 payload 구성 중복을 줄이기 위해 auth 전용 이벤트를 여기로 모읍니다.
+ *
+ * 규칙:
+ * - 컨트롤러는 "언제/무엇을" 기록할지 결정하고, 이 서비스는 "어떤 형태로" 기록할지를 담당합니다.
+ * - 콘솔 출력 여부는 `admin-audit.service`의 `AUDIT_CLI_LOG_LEVEL` 정책을 따릅니다.
  */
 
 /**

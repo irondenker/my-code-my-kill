@@ -1,10 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import {
-    createUser,
-    findUserByUsername,
     findUserForLogin,
-    findUserProfileById,
-} from "../services/auth.service.js";
+    createUserForRegister,
+    findUserByUsernameForRegisterLookup,
+} from "../services/auth-core.service.js";
+import { findUserProfileById } from "../services/profile.service.js";
 import { logLoginFailed, logLoginSuccess, logLogoutSuccess } from "../services/auth-audit.service.js";
 import { hashPassword, verifyPassword } from "../utils/password.util.js";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
@@ -12,6 +12,23 @@ import { isValidPassword, isValidUsername, normalizeString } from "../utils/auth
 import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
 import { regenerateSession, saveSession } from "../utils/session.util.js";
 
+/**
+ * 인증(Auth) 컨트롤러입니다.
+ *
+ * 책임:
+ * - 로그인/회원가입/로그아웃 HTTP 흐름 제어
+ * - 세션 생성/재생성/파기 및 쿠키 처리
+ * - 서비스 호출에 필요한 최소 파라미터 구성
+ * - 성공/실패 감사로그 기록 호출(상세 DB 로직은 서비스가 담당)
+ *
+ * 주의:
+ * - DB 접근은 `auth-core.service` / `profile.service`로 위임합니다.
+ */
+
+/**
+ * 로그인/회원가입 뷰 렌더링 시 사용하는 옵션 타입입니다.
+ * 컨트롤러 내부에서만 사용됩니다.
+ */
 type AuthRenderOptions = {
     formError?: string | null;
     nextPath?: string | null;
@@ -120,7 +137,7 @@ export async function postRegister(req: Request, res: Response, next: NextFuncti
             });
         }
 
-        const existing = await findUserByUsername(username);
+        const existing = await findUserByUsernameForRegisterLookup(username);
         if (existing) {
             return res.status(409).render("auth/register", {
                 formError: "Username is already taken.",
@@ -128,7 +145,7 @@ export async function postRegister(req: Request, res: Response, next: NextFuncti
         }
 
         const passwordHash = hashPassword(password);
-        const user = await createUser({ username, passwordHash });
+        const user = await createUserForRegister({ username, passwordHash });
 
         await regenerateSession(req);
         req.session.userId = user.userId;

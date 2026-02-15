@@ -10,15 +10,17 @@ import {
     updateBoard,
 } from "../services/board.service.js";
 import {
+    createUserForAdmin,
+    findUserByUsernameForAdminLookup,
+} from "../services/auth-core.service.js";
+import {
     countAdminUsers,
-    createUser,
     deleteUserForAdmin,
-    findUserByUsername,
     findUserMetaForAdminById,
     listUsersForAdmin,
     updateUserActiveStatus,
     updateUserRole,
-} from "../services/auth.service.js";
+} from "../services/admin-user.service.js";
 import { writeAdminAuditLog, listAdminAuditLogs } from "../services/admin-audit.service.js";
 import { hashPassword } from "../utils/password.util.js";
 import { isValidPassword, isValidUsername } from "../utils/auth.validation.js";
@@ -41,6 +43,19 @@ import {
     validateAdminUserStatusPolicy,
 } from "../utils/admin-user.policy.util.js";
 import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
+
+/**
+ * 어드민 컨트롤러입니다.
+ *
+ * 책임:
+ * - `req/res/session` 기반의 HTTP 흐름 제어(렌더링/리다이렉트/상태코드)
+ * - 입력값 정규화/검증(형태만) 후 서비스 호출
+ * - 감사로그 payload 구성(행위/actor/target/IP/UA)
+ *
+ * 반대 책임(여기서 하지 않음):
+ * - DB 쿼리 직접 구현(서비스로 위임)
+ * - 순수 정책 판정/메시지 매핑(유틸로 위임)
+ */
 
 /**
  * 현재 세션에서 감사로그 actor 정보를 구성합니다.
@@ -239,7 +254,7 @@ export async function postAdminUserCreate(req: Request, res: Response, next: Nex
             });
         }
 
-        const existing = await findUserByUsername(username);
+        const existing = await findUserByUsernameForAdminLookup(username);
         if (existing) {
             res.status(422);
             return await renderAdminUsersIndex(req, res, {
@@ -248,7 +263,7 @@ export async function postAdminUserCreate(req: Request, res: Response, next: Nex
             });
         }
 
-        const created = await createUser({
+        const created = await createUserForAdmin({
             username,
             passwordHash: hashPassword(password),
             userRole: role as "admin" | "user",

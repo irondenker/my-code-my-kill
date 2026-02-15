@@ -1,25 +1,53 @@
 ﻿import type { Request, Response, NextFunction } from "express";
-import { findUserProfileById, findUserProfileByUsername, updateUserProfile } from "../services/auth.service.js";
+import { findUserProfileById, findUserProfileByUsername, updateUserProfile } from "../services/profile.service.js";
 import { isPublicProfileHandle, normalizeUsernameParam } from "../utils/username.util.js";
 import { HttpError } from "../utils/http-error.js";
 
+/**
+ * 사용자 프로필(공개 페이지 + 설정 페이지) 컨트롤러입니다.
+ *
+ * 책임:
+ * - 라우트 파라미터/폼 입력 정규화 및 검증
+ * - 세션에 따른 노출 범위 제어(본인/관리자만 사적 정보 노출)
+ * - 프로필 조회/수정은 `profile.service`로 위임
+ */
+
+/**
+ * 문자열 입력을 trim하여 반환합니다.
+ */
 function normalizeString(value: unknown): string {
     return typeof value === "string" ? value.trim() : "";
 }
 
+/**
+ * 문자열을 trim 후 비어 있으면 null로 정규화합니다.
+ */
 function normalizeNullable(value: unknown): string | null {
     const trimmed = normalizeString(value);
     return trimmed ? trimmed : null;
 }
 
+/**
+ * 이메일 형식을 간단히 검증합니다.
+ */
 function isValidEmail(value: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+/**
+ * 전화번호 형식을 간단히 검증합니다.
+ */
 function isValidPhone(value: string): boolean {
     return /^[0-9+\-() ]+$/.test(value);
 }
 
+/**
+ * 공개 프로필 페이지(`/@:username`)를 렌더링합니다.
+ *
+ * 노출 정책:
+ * - 기본: 공개 필드(username/displayName/bio/profileImageUrl)
+ * - 본인 또는 admin: email/phoneNumber도 노출
+ */
 export async function getUserProfile(req: Request, res: Response, next: NextFunction) {
     try {
         const username = normalizeUsernameParam(req.params.username);
@@ -62,6 +90,10 @@ export async function getUserProfile(req: Request, res: Response, next: NextFunc
     }
 }
 
+/**
+ * 프로필 수정 폼을 렌더링합니다.
+ * 로그인하지 않은 경우 로그인 페이지로 보냅니다.
+ */
 export async function getProfileEditForm(req: Request, res: Response, next: NextFunction) {
     try {
         const userId = Number(req.session.userId);
@@ -90,6 +122,10 @@ export async function getProfileEditForm(req: Request, res: Response, next: Next
     }
 }
 
+/**
+ * 프로필 수정 요청을 처리합니다.
+ * 입력값 검증 후 프로필을 업데이트합니다.
+ */
 export async function postProfileEdit(req: Request, res: Response, next: NextFunction) {
     try {
         const userId = Number(req.session.userId);
@@ -156,6 +192,4 @@ export async function postProfileEdit(req: Request, res: Response, next: NextFun
         return next(err);
     }
 }
-
-
 

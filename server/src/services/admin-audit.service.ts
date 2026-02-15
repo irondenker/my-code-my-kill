@@ -1,6 +1,26 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 import { summarizeErrorMessage } from "../utils/error-summary.util.js";
+import {
+    ADMIN_AUDIT_ACTIONS,
+    type AdminAuditAction,
+    type AdminAuditLog,
+    type AdminAuditLogRow,
+} from "../types/admin-audit.types.js";
+
+export type { AdminAuditAction, AdminAuditLog } from "../types/admin-audit.types.js";
+
+/**
+ * 어드민 감사로그(Admin Audit) 서비스입니다.
+ *
+ * 책임:
+ * - 감사 이벤트를 DB에 저장하고, 조회 API를 제공합니다.
+ * - 콘솔 출력은 `AUDIT_CLI_LOG_LEVEL`로 제어하며, 기본값은 `none`입니다.
+ *
+ * 설계 의도:
+ * - 감사로그는 "DB가 원본(source of truth)"이고, 콘솔 출력은 운영 편의를 위한 보조 수단입니다.
+ * - 콘솔 출력이 필요하더라도 성공 로그는 과도해지기 쉬우므로, 기본값을 `none`으로 둡니다.
+ */
 
 /**
  * 감사로그를 Node 콘솔에 어느 수준으로 출력할지 결정하는 레벨입니다.
@@ -28,63 +48,6 @@ function getAuditCliLogLevel(): AuditCliLogLevel {
  * 현재 프로세스에서 사용할 감사로그 콘솔 출력 레벨(서버 시작 시 1회 결정)입니다.
  */
 const auditCliLogLevel = getAuditCliLogLevel();
-
-/**
- * 관리자 감사 로그에서 허용하는 액션 목록입니다.
- * DB 체크 제약과 동일한 범위를 유지해야 합니다.
- */
-const ADMIN_AUDIT_ACTIONS = [
-    "LOGIN",
-    "LOGIN_FAILED",
-    "LOGOUT",
-    "ACCOUNT_CREATED",
-    "ACCOUNT_DELETED",
-    "ACCOUNT_ACTIVATED",
-    "ACCOUNT_DEACTIVATED",
-    "ADMIN_GRANTED",
-    "ADMIN_REVOKED",
-    "AUTHZ_DENIED",
-    "CSRF_INVALID",
-    "ADMIN_PAGE_ACCESS_ATTEMPT",
-] as const;
-
-/**
- * 감사 로그 액션 문자열 유니온 타입입니다.
- */
-export type AdminAuditAction = typeof ADMIN_AUDIT_ACTIONS[number];
-
-/**
- * `admin_audit_logs` 원시 조회 결과 타입(DB 컬럼 스네이크 케이스 기준)입니다.
- */
-type AdminAuditLogRow = {
-    audit_log_id: number;
-    action: string;
-    actor_user_id: number | null;
-    actor_username: string | null;
-    target_user_id: number | null;
-    target_username: string | null;
-    details: Record<string, unknown> | null;
-    ip_address: string | null;
-    user_agent: string | null;
-    created_at: Date;
-};
-
-/**
- * 애플리케이션 레이어에서 사용하는 감사 로그 정규화 타입입니다.
- * 컨트롤러/뷰로 전달할 때 이 타입을 사용합니다.
- */
-export type AdminAuditLog = {
-    auditLogId: number;
-    action: AdminAuditAction;
-    actorUserId: number | null;
-    actorUsername: string | null;
-    targetUserId: number | null;
-    targetUsername: string | null;
-    details: Record<string, unknown>;
-    ipAddress: string | null;
-    userAgent: string | null;
-    createdAt: Date;
-};
 
 /**
  * 입력값이 문자열이면 trim 후 비어 있지 않은 값만 반환합니다.

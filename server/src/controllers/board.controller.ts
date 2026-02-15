@@ -6,6 +6,7 @@ import { QueryTypes } from "sequelize";
 import sharp from "sharp";
 import { sequelize } from "../db/index.js";
 import { HttpError } from "../utils/http-error.js";
+import { ensureDir, safeUnlink } from "../utils/fs.util.js";
 import {
     isExtensionCheckEnabled,
     isMagicNumberCheckEnabled,
@@ -138,10 +139,7 @@ function buildPostFileUrl(value: string | null): string | null {
 }
 
 async function ensurePostUploadDirs() {
-    await Promise.all([
-        fs.mkdir(IMAGE_UPLOAD_DIR, { recursive: true }),
-        fs.mkdir(FILE_UPLOAD_DIR, { recursive: true }),
-    ]);
+    await Promise.all([ensureDir(IMAGE_UPLOAD_DIR), ensureDir(FILE_UPLOAD_DIR)]);
 }
 
 function createUploadName(prefix: string, extension: string) {
@@ -219,10 +217,7 @@ async function storePostAttachment(file: Express.Multer.File): Promise<string> {
 }
 
 async function removeFile(filePath: string | null) {
-    if (!filePath) {
-        return;
-    }
-    await fs.unlink(filePath).catch(() => undefined);
+    await safeUnlink(filePath);
 }
 
 export async function getBoardIndex(req: Request, res: Response, next: NextFunction) {
@@ -804,7 +799,6 @@ export async function getBoardShow(req: Request, res: Response, next: NextFuncti
         next(err);
     }
 }
-
 
 
 

@@ -1,16 +1,20 @@
-export type AdminUserRole = "admin" | "user";
-export type AdminUserStatus = "active" | "inactive";
+import type {
+    AdminUserRole,
+    AdminUserStatus,
+    AdminUserTargetMeta,
+    PolicyAllow,
+    PolicyDeny,
+    PolicyNoChange,
+} from "../types/admin.types.js";
 
-export type AdminUserTargetMeta = {
-    userId: number;
-    userRole: AdminUserRole;
-    isActive: boolean;
+export type {
+    AdminUserRole,
+    AdminUserStatus,
+    AdminUserTargetMeta,
+    PolicyAllow,
+    PolicyDeny,
+    PolicyNoChange,
 };
-
-export type PolicyAllow = { ok: true };
-export type PolicyDeny = { ok: false; message: string };
-
-export type PolicyNoChange = { ok: true; noChange: true };
 
 /**
  * 어드민 유저 삭제 정책을 검증합니다.
@@ -118,4 +122,3 @@ export function mapDeleteUserResultToErrorMessage(
     }
     return null;
 }
-

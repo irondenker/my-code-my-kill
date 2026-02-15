@@ -25,8 +25,8 @@ cd server && npm run build
 - __ESM__ 에서 `import`로 상대 경로 사용 시, __확장자 표기 필수__
 
 ``` Typescript
-import { createUser } from "../services/auth.service"; // X
-import { createUser } from "../services/auth.service.ts"; // O
+import { createUserForRegister } from "../services/auth-core.service"; // X
+import { createUserForRegister } from "../services/auth-core.service.js"; // O
 ```
 
 - `.ts` 파일 컴파일 후에도, `import` 구문은 별도의 처리없이 그대로 남아있음
@@ -38,10 +38,10 @@ import { createUser } from "../services/auth.service.ts"; // O
 
 ``` Typescript
 // Error : An import path cannot end with a '.ts' extension. Consider importing './hello.js' instead.
-import { createUser } from "../services/auth.service.ts"; // X
+import { createUserForRegister } from "../services/auth-core.service.ts"; // X
 
 // Answer
-import { createUser } from "../services/auth.service.js"; // O
+import { createUserForRegister } from "../services/auth-core.service.js"; // O
 ```
 
 ## 👀 References
