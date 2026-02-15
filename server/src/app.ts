@@ -1,6 +1,5 @@
 ﻿import express from "express";
 import path from "node:path";
-import csrf from "csurf";
 import boardRouter from "./routes/board.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
@@ -12,107 +11,73 @@ import labSstiRouter from "./routes/lab-ssti.routes.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import { createSessionMiddleware } from "./middlewares/session.middleware.js";
 import { createRequestLogger } from "./middlewares/request-logger.middleware.js";
+import { createGlobalCsrfMiddlewares } from "./middlewares/csrf.middleware.js";
+import { createViewLocalsMiddleware } from "./middlewares/view-locals.middleware.js";
+import { csrfErrorMiddleware } from "./middlewares/csrf-error.middleware.js";
+import { createErrorCommonStaticMiddleware, createPublicStaticMiddleware } from "./middlewares/static.middleware.js";
 import { HttpError } from "./utils/http-error.js";
 import { getLabOptions } from "./config/lab-options.js";
 import { createXssEscaper } from "./utils/xss-escape.util.js";
-import { writeAdminAuditLog } from "./services/audit.service.js";
-import { getRequestIp, getRequestUserAgent } from "./utils/request-meta.util.js";
-import { summarizeErrorMessage } from "./utils/error-summary.util.js";
 
-const isProd = process.env.NODE_ENV === "production";
+/**
+ * 앱 전역 설정은 프로세스 시작 시 1회 로드한 스냅샷으로 사용합니다.
+ * 런타임에 `lab-options.json`을 수정해도 재로딩되지 않습니다.
+ */
 const labOptions = getLabOptions();
-const clientSideSanitizeEnabled = labOptions.xssInjection.clientSide.sanitizeEnabled;
-const serverSideSanitizeEnabled = labOptions.xssInjection.serverSide.sanitizeEnabled;
-const labStoredXssEnabled = labOptions.xssInjection.storedXss;
-const csrfLabEnabled = labOptions.csrf.enabled;
-const escapeForXss = createXssEscaper(labOptions.xssInjection.serverSide);
-const trustProxy = process.env.TRUST_PROXY === "true" || isProd;
 
+/**
+ * CSRF 실습 옵션입니다.
+ * - enabled=true: CSRF 보호 비활성화(실습용)
+ * - enabled=false: CSRF 보호 활성화
+ */
+const csrfLabEnabled = labOptions.csrf.enabled;
+
+/**
+ * 서버 사이드(XSS) escape 함수입니다.
+ * 요청마다 정규식/룰을 재생성하지 않도록, 부팅 시 1회 계산해 미들웨어에 주입합니다.
+ */
+const escapeForXss = createXssEscaper(labOptions.xssInjection.serverSide);
+
+/**
+ * Express 앱 인스턴스를 생성합니다.
+ *
+ * 구성 순서(요약):
+ * 1) static / body parser / session / logger
+ * 2) (옵션) CSRF 보호(multipart 포함)
+ * 3) view locals 주입(EJS)
+ * 4) routers
+ * 5) 404 fallback -> csrf error 변환 -> 공통 error handler
+ */
 export function createApp() {
     const app = express();
-    if (isProd && !serverSideSanitizeEnabled && labStoredXssEnabled) {
-        console.warn("[SECURITY_LAB] Stored XSS lab mode is enabled in production.");
-    }
-    if (isProd && csrfLabEnabled) {
-        console.warn("[SECURITY_LAB] CSRF protection is disabled in production.");
-    }
 
-    if (trustProxy) {
-        app.set("trust proxy", 1);
-    }
+    // 운영 환경에서 reverse proxy(nginx 등) 뒤에 있을 수 있으므로 trust proxy를 활성화합니다.
+    app.set("trust proxy", 1);
 
     app.set("view engine", "ejs");
     const publicDir = path.join(process.cwd(), "public");
-    const postFileUploadDir = path.join(publicDir, "uploads", "posts", "files");
-    app.use(
-        express.static(publicDir, {
-            setHeaders(res, filePath) {
-                // Helps prevent content-type sniffing attacks against uploaded files.
-                res.setHeader("X-Content-Type-Options", "nosniff");
-
-                // Force attachments to download instead of rendering inline in the browser.
-                if (filePath.startsWith(postFileUploadDir + path.sep)) {
-                    const filename = path.basename(filePath);
-                    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-                }
-            },
-        })
-    );
     const errorStaticRoot = path.join(process.cwd(), "views", "errors");
-    app.use(
-        "/errors/common",
-        express.static(path.join(errorStaticRoot, "common"), {
-            setHeaders(res) {
-                res.setHeader("X-Content-Type-Options", "nosniff");
-            },
-        })
-    );
+    app.use(createPublicStaticMiddleware({ publicDir }));
+    app.use("/errors/common", createErrorCommonStaticMiddleware({ errorStaticRoot }));
 
-
+    // Body parsers (주의: multipart는 별도 처리)
     app.use(express.urlencoded({ extended: false }));
     app.use(express.json());
 
+    // Session은 CSRF/인증/뷰 locals에서 사용되므로 먼저 등록합니다.
     app.use(createSessionMiddleware());
     app.use(createRequestLogger());
 
-    const csrfProtection = csrf();
-    if (!csrfLabEnabled) {
-        app.use((req, res, next) => {
-            const isMultipartPost =
-                req.method === "POST" &&
-                (req.path === "/users/avatar" ||
-                    /^\/board\/[^/]+$/.test(req.path) ||
-                    /^\/board\/[^/]+\/\d+\/edit$/.test(req.path));
+    // CSRF 보호는 일반 요청 + 특정 multipart 요청(선행 multer 파싱 포함)을 함께 처리합니다.
+    app.use(...createGlobalCsrfMiddlewares({ csrfLabEnabled }));
 
-            if (isMultipartPost) {
-                return next();
-            }
-
-            return csrfProtection(req, res, next);
-        });
-    }
-
-    app.use((req, res, next) => {
-        res.locals.csrfToken = typeof req.csrfToken === "function" ? req.csrfToken() : null;
-        res.locals.sessionUser = req.session.userId ?? null;
-        res.locals.sessionUsername = req.session.username ?? null;
-        res.locals.sessionUserRole = req.session.userRole ?? null;
-        res.locals.labStoredXssEnabled = labStoredXssEnabled;
-        res.locals.clientSideSanitizeEnabled = clientSideSanitizeEnabled;
-        res.locals.serverSideSanitizeEnabled = serverSideSanitizeEnabled;
-        res.locals.xssClientSideOptions = labOptions.xssInjection.clientSide;
-        res.locals.escapeForXss = escapeForXss;
-        const profileImageUrl = req.session.profileImageUrl;
-        res.locals.sessionProfileImageUrl =
-            profileImageUrl && !profileImageUrl.startsWith("/")
-                ? `/uploads/avatars/${profileImageUrl}`
-                : profileImageUrl ?? null;
-        next();
-    });
-
-    app.get("/healthz", (_req, res) => {
-        res.status(200).send("ok");
-    });
+    // EJS 템플릿에서 공통으로 사용할 locals를 주입합니다.
+    app.use(
+        createViewLocalsMiddleware({
+            labOptions,
+            escapeForXss,
+        })
+    );
 
     app.use(authRouter);
     app.use(userRouter);
@@ -124,36 +89,15 @@ export function createApp() {
 
     app.use("/", rootRouter);
 
+    // 라우팅 실패(매칭 없음)는 404 에러로 통일해 errorHandler 흐름으로 보냅니다.
     app.use((_req, _res, next) => {
         return next(new HttpError(404, "Not Found"));
     });
 
-    app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-        if (err?.code === "EBADCSRFTOKEN") {
-            void writeAdminAuditLog({
-                action: "CSRF_INVALID",
-                actorUserId: typeof req.session.userId === "number" ? req.session.userId : null,
-                actorUsername: typeof req.session.username === "string" ? req.session.username : null,
-                targetUserId: null,
-                targetUsername: null,
-                details: {
-                    method: req.method,
-                    path: req.originalUrl,
-                    reason: "invalid_csrf_token",
-                },
-                ipAddress: getRequestIp(req),
-                userAgent: getRequestUserAgent(req),
-            }).catch((logErr) => {
-                console.error(
-                    `[AUDIT_LOG_ERROR] action=CSRF_INVALID path=${req.originalUrl} reason="${summarizeErrorMessage(logErr)}"`
-                );
-            });
-            res.locals.securityEventLogged = true;
-            return next(new HttpError(403, "Invalid CSRF token"));
-        }
-        return next(err);
-    });
+    // csurf의 EBADCSRFTOKEN을 403으로 변환하고, 감사 로그를 남깁니다.
+    app.use(csrfErrorMiddleware);
 
+    // 최종 에러 핸들러(공통 에러 페이지/리다이렉트 정책)
     app.use(errorHandler);
 
     return app;

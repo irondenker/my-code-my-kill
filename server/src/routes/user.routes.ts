@@ -1,6 +1,4 @@
 import { Router } from "express";
-import multer from "multer";
-import csrf from "csurf";
 import { postAvatarDelete, postAvatarUpload } from "../controllers/avatar.controller.js";
 import { getProfileEditForm, getUserProfile, postProfileEdit } from "../controllers/user.controller.js";
 import { requireAuthRedirect } from "../middlewares/auth.middleware.js";
@@ -14,17 +12,10 @@ import { requireAuthRedirect } from "../middlewares/auth.middleware.js";
  * - 아바타 업로드/삭제
  *
  * 주의:
- * - 아바타 업로드는 multipart/form-data 이므로 `multer`가 먼저 요청 바디를 파싱해야 합니다.
- * - CSRF 보호는 multipart 라우트에서 순서가 중요합니다: `multer` -> `csrfProtection` -> controller
+ * - 아바타 업로드는 multipart/form-data 이며, `app.ts`에서 해당 경로에 한해 `multer`를 먼저 적용합니다.
+ * - 그 다음 전역 CSRF 미들웨어가 동일한 방식으로 검증합니다(실습 옵션에 따라 비활성화될 수 있음).
  */
 const router = Router();
-
-/**
- * 업로드는 메모리로 받고(sharp 변환 후 디스크로 저장),
- * 디스크 저장은 컨트롤러에서 수행합니다.
- */
-const upload = multer({ storage: multer.memoryStorage() });
-const csrfProtection = csrf();
 
 router.get("/@:username", getUserProfile);
 router.get("/setting/profile", requireAuthRedirect, getProfileEditForm);
@@ -36,13 +27,7 @@ router.post("/settings/profile", requireAuthRedirect, postProfileEdit);
  * 아바타 업로드
  * - `avatar` 필드로 파일 1개를 받습니다.
  */
-router.post(
-    "/users/avatar",
-    requireAuthRedirect,
-    upload.single("avatar"),
-    csrfProtection,
-    postAvatarUpload
-);
+router.post("/users/avatar", requireAuthRedirect, postAvatarUpload);
 
 /**
  * 아바타 삭제

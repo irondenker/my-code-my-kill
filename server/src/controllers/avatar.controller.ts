@@ -1,7 +1,6 @@
 ﻿import type { Request, Response, NextFunction } from "express";
 import path from "node:path";
 import sharp from "sharp";
-import csrf from "csurf";
 import { findUserProfileById, updateUserProfileImage } from "../services/profile.service.js";
 import { ALLOWED_MIME_TYPES, MAX_DIMENSION, MAX_FILE_SIZE_BYTES, MIN_DIMENSION, OUTPUT_QUALITY, OUTPUT_SIZE, UPLOAD_DIR } from "../constants/upload.constants.js";
 import { HttpError } from "../utils/http-error.js";
@@ -22,15 +21,6 @@ import { isMagicNumberCheckEnabled, validateMagicNumberForImage } from "../utils
  */
 
 /**
- * 아바타 업로드 실패 시에도 동일한 뷰에서 CSRF 토큰이 필요하므로,
- * 렌더링용 CSRF 미들웨어를 별도로 둡니다.
- *
- * 주의:
- * - 업로드는 multipart/form-data 이므로, 라우트에서 `multer` 이후에 CSRF를 적용합니다.
- */
-const csrfForRender = csrf({ ignoreMethods: ["POST"] });
-
-/**
  * 업로드 디렉토리가 없으면 생성합니다.
  * 업로드가 자주 발생할 수 있으므로 `recursive: true`로 idempotent하게 처리합니다.
  */
@@ -49,38 +39,31 @@ async function renderAvatarError(
     status: number,
     message: string
 ) {
-    csrfForRender(req, res, async (csrfErr) => {
-        if (csrfErr) return next(csrfErr);
-
-        try {
-            const userId = Number(req.session.userId);
-            if (!Number.isFinite(userId) || userId <= 0) {
-                return next(new HttpError(401, "Unauthorized"));
-            }
-
-            const profile = await findUserProfileById(userId);
-            if (!profile) {
-                return next(new HttpError(404, "User not found"));
-            }
-
-            const csrfToken = typeof req.csrfToken === "function" ? req.csrfToken() : null;
-
-            return res.status(status).render("settings/profile", {
-                formError: null,
-                avatarError: message,
-                csrfToken,
-                profile: {
-                    username: profile.username,
-                    displayName: profile.displayName,
-                    email: profile.email,
-                    phoneNumber: profile.phoneNumber,
-                    bio: profile.bio,
-                },
-            });
-        } catch (err) {
-            return next(err);
+    try {
+        const userId = Number(req.session.userId);
+        if (!Number.isFinite(userId) || userId <= 0) {
+            return next(new HttpError(401, "Unauthorized"));
         }
-    });
+
+        const profile = await findUserProfileById(userId);
+        if (!profile) {
+            return next(new HttpError(404, "User not found"));
+        }
+
+        return res.status(status).render("settings/profile", {
+            formError: null,
+            avatarError: message,
+            profile: {
+                username: profile.username,
+                displayName: profile.displayName,
+                email: profile.email,
+                phoneNumber: profile.phoneNumber,
+                bio: profile.bio,
+            },
+        });
+    } catch (err) {
+        return next(err);
+    }
 }
 
 /**

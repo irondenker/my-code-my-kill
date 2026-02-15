@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="/assets/css/fonts.css">
     <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
     <meta name="theme-color" content="#712cf9" />
+    <meta name="csrf-token" content="<%= typeof csrfToken === 'string' ? csrfToken : '' %>">
     <% const _styles = typeof styles !== "undefined" ? styles : []; %>
     <% _styles.forEach(function (href) { %>
         <link rel="stylesheet" href="<%= href %>">
