@@ -158,3 +158,24 @@ docker compose -f docker-compose.prod.yml logs -f nginx
 - 기본 마이그레이션 경로는 `server/migrations`입니다.
 - 기존 체인이 필요하면 `server/migrations/old`와 `--migrations-path` 옵션을 사용하세요.
 - prod 컨테이너에는 `sequelize-cli`가 없으므로 마이그레이션/시드는 dev에서 처리해야 합니다.
+
+## 감사로그 콘솔 출력 설정 (`AUDIT_CLI_LOG_LEVEL`)
+
+감사로그는 기본적으로 DB(`admin_audit_logs`)에 저장되며, Node 콘솔 출력은 아래 환경변수로 제어합니다.
+
+- `none` (기본): 감사로그 콘솔 출력 안 함
+- `errors`: 감사로그 저장 실패 등 오류만 1줄 요약 출력
+- `all`: 감사로그 성공/실패 모두 출력
+
+설정 위치
+
+- dev: `server/.env`
+- prod: `server/.env.production`
+- Docker compose 오버라이드: `docker-compose.yml`, `docker-compose.prod.yml`
+
+적용 방법
+
+```bash
+docker compose -f docker-compose.yml restart server
+docker compose -f docker-compose.prod.yml up -d --build server
+```

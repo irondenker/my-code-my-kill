@@ -34,6 +34,12 @@ function getRequestUserAgent(req: Request): string | null {
     return trimmed || null;
 }
 
+function summarizeErrorMessage(error: unknown): string {
+    const raw = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    const compact = raw.replace(/\s+/g, " ").trim();
+    return compact.length > 180 ? `${compact.slice(0, 177)}...` : compact;
+}
+
 /**
  * 권한 거부(403) 이벤트를 감사 로그에 안전하게 기록합니다.
  * 기록 실패가 에러 응답 처리 흐름을 중단시키지 않도록 예외를 내부 처리합니다.
@@ -63,7 +69,9 @@ function writeAuthzDeniedAuditLogSafely(req: Request, err: unknown) {
         ipAddress: getRequestIp(req),
         userAgent: getRequestUserAgent(req),
     }).catch((logErr) => {
-        console.error("[AUDIT_LOG_ERROR]", logErr);
+        console.error(
+            `[AUDIT_LOG_ERROR] action=AUTHZ_DENIED path=${req.originalUrl} reason="${summarizeErrorMessage(logErr)}"`
+        );
     });
 }
 

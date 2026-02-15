@@ -29,6 +29,12 @@ function getRequestUserAgent(req: Request): string | null {
     return trimmed || null;
 }
 
+function summarizeErrorMessage(error: unknown): string {
+    const raw = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    const compact = raw.replace(/\s+/g, " ").trim();
+    return compact.length > 180 ? `${compact.slice(0, 177)}...` : compact;
+}
+
 /**
  * 관리자 페이지 접근 시도 이벤트를 감사 로그에 안전하게 기록합니다.
  * 로깅 실패가 요청 처리를 중단시키지 않도록 fire-and-forget 방식으로 동작합니다.
@@ -55,7 +61,9 @@ function writeAdminAccessAttemptLogSafely(
         ipAddress: getRequestIp(req),
         userAgent: getRequestUserAgent(req),
     }).catch((err) => {
-        console.error("[AUDIT_LOG_ERROR]", err);
+        console.error(
+            `[AUDIT_LOG_ERROR] action=ADMIN_PAGE_ACCESS_ATTEMPT path=${req.originalUrl} reason="${summarizeErrorMessage(err)}"`
+        );
     });
 }
 

@@ -30,6 +30,12 @@ function getRequestUserAgent(req: Request): string | null {
     return trimmed || null;
 }
 
+function summarizeErrorMessage(error: unknown): string {
+    const raw = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    const compact = raw.replace(/\s+/g, " ").trim();
+    return compact.length > 180 ? `${compact.slice(0, 177)}...` : compact;
+}
+
 function destroySession(req: Request): Promise<void> {
     return new Promise((resolve, reject) => {
         req.session.destroy((err) => {
@@ -48,7 +54,9 @@ async function writeAdminAuditLogSafely(
         await writeAdminAuditLog(params);
     } catch (err) {
         // Audit logging must not break auth flow.
-        console.error("[AUDIT_LOG_ERROR]", err);
+        console.error(
+            `[AUDIT_LOG_ERROR] action=${params.action} reason="${summarizeErrorMessage(err)}"`
+        );
     }
 }
 

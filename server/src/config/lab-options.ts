@@ -35,6 +35,21 @@ export type UploadValidationOptions = {
 
 export type SqlInjectionOptions = {
     enabled: boolean;
+    targets: {
+        loginUsername: boolean;
+        registerUsernameLookup: boolean;
+        registerCreateUser: boolean;
+        adminUserUsernameLookup: boolean;
+        adminUserCreate: boolean;
+        profileLookupByUsername: boolean;
+        profileUpdate: boolean;
+        boardLookupBySlug: boolean;
+        boardCreate: boolean;
+        boardUpdate: boolean;
+        postLookup: boolean;
+        postCreate: boolean;
+        postUpdate: boolean;
+    };
 };
 
 export type CsrfOptions = {
@@ -74,6 +89,21 @@ const DEFAULT_XSS_INJECTION_OPTIONS: XssInjectionOptions = {
 const DEFAULT_LAB_OPTIONS: LabOptions = {
     sqlInjection: {
         enabled: false,
+        targets: {
+            loginUsername: false,
+            registerUsernameLookup: false,
+            registerCreateUser: false,
+            adminUserUsernameLookup: false,
+            adminUserCreate: false,
+            profileLookupByUsername: false,
+            profileUpdate: false,
+            boardLookupBySlug: false,
+            boardCreate: false,
+            boardUpdate: false,
+            postLookup: false,
+            postCreate: false,
+            postUpdate: false,
+        },
     },
     ssti: false,
     debugErrorRoutes: false,
@@ -99,6 +129,7 @@ function getDefaultLabOptions(): LabOptions {
     return {
         sqlInjection: {
             enabled: DEFAULT_LAB_OPTIONS.sqlInjection.enabled,
+            targets: { ...DEFAULT_LAB_OPTIONS.sqlInjection.targets },
         },
         ssti: DEFAULT_LAB_OPTIONS.ssti,
         debugErrorRoutes: DEFAULT_LAB_OPTIONS.debugErrorRoutes,
@@ -372,6 +403,7 @@ function parseSqlInjectionOptions(value: unknown): SqlInjectionOptions {
     if (typeof value === "undefined") {
         return {
             enabled: DEFAULT_LAB_OPTIONS.sqlInjection.enabled,
+            targets: { ...DEFAULT_LAB_OPTIONS.sqlInjection.targets },
         };
     }
 
@@ -379,16 +411,97 @@ function parseSqlInjectionOptions(value: unknown): SqlInjectionOptions {
         console.warn(`[CONFIG] Invalid lab option "sqlInjection" in ${LAB_OPTIONS_PATH}. Using defaults.`);
         return {
             enabled: DEFAULT_LAB_OPTIONS.sqlInjection.enabled,
+            targets: { ...DEFAULT_LAB_OPTIONS.sqlInjection.targets },
         };
     }
 
     const options = value as Record<string, unknown>;
-    return {
-        enabled: parseBooleanOption(
-            options.enabled,
-            "sqlInjection.enabled",
-            DEFAULT_LAB_OPTIONS.sqlInjection.enabled,
+    const enabled = parseBooleanOption(
+        options.enabled,
+        "sqlInjection.enabled",
+        DEFAULT_LAB_OPTIONS.sqlInjection.enabled,
+    );
+
+    const rawTargets = options.targets;
+    const parsedTargets =
+        rawTargets && typeof rawTargets === "object" && !Array.isArray(rawTargets)
+            ? (rawTargets as Record<string, unknown>)
+            : undefined;
+    if (typeof rawTargets !== "undefined" && !parsedTargets) {
+        console.warn(`[CONFIG] Invalid lab option "sqlInjection.targets" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+    }
+
+    const targets = {
+        loginUsername: parseBooleanOption(
+            parsedTargets?.loginUsername,
+            "sqlInjection.targets.loginUsername",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.loginUsername,
         ),
+        registerUsernameLookup: parseBooleanOption(
+            parsedTargets?.registerUsernameLookup,
+            "sqlInjection.targets.registerUsernameLookup",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.registerUsernameLookup,
+        ),
+        registerCreateUser: parseBooleanOption(
+            parsedTargets?.registerCreateUser,
+            "sqlInjection.targets.registerCreateUser",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.registerCreateUser,
+        ),
+        adminUserUsernameLookup: parseBooleanOption(
+            parsedTargets?.adminUserUsernameLookup,
+            "sqlInjection.targets.adminUserUsernameLookup",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.adminUserUsernameLookup,
+        ),
+        adminUserCreate: parseBooleanOption(
+            parsedTargets?.adminUserCreate,
+            "sqlInjection.targets.adminUserCreate",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.adminUserCreate,
+        ),
+        profileLookupByUsername: parseBooleanOption(
+            parsedTargets?.profileLookupByUsername,
+            "sqlInjection.targets.profileLookupByUsername",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.profileLookupByUsername,
+        ),
+        profileUpdate: parseBooleanOption(
+            parsedTargets?.profileUpdate,
+            "sqlInjection.targets.profileUpdate",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.profileUpdate,
+        ),
+        boardLookupBySlug: parseBooleanOption(
+            parsedTargets?.boardLookupBySlug,
+            "sqlInjection.targets.boardLookupBySlug",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.boardLookupBySlug,
+        ),
+        boardCreate: parseBooleanOption(
+            parsedTargets?.boardCreate,
+            "sqlInjection.targets.boardCreate",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.boardCreate,
+        ),
+        boardUpdate: parseBooleanOption(
+            parsedTargets?.boardUpdate,
+            "sqlInjection.targets.boardUpdate",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.boardUpdate,
+        ),
+        postLookup: parseBooleanOption(
+            parsedTargets?.postLookup,
+            "sqlInjection.targets.postLookup",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.postLookup,
+        ),
+        postCreate: parseBooleanOption(
+            parsedTargets?.postCreate,
+            "sqlInjection.targets.postCreate",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.postCreate,
+        ),
+        postUpdate: parseBooleanOption(
+            parsedTargets?.postUpdate,
+            "sqlInjection.targets.postUpdate",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.postUpdate,
+        ),
+    };
+
+    return {
+        enabled,
+        targets,
     };
 }
 

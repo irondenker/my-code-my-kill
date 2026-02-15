@@ -24,6 +24,7 @@ services:
       NODE_ENV: development
       DB_HOST: db
       DB_PORT: 5432
+      AUDIT_CLI_LOG_LEVEL: none
     depends_on:
       - db
     volumes:
@@ -49,4 +50,3 @@ volumes:
   postgresql:
     external: true
     name: postgresql
-

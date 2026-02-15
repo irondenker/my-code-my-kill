@@ -1,5 +1,8 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
+import { getLabOptions } from "../config/lab-options.js";
+
+const sqlInjectionOptions = getLabOptions().sqlInjection;
 
 export type BoardReadAccess = "public" | "auth" | "admin" | "owner_or_admin";
 export type BoardCreateAccess = "auth" | "admin";
@@ -179,6 +182,39 @@ export async function listBoardPostOutlinesBySlug(params: {
 }
 
 export async function findBoardBySlug(slug: string): Promise<BoardMeta | null> {
+    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.boardLookupBySlug) {
+        const rows = await sequelize.query<{
+            board_id: number;
+            slug: string;
+            name: string;
+            description: string | null;
+            read_access: string;
+            create_access: string;
+        }>(
+            `
+            SELECT board_id, slug, name, description, read_access, create_access
+            FROM boards
+            WHERE slug = '${slug}'
+            LIMIT 1
+            `,
+            { type: QueryTypes.SELECT }
+        );
+
+        const row = rows[0];
+        if (!row) {
+            return null;
+        }
+
+        return {
+            boardId: Number(row.board_id),
+            slug: row.slug,
+            name: row.name,
+            description: row.description ?? null,
+            readAccess: row.read_access as BoardReadAccess,
+            createAccess: row.create_access as BoardCreateAccess,
+        };
+    }
+
     const rows = await sequelize.query<{
         board_id: number;
         slug: string;
@@ -257,6 +293,44 @@ export async function createBoard(params: {
     readAccess?: BoardReadAccess;
     createAccess?: BoardCreateAccess;
 }): Promise<BoardMeta> {
+    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.boardCreate) {
+        const slug = params.slug;
+        const name = params.name;
+        const description = params.description ?? null;
+        const readAccess = params.readAccess ?? "public";
+        const createAccess = params.createAccess ?? "auth";
+
+        const rows = await sequelize.query<{
+            board_id: number;
+            slug: string;
+            name: string;
+            description: string | null;
+            read_access: string;
+            create_access: string;
+        }>(
+            `
+            INSERT INTO boards (slug, name, description, read_access, create_access, created_at, updated_at)
+            VALUES ('${slug}', '${name}', ${description === null ? "NULL" : `'${description}'`}, '${readAccess}', '${createAccess}', NOW(), NOW())
+            RETURNING board_id, slug, name, description, read_access, create_access
+            `,
+            { type: QueryTypes.SELECT }
+        );
+
+        const row = rows[0];
+        if (!row) {
+            throw new Error("Failed to create board");
+        }
+
+        return {
+            boardId: Number(row.board_id),
+            slug: row.slug,
+            name: row.name,
+            description: row.description ?? null,
+            readAccess: row.read_access as BoardReadAccess,
+            createAccess: row.create_access as BoardCreateAccess,
+        };
+    }
+
     const rows = await sequelize.query<{
         board_id: number;
         slug: string;
@@ -305,6 +379,26 @@ export async function updateBoard(params: {
     readAccess: BoardReadAccess;
     createAccess: BoardCreateAccess;
 }): Promise<boolean> {
+    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.boardUpdate) {
+        const description = params.description ?? null;
+        const rows = await sequelize.query<{ board_id: number }>(
+            `
+            UPDATE boards
+            SET slug = '${params.slug}',
+                name = '${params.name}',
+                description = ${description === null ? "NULL" : `'${description}'`},
+                read_access = '${params.readAccess}',
+                create_access = '${params.createAccess}',
+                updated_at = NOW()
+            WHERE board_id = ${params.boardId}
+            RETURNING board_id
+            `,
+            { type: QueryTypes.SELECT }
+        );
+
+        return rows.length > 0;
+    }
+
     const rows = await sequelize.query<{ board_id: number }>(
         `
         UPDATE boards
@@ -338,6 +432,60 @@ export async function findPostBySlugDisplayId(params: {
     displayId: number;
 }): Promise<BoardPostRecord | null> {
     const { slug, displayId } = params;
+    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.postLookup) {
+        const rows = await sequelize.query<{
+            post_id: number;
+            board_id: number;
+            board_slug: string;
+            board_name: string;
+            display_id: number;
+            user_id: number;
+            title: string;
+            content: string;
+            image_url: string | null;
+            file_url: string | null;
+        }>(
+            `
+            SELECT
+                p.post_id,
+                b.board_id,
+                b.slug AS board_slug,
+                b.name AS board_name,
+                p.display_id,
+                p.user_id,
+                p.title,
+                p.content,
+                p.image_url,
+                p.file_url
+            FROM posts p
+            JOIN boards b ON p.board_id = b.board_id
+            WHERE b.slug = '${slug}'
+              AND p.display_id = ${displayId}
+              AND p.use_yn = true
+            LIMIT 1
+            `,
+            { type: QueryTypes.SELECT }
+        );
+
+        const row = rows[0];
+        if (!row) {
+            return null;
+        }
+
+        return {
+            postId: Number(row.post_id),
+            boardId: Number(row.board_id),
+            boardSlug: row.board_slug,
+            boardName: row.board_name,
+            displayId: Number(row.display_id),
+            userId: Number(row.user_id),
+            title: row.title,
+            content: row.content,
+            imageUrl: row.image_url ?? null,
+            fileUrl: row.file_url ?? null,
+        };
+    }
+
     const rows = await sequelize.query<{
         post_id: number;
         board_id: number;
@@ -436,6 +584,39 @@ export async function createBoardPost(params: {
             throw new Error("Failed to allocate display id");
         }
 
+        if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.postCreate) {
+            await sequelize.query(
+                `
+                INSERT INTO posts (
+                    board_id,
+                    display_id,
+                    user_id,
+                    title,
+                    content,
+                    image_url,
+                    file_url,
+                    created_at,
+                    updated_at,
+                    use_yn
+                )
+                VALUES (
+                    ${boardId},
+                    ${displayId},
+                    ${userId},
+                    '${title}',
+                    '${content}',
+                    ${imageUrl ? `'${imageUrl}'` : "NULL"},
+                    ${fileUrl ? `'${fileUrl}'` : "NULL"},
+                    NOW(),
+                    NOW(),
+                    true
+                )
+                `,
+                { transaction }
+            );
+            return { displayId };
+        }
+
         await sequelize.query(
             `
             INSERT INTO posts (
@@ -489,6 +670,25 @@ export async function updateBoardPost(params: {
     fileUrl?: string | null;
 }): Promise<boolean> {
     const { postId, title, content, imageUrl, fileUrl } = params;
+    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.postUpdate) {
+        const rows = await sequelize.query<{ post_id: number }>(
+            `
+            UPDATE posts
+            SET title = '${title}',
+                content = '${content}',
+                image_url = ${imageUrl ? `'${imageUrl}'` : "NULL"},
+                file_url = ${fileUrl ? `'${fileUrl}'` : "NULL"},
+                updated_at = NOW()
+            WHERE post_id = ${postId}
+              AND use_yn = true
+            RETURNING post_id
+            `,
+            { type: QueryTypes.SELECT }
+        );
+
+        return rows.length > 0;
+    }
+
     const rows = await sequelize.query<{ post_id: number }>(
         `
         UPDATE posts

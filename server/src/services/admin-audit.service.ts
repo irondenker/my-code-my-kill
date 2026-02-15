@@ -1,6 +1,28 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 
+type AuditCliLogLevel = "none" | "errors" | "all";
+
+function getAuditCliLogLevel(): AuditCliLogLevel {
+    const raw = String(process.env.AUDIT_CLI_LOG_LEVEL ?? "none").trim().toLowerCase();
+    if (raw === "none" || raw === "errors" || raw === "all") {
+        return raw;
+    }
+    console.warn(`[CONFIG] Invalid AUDIT_CLI_LOG_LEVEL="${raw}". Falling back to "none".`);
+    return "none";
+}
+
+const auditCliLogLevel = getAuditCliLogLevel();
+
+function summarizeErrorMessage(error: unknown): string {
+    const raw =
+        error instanceof Error
+            ? `${error.name}: ${error.message}`
+            : String(error);
+    const compact = raw.replace(/\s+/g, " ").trim();
+    return compact.length > 180 ? `${compact.slice(0, 177)}...` : compact;
+}
+
 /**
  * 관리자 감사 로그에서 허용하는 액션 목록입니다.
  * DB 체크 제약과 동일한 범위를 유지해야 합니다.
@@ -118,6 +140,13 @@ function emitAdminAuditCliLog(params: {
     userAgent: string | null;
     error?: unknown;
 }) {
+    if (auditCliLogLevel === "none") {
+        return;
+    }
+    if (auditCliLogLevel === "errors" && params.outcome === "success") {
+        return;
+    }
+
     const payload: Record<string, unknown> = {
         timestamp: new Date().toISOString(),
         source: "admin_audit",
@@ -133,14 +162,13 @@ function emitAdminAuditCliLog(params: {
     };
 
     if (params.error) {
-        const error =
-            params.error instanceof Error
-                ? {
-                    name: params.error.name,
-                    message: params.error.message,
-                }
-                : { message: String(params.error) };
-        console.error("[AUDIT]", JSON.stringify({ ...payload, error }));
+        const actor = params.actorUserId === null ? "-" : String(params.actorUserId);
+        const target = params.targetUserId === null ? "-" : String(params.targetUserId);
+        const ip = params.ipAddress ?? "-";
+        const reason = summarizeErrorMessage(params.error);
+        console.error(
+            `[AUDIT][ERROR] action=${params.action} actor=${actor} target=${target} ip=${ip} reason="${reason}"`
+        );
         return;
     }
 

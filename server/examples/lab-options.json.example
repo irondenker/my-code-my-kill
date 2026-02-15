@@ -5,7 +5,22 @@
     }
   },
   "sqlInjection": {
-    "enabled": false
+    "enabled": false,
+    "targets": {
+      "loginUsername": false,
+      "registerUsernameLookup": false,
+      "registerCreateUser": false,
+      "adminUserUsernameLookup": false,
+      "adminUserCreate": false,
+      "profileLookupByUsername": false,
+      "profileUpdate": false,
+      "boardLookupBySlug": false,
+      "boardCreate": false,
+      "boardUpdate": false,
+      "postLookup": false,
+      "postCreate": false,
+      "postUpdate": false
+    }
   },
   "SSTI": {
     "enabled": false

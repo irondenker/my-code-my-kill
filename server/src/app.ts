@@ -51,6 +51,12 @@ function getRequestUserAgent(req: express.Request): string | null {
     return trimmed || null;
 }
 
+function summarizeErrorMessage(error: unknown): string {
+    const raw = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    const compact = raw.replace(/\s+/g, " ").trim();
+    return compact.length > 180 ? `${compact.slice(0, 177)}...` : compact;
+}
+
 export function createApp() {
     const app = express();
     if (isProd && !serverSideSanitizeEnabled && labStoredXssEnabled) {
@@ -166,7 +172,9 @@ export function createApp() {
                 ipAddress: getRequestIp(req),
                 userAgent: getRequestUserAgent(req),
             }).catch((logErr) => {
-                console.error("[AUDIT_LOG_ERROR]", logErr);
+                console.error(
+                    `[AUDIT_LOG_ERROR] action=CSRF_INVALID path=${req.originalUrl} reason="${summarizeErrorMessage(logErr)}"`
+                );
             });
             res.locals.securityEventLogged = true;
             return next(new HttpError(403, "Invalid CSRF token"));

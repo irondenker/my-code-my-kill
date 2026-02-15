@@ -2,7 +2,7 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 import { getLabOptions } from "../config/lab-options.js";
 
-const sqlInjectionLabEnabled = getLabOptions().sqlInjection.enabled;
+const sqlInjectionOptions = getLabOptions().sqlInjection;
 
 type UserRow = {
     user_id: number;
@@ -115,14 +115,25 @@ async function findUserByUsernameInsecureForLab(params: {
 export async function findUserForLogin(params: {
     username: string;
 }): Promise<AuthUser | null> {
-    if (sqlInjectionLabEnabled) {
+    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.loginUsername) {
         return findUserByUsernameInsecureForLab(params);
     }
 
     return findUserByUsername(params.username);
 }
 
+async function findUserByUsernameInsecureForLabRaw(username: string): Promise<AuthUser | null> {
+    return findUserByUsernameInsecureForLab({ username });
+}
+
 export async function findUserByUsername(username: string): Promise<AuthUser | null> {
+    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.registerUsernameLookup) {
+        return findUserByUsernameInsecureForLabRaw(username);
+    }
+    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.adminUserUsernameLookup) {
+        return findUserByUsernameInsecureForLabRaw(username);
+    }
+
     const rows = await sequelize.query<UserRow>(
         `
         SELECT
@@ -157,6 +168,94 @@ export async function createUser(params: {
 }): Promise<AuthUserPublic> {
     const userRole = params.userRole ?? "user";
     const isActive = params.isActive ?? true;
+
+    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.registerCreateUser) {
+        const rows = await sequelize.query<{
+            user_id: number;
+            user_role: string;
+            username: string;
+            is_active: boolean;
+        }>(
+            `
+            INSERT INTO users (
+                user_role,
+                username,
+                password_hash,
+                is_active,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                '${userRole}',
+                '${params.username}',
+                '${params.passwordHash}',
+                ${isActive ? "true" : "false"},
+                NOW(),
+                NOW()
+            )
+            RETURNING user_id, user_role, username, is_active
+            `,
+            {
+                type: QueryTypes.SELECT,
+            }
+        );
+
+        const row = rows[0];
+        if (!row) {
+            throw new Error("Failed to create user");
+        }
+
+        return {
+            userId: Number(row.user_id),
+            userRole: row.user_role as AuthUser["userRole"],
+            username: row.username,
+            isActive: Boolean(row.is_active),
+        };
+    }
+
+    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.adminUserCreate) {
+        const rows = await sequelize.query<{
+            user_id: number;
+            user_role: string;
+            username: string;
+            is_active: boolean;
+        }>(
+            `
+            INSERT INTO users (
+                user_role,
+                username,
+                password_hash,
+                is_active,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                '${userRole}',
+                '${params.username}',
+                '${params.passwordHash}',
+                ${isActive ? "true" : "false"},
+                NOW(),
+                NOW()
+            )
+            RETURNING user_id, user_role, username, is_active
+            `,
+            {
+                type: QueryTypes.SELECT,
+            }
+        );
+
+        const row = rows[0];
+        if (!row) {
+            throw new Error("Failed to create user");
+        }
+
+        return {
+            userId: Number(row.user_id),
+            userRole: row.user_role as AuthUser["userRole"],
+            username: row.username,
+            isActive: Boolean(row.is_active),
+        };
+    }
 
     const rows = await sequelize.query<{
         user_id: number;
@@ -247,6 +346,42 @@ export async function findUserProfileById(userId: number): Promise<UserProfile |
 }
 
 export async function findUserProfileByUsername(username: string): Promise<UserProfile | null> {
+    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.profileLookupByUsername) {
+        const rows = await sequelize.query<UserProfileRow>(
+            `
+            SELECT
+                user_id,
+                username,
+                email,
+                phone_number,
+                display_name,
+                profile_image_url,
+                bio,
+                created_at
+            FROM users
+            WHERE username = '${username}'
+            LIMIT 1
+            `,
+            { type: QueryTypes.SELECT }
+        );
+
+        const row = rows[0];
+        if (!row) {
+            return null;
+        }
+
+        return {
+            userId: Number(row.user_id),
+            username: row.username,
+            email: row.email ?? null,
+            phoneNumber: row.phone_number ?? null,
+            displayName: row.display_name ?? null,
+            profileImageUrl: row.profile_image_url ?? null,
+            bio: row.bio ?? null,
+            createdAt: row.created_at,
+        };
+    }
+
     const rows = await sequelize.query<UserProfileRow>(
         `
         SELECT
@@ -329,6 +464,24 @@ export async function updateUserProfile(params: {
     phoneNumber: string | null;
     bio: string | null;
 }): Promise<boolean> {
+    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.profileUpdate) {
+        const rows = await sequelize.query<{ user_id: number }>(
+            `
+            UPDATE users
+            SET display_name = '${params.displayName ?? ""}',
+                email = '${params.email ?? ""}',
+                phone_number = '${params.phoneNumber ?? ""}',
+                bio = '${params.bio ?? ""}',
+                updated_at = NOW()
+            WHERE user_id = ${params.userId}
+            RETURNING user_id
+            `,
+            { type: QueryTypes.SELECT }
+        );
+
+        return rows.length > 0;
+    }
+
     const rows = await sequelize.query<{ user_id: number }>(
         `
         UPDATE users

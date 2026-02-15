@@ -54,6 +54,7 @@
 | 문서 | 설명 |
 | --- | --- |
 | [`docs/xss-filter-guide.md`](./docs/xss-filter-guide.md) | XSS 실습 설정 가이드 |
+| [`docs/sqli-lab-guide.md`](./docs/sqli-lab-guide.md) | SQLi 실습 설정 가이드 |
 
 ## Links
 
