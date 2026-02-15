@@ -11,10 +11,13 @@ import occurRouter from "./routes/occur.routes.js";
 import labSstiRouter from "./routes/lab-ssti.routes.js";
 import { errorHandler } from "./middlewares/error-handler.js";
 import { createSessionMiddleware } from "./middlewares/session.middleware.js";
+import { createRequestLogger } from "./middlewares/request-logger.middleware.js";
 import { HttpError } from "./utils/http-error.js";
 import { getLabOptions } from "./config/lab-options.js";
 import { createXssEscaper } from "./utils/xss-escape.util.js";
 import { writeAdminAuditLog } from "./services/audit.service.js";
+import { getRequestIp, getRequestUserAgent } from "./utils/request-meta.util.js";
+import { summarizeErrorMessage } from "./utils/error-summary.util.js";
 
 const isProd = process.env.NODE_ENV === "production";
 const labOptions = getLabOptions();
@@ -24,38 +27,6 @@ const labStoredXssEnabled = labOptions.xssInjection.storedXss;
 const csrfLabEnabled = labOptions.csrf.enabled;
 const escapeForXss = createXssEscaper(labOptions.xssInjection.serverSide);
 const trustProxy = process.env.TRUST_PROXY === "true" || isProd;
-
-/**
- * 요청 IP를 문자열로 정규화합니다.
- *
- * @param req Express 요청 객체
- * @returns 공백 제거된 IP 문자열 또는 null
- */
-function getRequestIp(req: express.Request): string | null {
-    const value = typeof req.ip === "string" ? req.ip.trim() : "";
-    return value || null;
-}
-
-/**
- * 요청 User-Agent를 문자열로 정규화합니다.
- *
- * @param req Express 요청 객체
- * @returns 공백 제거된 User-Agent 문자열 또는 null
- */
-function getRequestUserAgent(req: express.Request): string | null {
-    const value = req.get("user-agent");
-    if (typeof value !== "string") {
-        return null;
-    }
-    const trimmed = value.trim();
-    return trimmed || null;
-}
-
-function summarizeErrorMessage(error: unknown): string {
-    const raw = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
-    const compact = raw.replace(/\s+/g, " ").trim();
-    return compact.length > 180 ? `${compact.slice(0, 177)}...` : compact;
-}
 
 export function createApp() {
     const app = express();
@@ -102,6 +73,7 @@ export function createApp() {
     app.use(express.json());
 
     app.use(createSessionMiddleware());
+    app.use(createRequestLogger());
 
     const csrfProtection = csrf();
     if (!csrfLabEnabled) {

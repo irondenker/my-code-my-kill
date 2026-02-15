@@ -3,42 +3,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
 import { writeAdminAuditLog } from "../services/audit.service.js";
+import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
+import { summarizeErrorMessage } from "../utils/error-summary.util.js";
 
 const staticErrorStatuses = new Set([403, 404, 500, 503, 504]);
 const sharedErrorPage = path.join(process.cwd(), "views", "errors", "common", "index.html");
 const sharedTemplate = fs.readFileSync(sharedErrorPage, "utf8");
-
-/**
- * 요청 IP를 문자열로 정규화합니다.
- *
- * @param req Express 요청 객체
- * @returns 공백 제거된 IP 문자열 또는 null
- */
-function getRequestIp(req: Request): string | null {
-    const value = typeof req.ip === "string" ? req.ip.trim() : "";
-    return value || null;
-}
-
-/**
- * 요청 User-Agent를 문자열로 정규화합니다.
- *
- * @param req Express 요청 객체
- * @returns 공백 제거된 User-Agent 문자열 또는 null
- */
-function getRequestUserAgent(req: Request): string | null {
-    const value = req.get("user-agent");
-    if (typeof value !== "string") {
-        return null;
-    }
-    const trimmed = value.trim();
-    return trimmed || null;
-}
-
-function summarizeErrorMessage(error: unknown): string {
-    const raw = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
-    const compact = raw.replace(/\s+/g, " ").trim();
-    return compact.length > 180 ? `${compact.slice(0, 177)}...` : compact;
-}
 
 /**
  * 권한 거부(403) 이벤트를 감사 로그에 안전하게 기록합니다.
