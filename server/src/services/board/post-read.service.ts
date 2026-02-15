@@ -1,8 +1,8 @@
 import { QueryTypes } from "sequelize";
-import { sequelize } from "../db/index.js";
-import { getLabOptions } from "../config/lab-options.js";
-import type { BoardPostOutline, BoardPostRecord } from "../types/board.types.js";
-import { runWithSqlInjectionOption } from "../utils/sql-injection.util.js";
+import { sequelize } from "../../db/index.js";
+import { getLabOptions } from "../../config/lab-options.js";
+import type { BoardPostOutline, BoardPostRecord } from "../../types/board.types.js";
+import { runWithSqlInjectionOption } from "../../utils/sql-injection.util.js";
 
 /**
  * 게시글 "조회/존재 여부" 관련 DB 쿼리를 제공하는 서비스입니다.

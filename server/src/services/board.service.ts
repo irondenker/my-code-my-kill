@@ -21,7 +21,7 @@ export {
     findBoardById,
     createBoard,
     updateBoard,
-} from "./board-meta.service.js";
+} from "./board/board-meta.service.js";
 
 // Post read (posts: count/list/find/exists)
 export {
@@ -31,7 +31,7 @@ export {
     listBoardPostOutlinesBySlug,
     findPostBySlugDisplayId,
     doesPostExistBySlugDisplayId,
-} from "./post-read.service.js";
+} from "./board/post-read.service.js";
 
 // Post write (posts: create/update/delete)
 export {
@@ -39,5 +39,18 @@ export {
     updateBoardPost,
     softDeletePostBySlugDisplayIdAsAdmin,
     softDeletePostBySlugDisplayId,
-} from "./post-write.service.js";
+} from "./board/post-write.service.js";
 
+// Post show (view model data: post detail + neighbors)
+export {
+    findBoardPostForShowBySlugDisplayId,
+    findNeighborPosts,
+} from "./board/board-read.service.js";
+
+// Post upload (filesystem)
+export {
+    storePostImage,
+    storePostAttachment,
+    deleteStoredPostImage,
+    deleteStoredPostAttachment,
+} from "./board/post-upload.service.js";

@@ -1,6 +1,6 @@
 import { writeAdminAuditLogSafely } from "./admin-audit.service.js";
 
-import type { LoginFailedReason } from "../types/auth.types.js";
+import type { LoginFailedReason } from "../../types/auth.types.js";
 
 /**
  * 인증(Auth) 관련 감사로그를 기록하는 서비스입니다.

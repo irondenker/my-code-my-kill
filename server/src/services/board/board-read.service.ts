@@ -1,9 +1,9 @@
 import path from "node:path";
 import { QueryTypes } from "sequelize";
-import { sequelize } from "../db/index.js";
-import { getLabOptions } from "../config/lab-options.js";
-import { buildPostFileUrl, buildPostImageUrl } from "../utils/post-media-url.util.js";
-import type { BoardPostForShow, NeighborPost } from "../types/board.types.js";
+import { sequelize } from "../../db/index.js";
+import { getLabOptions } from "../../config/lab-options.js";
+import { buildPostFileUrl, buildPostImageUrl } from "../../utils/post-media-url.util.js";
+import type { BoardPostForShow, NeighborPost } from "../../types/board.types.js";
 
 /**
  * 보드 "조회 전용" DB 쿼리를 제공하는 서비스입니다.
@@ -36,7 +36,7 @@ type BoardPostRowForShow = {
     updated_at: Date | null;
 };
 
-export type { BoardPostForShow, NeighborPost } from "../types/board.types.js";
+export type { BoardPostForShow, NeighborPost } from "../../types/board.types.js";
 
 /**
  * DB 조회 결과(BoardPostRowForShow)를 뷰에서 사용하는 타입(BoardPostForShow)으로 매핑합니다.

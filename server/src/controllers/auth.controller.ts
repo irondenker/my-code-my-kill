@@ -3,9 +3,9 @@ import {
     findUserForLogin,
     createUserForRegister,
     findUserByUsernameForRegisterLookup,
-} from "../services/auth-core.service.js";
+} from "../services/auth.service.js";
 import { findUserProfileById } from "../services/profile.service.js";
-import { logLoginFailed, logLoginSuccess, logLogoutSuccess } from "../services/auth-audit.service.js";
+import { logLoginFailed, logLoginSuccess, logLogoutSuccess } from "../services/audit.service.js";
 import { hashPassword, verifyPassword } from "../utils/password.util.js";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
 import { isValidPassword, isValidUsername, normalizeString } from "../utils/auth.validation.js";

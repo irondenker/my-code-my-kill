@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
 import { HttpError } from "../utils/http-error.js";
-import { writeAdminAuditLog } from "../services/admin-audit.service.js";
+import { writeAdminAuditLog } from "../services/audit.service.js";
 
 /**
  * 요청 IP를 문자열로 정규화합니다.

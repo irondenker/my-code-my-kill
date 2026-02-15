@@ -1,8 +1,8 @@
 import { QueryTypes } from "sequelize";
-import { sequelize } from "../db/index.js";
-import { getLabOptions } from "../config/lab-options.js";
-import type { AuthUser, AuthUserPublic } from "../types/auth.types.js";
-import { runWithSqlInjectionOption } from "../utils/sql-injection.util.js";
+import { sequelize } from "../../db/index.js";
+import { getLabOptions } from "../../config/lab-options.js";
+import type { AuthUser, AuthUserPublic } from "../../types/auth.types.js";
+import { runWithSqlInjectionOption } from "../../utils/sql-injection.util.js";
 
 /**
  * 인증(로그인/회원가입/어드민 유저 생성)에 필요한 핵심 DB 쿼리를 제공합니다.

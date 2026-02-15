@@ -17,18 +17,17 @@ import {
     createBoardPost,
     doesPostExistBySlugDisplayId,
     findBoardBySlug,
+    findBoardPostForShowBySlugDisplayId,
+    findNeighborPosts,
     findPostBySlugDisplayId,
-    softDeletePostBySlugDisplayId,
-    softDeletePostBySlugDisplayIdAsAdmin,
-    updateBoardPost,
-} from "../services/board.service.js";
-import { findBoardPostForShowBySlugDisplayId, findNeighborPosts } from "../services/board-read.service.js";
-import {
     deleteStoredPostAttachment,
     deleteStoredPostImage,
+    softDeletePostBySlugDisplayId,
+    softDeletePostBySlugDisplayIdAsAdmin,
     storePostAttachment,
     storePostImage,
-} from "../services/post-upload.service.js";
+    updateBoardPost,
+} from "../services/board.service.js";
 import { buildBoardIndexViewModel, buildBoardSlugViewModel } from "../view-models/board.view-model.js";
 
 /**

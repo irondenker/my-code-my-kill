@@ -1,8 +1,8 @@
 import { QueryTypes } from "sequelize";
-import { sequelize } from "../db/index.js";
-import { getLabOptions } from "../config/lab-options.js";
-import type { BoardCreateAccess, BoardMeta, BoardReadAccess } from "../types/board.types.js";
-import { runWithSqlInjectionOption } from "../utils/sql-injection.util.js";
+import { sequelize } from "../../db/index.js";
+import { getLabOptions } from "../../config/lab-options.js";
+import type { BoardCreateAccess, BoardMeta, BoardReadAccess } from "../../types/board.types.js";
+import { runWithSqlInjectionOption } from "../../utils/sql-injection.util.js";
 
 /**
  * 보드 메타(boards 테이블) 관련 DB 쿼리를 제공하는 서비스입니다.

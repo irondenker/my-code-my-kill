@@ -1,7 +1,7 @@
-import { QueryTypes } from "sequelize";
-import { sequelize } from "../db/index.js";
-import { getLabOptions } from "../config/lab-options.js";
-import { runWithSqlInjectionOption } from "../utils/sql-injection.util.js";
+import { QueryTypes, type Transaction } from "sequelize";
+import { sequelize } from "../../db/index.js";
+import { getLabOptions } from "../../config/lab-options.js";
+import { runWithSqlInjectionOption } from "../../utils/sql-injection.util.js";
 
 /**
  * 게시글 "쓰기/수정/삭제" 관련 DB 쿼리를 제공하는 서비스입니다.
@@ -48,7 +48,7 @@ export async function createBoardPost(params: {
 }): Promise<{ displayId: number }> {
     const { boardId, userId, title, content, imageUrl, fileUrl } = params;
 
-    return sequelize.transaction(async (transaction) => {
+    return sequelize.transaction(async (transaction: Transaction) => {
         // displayId는 보드 내에서 증가하는 사용자 노출용 ID입니다.
         // 카운터 테이블을 이용해 동시성에서 중복이 발생하지 않게 합니다.
         const displayRows = await sequelize.query<{ display_id: number }>(

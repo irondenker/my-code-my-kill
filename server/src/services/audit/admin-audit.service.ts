@@ -1,7 +1,7 @@
 import { QueryTypes } from "sequelize";
-import { sequelize } from "../db/index.js";
-import { summarizeErrorMessage } from "../utils/error-summary.util.js";
-import { formatKvLine } from "../utils/log-format.util.js";
+import { sequelize } from "../../db/index.js";
+import { summarizeErrorMessage } from "../../utils/error-summary.util.js";
+import { formatKvLine } from "../../utils/log-format.util.js";
 import {
     ADMIN_AUDIT_ACTIONS,
     type AdminAuditAction,
@@ -9,9 +9,9 @@ import {
     type AdminAuditLogRow,
     type AdminAuditCliPayload,
     type EmitAdminAuditCliLogParams,
-} from "../types/admin-audit.types.js";
+} from "../../types/admin-audit.types.js";
 
-export type { AdminAuditAction, AdminAuditLog } from "../types/admin-audit.types.js";
+export type { AdminAuditAction, AdminAuditLog } from "../../types/admin-audit.types.js";
 
 /**
  * 어드민 감사로그(Admin Audit) 서비스입니다.

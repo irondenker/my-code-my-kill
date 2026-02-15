@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { ensureDir, safeUnlink } from "../utils/fs.util.js";
+import { ensureDir, safeUnlink } from "../../utils/fs.util.js";
 import {
     isExtensionCheckEnabled,
     isMagicNumberCheckEnabled,
@@ -10,7 +10,7 @@ import {
     validateAllowedExtension,
     validateMagicNumberForAttachment,
     validateMagicNumberForImage,
-} from "../utils/upload-validation.util.js";
+} from "../../utils/upload-validation.util.js";
 import {
     POST_ATTACHMENT_EXTENSIONS,
     POST_ATTACHMENT_MAX_BYTES,
@@ -22,7 +22,7 @@ import {
     POST_IMAGE_MIME_TYPES,
     POST_IMAGE_QUALITY,
     POST_IMAGE_UPLOAD_DIR,
-} from "../constants/post-upload.constants.js";
+} from "../../constants/post-upload.constants.js";
 
 /**
  * 게시글 업로드(이미지/첨부파일) 저장을 담당하는 서비스입니다.

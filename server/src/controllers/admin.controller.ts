@@ -12,7 +12,7 @@ import {
 import {
     createUserForAdmin,
     findUserByUsernameForAdminLookup,
-} from "../services/auth-core.service.js";
+} from "../services/auth.service.js";
 import {
     countAdminUsers,
     deleteUserForAdmin,
@@ -20,8 +20,8 @@ import {
     listUsersForAdmin,
     updateUserActiveStatus,
     updateUserRole,
-} from "../services/admin-user.service.js";
-import { writeAdminAuditLog, listAdminAuditLogs } from "../services/admin-audit.service.js";
+} from "../services/admin.service.js";
+import { writeAdminAuditLog, listAdminAuditLogs } from "../services/audit.service.js";
 import { hashPassword } from "../utils/password.util.js";
 import { isValidPassword, isValidUsername } from "../utils/auth.validation.js";
 import {

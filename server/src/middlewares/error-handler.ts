@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
-import { writeAdminAuditLog } from "../services/admin-audit.service.js";
+import { writeAdminAuditLog } from "../services/audit.service.js";
 
 const staticErrorStatuses = new Set([403, 404, 500, 503, 504]);
 const sharedErrorPage = path.join(process.cwd(), "views", "errors", "common", "index.html");

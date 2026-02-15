@@ -14,7 +14,7 @@ import { createSessionMiddleware } from "./middlewares/session.middleware.js";
 import { HttpError } from "./utils/http-error.js";
 import { getLabOptions } from "./config/lab-options.js";
 import { createXssEscaper } from "./utils/xss-escape.util.js";
-import { writeAdminAuditLog } from "./services/admin-audit.service.js";
+import { writeAdminAuditLog } from "./services/audit.service.js";
 
 const isProd = process.env.NODE_ENV === "production";
 const labOptions = getLabOptions();

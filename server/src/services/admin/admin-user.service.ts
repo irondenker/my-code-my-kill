@@ -1,6 +1,6 @@
 import { QueryTypes } from "sequelize";
-import { sequelize } from "../db/index.js";
-import type { AdminUserMeta, AdminUserSummary, DeleteUserForAdminResult } from "../types/auth.types.js";
+import { sequelize } from "../../db/index.js";
+import type { AdminUserMeta, AdminUserSummary, DeleteUserForAdminResult } from "../../types/auth.types.js";
 
 /**
  * 어드민 유저 관리(목록/메타/상태/역할/삭제)에 필요한 DB 쿼리 모음입니다.
