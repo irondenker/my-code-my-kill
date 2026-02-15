@@ -4,6 +4,13 @@ const SALT_BYTES = 16;
 const KEY_LENGTH = 64;
 const SCRYPT_OPTIONS = { N: 16384, r: 8, p: 1 };
 
+/**
+ * 패스워드를 scrypt 기반 해시 문자열로 변환합니다.
+ *
+ * 포맷: `scrypt$<salt-hex>$<derivedKey-hex>`
+ *
+ * @param password 평문 패스워드
+ */
 export function hashPassword(password: string): string {
     const salt = crypto.randomBytes(SALT_BYTES).toString("hex");
     const derivedKey = crypto
@@ -12,6 +19,12 @@ export function hashPassword(password: string): string {
     return `scrypt$${salt}$${derivedKey}`;
 }
 
+/**
+ * 평문 패스워드가 저장된 해시와 일치하는지 검증합니다.
+ *
+ * @param password 평문 패스워드
+ * @param storedHash DB 등에 저장된 해시 문자열(`hashPassword` 결과)
+ */
 export function verifyPassword(password: string, storedHash: string): boolean {
     const parts = storedHash.split("$");
     if (parts.length !== 3 || parts[0] !== "scrypt") {

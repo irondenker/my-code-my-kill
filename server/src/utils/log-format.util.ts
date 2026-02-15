@@ -42,11 +42,24 @@ export type FormatKvLineOptions = {
     quoteStrings?: "auto" | "always" | "never";
 };
 
+/**
+ * 문자열을 quoting 해야 하는지 판정합니다.
+ * key=value 포맷을 깨기 쉬운 문자(공백/따옴표/등호 등)가 포함되면 quoting 대상으로 취급합니다.
+ *
+ * @param value 문자열 값
+ */
 function shouldQuoteString(value: string): boolean {
     // key=value 로그에서 구분자를 깨기 쉬운 문자들을 auto-quote 대상으로 둡니다.
     return /[\s"=]/.test(value);
 }
 
+/**
+ * LogKvValue를 문자열로 변환합니다.
+ * quoting/omit 정책은 `formatKvLine`에서 결정된 옵션을 따릅니다.
+ *
+ * @param value value
+ * @param options resolved options
+ */
 function formatKvValue(value: LogKvValue, options: Required<FormatKvLineOptions>): string {
     if (value === null) {
         return options.nullValue;
@@ -91,4 +104,3 @@ export function formatKvLine(prefix: string, kv: LogKvInput, options: FormatKvLi
 
     return parts.length > 0 ? `${prefix} ${parts.join(" ")}` : prefix;
 }
-
