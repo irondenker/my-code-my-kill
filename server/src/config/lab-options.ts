@@ -1,6 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
 
+/**
+ * Lab 옵션(취약점 실습용 토글) 로더/파서입니다.
+ *
+ * - `lab-options.json`을 읽어 실행 중 기능 토글을 제어합니다.
+ * - JSON 스키마가 완벽히 일치하지 않아도, 가능한 한 값을 복구하고 나머지는 기본값으로 폴백합니다.
+ * - 잘못된 타입/형식은 `console.warn`으로만 알리고, 서버 부팅을 실패시키지 않습니다.
+ *
+ * 주의:
+ * - 현재 구현은 프로세스 시작 시 1회 로드한 스냅샷을 반환합니다(런타임 재로딩 없음).
+ */
 export type EscapeRule = {
     from: string;
     to: string;
@@ -65,8 +75,10 @@ export type LabOptions = {
     uploadValidation: UploadValidationOptions;
 };
 
+// 프로젝트 루트에서 `lab-options.json`을 찾습니다.
 const LAB_OPTIONS_PATH = path.join(process.cwd(), "lab-options.json");
 
+// XSS 옵션은 client/server 양쪽에서 동일한 기본값을 공유하므로 "clone"해서 사용합니다.
 const DEFAULT_XSS_SIDE_OPTIONS: XssSideOptions = {
     sanitizeEnabled: true,
     defaultRuleToggles: {
@@ -117,6 +129,10 @@ const DEFAULT_LAB_OPTIONS: LabOptions = {
     },
 };
 
+/**
+ * 기본 XSS 사이드 옵션을 "깊은 복사"로 생성합니다.
+ * (특히 `defaultRuleToggles`, `customRules`는 참조 공유를 피합니다.)
+ */
 function cloneDefaultXssSideOptions(): XssSideOptions {
     return {
         sanitizeEnabled: DEFAULT_XSS_SIDE_OPTIONS.sanitizeEnabled,
@@ -125,6 +141,10 @@ function cloneDefaultXssSideOptions(): XssSideOptions {
     };
 }
 
+/**
+ * 전체 Lab 옵션의 기본값을 새 객체로 반환합니다.
+ * 이 함수는 호출자 간 참조 공유를 피하기 위해 매번 새 객체를 생성합니다.
+ */
 function getDefaultLabOptions(): LabOptions {
     return {
         sqlInjection: {
@@ -148,6 +168,16 @@ function getDefaultLabOptions(): LabOptions {
     };
 }
 
+/**
+ * boolean 토글을 느슨하게 파싱합니다.
+ *
+ * - boolean이면 그대로 사용
+ * - string "true"/"false"는 허용
+ * - 그 외는 경고 후 fallback 사용
+ *
+ * 기대 형태(값):
+ * - `true | false | "true" | "false"`
+ */
 function parseBooleanOption(value: unknown, key: string, fallback = false): boolean {
     if (typeof value === "boolean") {
         return value;
@@ -169,6 +199,13 @@ function parseBooleanOption(value: unknown, key: string, fallback = false): bool
     return fallback;
 }
 
+/**
+ * 커스텀 이스케이프 룰 목록을 파싱합니다.
+ * 각 원소는 `{ from: string, to: string }` 형태여야 하며, from은 비어 있으면 안 됩니다.
+ *
+ * 기대 형태(값):
+ * - `[{ "from": "<non-empty>", "to": "<string>" }, ...]`
+ */
 function parseEscapeRuleList(value: unknown, key: string): EscapeRule[] {
     if (typeof value === "undefined") {
         return [];
@@ -206,6 +243,21 @@ function parseEscapeRuleList(value: unknown, key: string): EscapeRule[] {
     return parsed;
 }
 
+/**
+ * XSS sanitize 옵션(clientSide/serverSide 공통)의 파서입니다.
+ *
+ * 기대 형태(부분 JSON):
+ * - `{ "enabled": boolean, "defaultRuleToggles": { ... }, "customRules": [...] }`
+ * - enabled는 `keyPrefix + ".enabled"`에서 읽습니다.
+ * - defaultRuleToggles는 `keyPrefix + ".defaultRuleToggles"`에서 읽습니다.
+ * - customRules는 `keyPrefix + ".customRules"`에서 읽습니다.
+ *
+ * defaultRuleToggles 기대 형태:
+ * - `{ "ampersand": boolean, "lessThan": boolean, "greaterThan": boolean, "doubleQuote": boolean, "singleQuote": boolean, "backtick": boolean }`
+ *
+ * customRules 기대 형태:
+ * - `[{ "from": string, "to": string }, ...]`
+ */
 function parseXssSideOptions(value: unknown, keyPrefix: string): XssSideOptions {
     if (typeof value === "undefined") {
         return cloneDefaultXssSideOptions();
@@ -217,12 +269,15 @@ function parseXssSideOptions(value: unknown, keyPrefix: string): XssSideOptions 
     }
 
     const options = value as Record<string, unknown>;
-    const sanitizeEnabledRaw = typeof options.enabled !== "undefined"
-        ? options.enabled
-        : options.sanitizeEnabled;
-    const sanitizeEnabledKey = typeof options.enabled !== "undefined"
-        ? `${keyPrefix}.enabled`
-        : `${keyPrefix}.sanitizeEnabled`;
+    // 레거시 호환성 제거: `sanitizeEnabled`는 더 이상 읽지 않습니다.
+    if (typeof options.sanitizeEnabled !== "undefined") {
+        console.warn(
+            `[CONFIG] Deprecated lab option "${keyPrefix}.sanitizeEnabled" in ${LAB_OPTIONS_PATH}. Use "${keyPrefix}.enabled" instead.`,
+        );
+    }
+
+    const sanitizeEnabledRaw = options.enabled;
+    const sanitizeEnabledKey = `${keyPrefix}.enabled`;
     const rawToggles = options.defaultRuleToggles;
     const parsedToggles =
         rawToggles && typeof rawToggles === "object" && !Array.isArray(rawToggles)
@@ -274,6 +329,9 @@ function parseXssSideOptions(value: unknown, keyPrefix: string): XssSideOptions 
     };
 }
 
+/**
+ * XSS injection 옵션의 기본값을 새 객체로 반환합니다.
+ */
 function getDefaultXssInjectionOptions(): XssInjectionOptions {
     return {
         storedXss: DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
@@ -282,6 +340,16 @@ function getDefaultXssInjectionOptions(): XssInjectionOptions {
     };
 }
 
+/**
+ * XSS 설정 루트(`XSS`)를 파싱합니다.
+ *
+ * 기대 형태(부분 JSON):
+ * - `XSS: { "stored": { "enabled": boolean }, "sanitize": { "clientSide": {...}, "serverSide": {...} } }`
+ *
+ * 상세:
+ * - `XSS.stored.enabled`: stored XSS 시뮬레이션 on/off
+ * - `XSS.sanitize.clientSide|serverSide`: sanitize on/off + 룰 토글/커스텀 룰
+ */
 function parseXssInjectionOptions(value: unknown): XssInjectionOptions {
     if (typeof value === "undefined") {
         return getDefaultXssInjectionOptions();
@@ -322,6 +390,9 @@ function parseXssInjectionOptions(value: unknown): XssInjectionOptions {
     };
 }
 
+/**
+ * 업로드 검증(extension/magic number) 옵션 기본값을 새 객체로 반환합니다.
+ */
 function getDefaultUploadValidationOptions(): UploadValidationOptions {
     return {
         extensionCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheckEnabled,
@@ -329,6 +400,12 @@ function getDefaultUploadValidationOptions(): UploadValidationOptions {
     };
 }
 
+/**
+ * 업로드 검증 옵션을 파싱합니다.
+ *
+ * 기대 형태(부분 JSON):
+ * - `uploadValidation: { "extensionCheck": { "enabled": boolean }, "magicNumberCheck": { "enabled": boolean } }`
+ */
 function parseUploadValidationOptions(value: unknown): UploadValidationOptions {
     if (typeof value === "undefined") {
         return getDefaultUploadValidationOptions();
@@ -372,6 +449,12 @@ function parseUploadValidationOptions(value: unknown): UploadValidationOptions {
     };
 }
 
+/**
+ * 디버그용 에러 라우트 토글을 파싱합니다.
+ *
+ * 기대 형태(부분 JSON):
+ * - `debug: { "errorRoutes": { "enabled": boolean } }`
+ */
 function parseDebugErrorRoutesOption(value: unknown): boolean {
     if (typeof value === "undefined") {
         return DEFAULT_LAB_OPTIONS.debugErrorRoutes;
@@ -399,6 +482,22 @@ function parseDebugErrorRoutesOption(value: unknown): boolean {
     );
 }
 
+/**
+ * SQL injection 시뮬레이션 옵션을 파싱합니다.
+ *
+ * - `sqlInjection.enabled`가 false면 전체적으로 꺼진 것으로 간주하되,
+ *   개별 타깃 토글은 "UI/실험 편의"를 위해 함께 보관합니다.
+ * - `sqlInjection.targets.*`는 각 코드 경로에 대한 개별 토글입니다.
+ *
+ * 기대 형태(부분 JSON):
+ * - `sqlInjection: { "enabled": boolean, "targets": { "<targetKey>": boolean, ... } }`
+ *
+ * targets 키 목록:
+ * - loginUsername, registerUsernameLookup, registerCreateUser, adminUserUsernameLookup, adminUserCreate
+ * - profileLookupByUsername, profileUpdate
+ * - boardLookupBySlug, boardCreate, boardUpdate
+ * - postLookup, postCreate, postUpdate
+ */
 function parseSqlInjectionOptions(value: unknown): SqlInjectionOptions {
     if (typeof value === "undefined") {
         return {
@@ -505,6 +604,12 @@ function parseSqlInjectionOptions(value: unknown): SqlInjectionOptions {
     };
 }
 
+/**
+ * CSRF 토글을 파싱합니다.
+ *
+ * 기대 형태(부분 JSON):
+ * - `csrf: { "enabled": boolean }`
+ */
 function parseCsrfOptions(value: unknown): CsrfOptions {
     if (typeof value === "undefined") {
         return {
@@ -529,6 +634,12 @@ function parseCsrfOptions(value: unknown): CsrfOptions {
     };
 }
 
+/**
+ * SSTI 토글을 파싱합니다.
+ *
+ * 기대 형태(부분 JSON):
+ * - `SSTI: { "enabled": boolean }` (키가 대문자인 것에 주의)
+ */
 function parseSstiOption(value: unknown): boolean {
     if (typeof value === "undefined") {
         return DEFAULT_LAB_OPTIONS.ssti;
@@ -547,6 +658,13 @@ function parseSstiOption(value: unknown): boolean {
     );
 }
 
+/**
+ * `lab-options.json`을 로드해 LabOptions로 변환합니다.
+ * 파일이 없거나 JSON이 깨졌거나 포맷이 틀린 경우, 기본값으로 폴백합니다.
+ *
+ * 기대 형태(최상위 부분 JSON):
+ * - `{"sqlInjection": {...}, "SSTI": {...}, "debug": {...}, "csrf": {...}, "XSS": {...}, "uploadValidation": {...}}`
+ */
 function loadLabOptions(): LabOptions {
     try {
         const raw = fs.readFileSync(LAB_OPTIONS_PATH, "utf8");
@@ -572,8 +690,13 @@ function loadLabOptions(): LabOptions {
     }
 }
 
+// 프로세스 시작 시 1회 로드한 스냅샷입니다(의도적으로 재로딩하지 않음).
 const labOptions = loadLabOptions();
 
+/**
+ * 로드된 Lab 옵션 스냅샷을 반환합니다.
+ * 현재 구현은 런타임에 파일 변경을 감지/반영하지 않습니다.
+ */
 export function getLabOptions(): LabOptions {
     return labOptions;
 }
