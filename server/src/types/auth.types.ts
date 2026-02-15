@@ -78,5 +78,10 @@ export type AdminUserMeta = {
  * - `not_found`: 대상 없음
  * - `has_posts`: 게시글이 있어 삭제 불가
  */
-export type DeleteUserForAdminResult = "deleted" | "not_found" | "has_posts";
+export const DELETE_USER_FOR_ADMIN_RESULTS = ["deleted", "not_found", "has_posts"] as const;
 
+/**
+ * `DELETE_USER_FOR_ADMIN_RESULTS` 기반의 유니온 타입입니다.
+ * 리턴 코드 후보를 상수로 함께 관리하여, 문서화/검증 시 기준점을 명확히 합니다.
+ */
+export type DeleteUserForAdminResult = (typeof DELETE_USER_FOR_ADMIN_RESULTS)[number];

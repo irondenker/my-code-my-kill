@@ -2,6 +2,7 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 import { getLabOptions } from "../config/lab-options.js";
 import type { PublicUserProfile, UserProfile } from "../types/auth.types.js";
+import { runWithSqlInjectionOption } from "../utils/sql-injection.util.js";
 
 /**
  * 사용자 프로필 조회/수정에 필요한 DB 쿼리를 제공하는 서비스입니다.
@@ -34,11 +35,43 @@ type PublicProfileRow = {
 };
 
 /**
+ * profile 서비스에서 사용하는 SQLi 분기 헬퍼입니다.
+ * 공통 유틸의 `runWithSqlInjectionOption`에 전역 옵션을 함께 전달합니다.
+ */
+async function runWithProfileSqlInjectionOption<T>(params: {
+    targetEnabled: boolean;
+    insecure: () => Promise<T>;
+    safe: () => Promise<T>;
+}): Promise<T> {
+    return runWithSqlInjectionOption<T>({
+        sqlInjectionOptions,
+        targetEnabled: params.targetEnabled,
+        insecure: params.insecure,
+        safe: params.safe,
+    });
+}
+
+/**
  * DB 조회 결과(UserProfileRow)를 애플리케이션 타입(UserProfile)으로 매핑합니다.
  */
 function mapUserProfile(row: UserProfileRow): UserProfile {
     return {
         userId: Number(row.user_id),
+        username: row.username,
+        email: row.email ?? null,
+        phoneNumber: row.phone_number ?? null,
+        displayName: row.display_name ?? null,
+        profileImageUrl: row.profile_image_url ?? null,
+        bio: row.bio ?? null,
+        createdAt: row.created_at,
+    };
+}
+
+/**
+ * DB 조회 결과(PublicProfileRow)를 애플리케이션 타입(PublicUserProfile)으로 매핑합니다.
+ */
+function mapPublicUserProfile(row: PublicProfileRow): PublicUserProfile {
+    return {
         username: row.username,
         email: row.email ?? null,
         phoneNumber: row.phone_number ?? null,
@@ -80,48 +113,56 @@ export async function findUserProfileById(userId: number): Promise<UserProfile |
  * SQLi 실습 옵션이 켜져 있으면 특정 타깃에서 취약 쿼리를 사용합니다.
  */
 export async function findUserProfileByUsername(username: string): Promise<UserProfile | null> {
-    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.profileLookupByUsername) {
-        const rows = await sequelize.query<UserProfileRow>(
-            `
-            SELECT
-                user_id,
-                username,
-                email,
-                phone_number,
-                display_name,
-                profile_image_url,
-                bio,
-                created_at
-            FROM users
-            WHERE username = '${username}'
-            LIMIT 1
-            `,
-            { type: QueryTypes.SELECT }
-        );
-        const row = rows[0];
-        return row ? mapUserProfile(row) : null;
-    }
+    return runWithProfileSqlInjectionOption<UserProfile | null>({
+        targetEnabled: sqlInjectionOptions.targets.profileLookupByUsername,
+        insecure: async () => {
+            // 주의: SQLi 실습용으로 의도적으로 문자열 보간을 사용합니다.
+            const rows = await sequelize.query<UserProfileRow>(
+                `
+                SELECT
+                    user_id,
+                    username,
+                    email,
+                    phone_number,
+                    display_name,
+                    profile_image_url,
+                    bio,
+                    created_at
+                FROM users
+                WHERE username = '${username}'
+                LIMIT 1
+                `,
+                { type: QueryTypes.SELECT }
+            );
+            // 결과는 최대 1행이므로 첫 행만 사용합니다.
+            const row = rows[0];
+            return row ? mapUserProfile(row) : null;
+        },
+        safe: async () => {
+            // 안전 쿼리: replacements 바인딩으로 username을 전달합니다.
+            const rows = await sequelize.query<UserProfileRow>(
+                `
+                SELECT
+                    user_id,
+                    username,
+                    email,
+                    phone_number,
+                    display_name,
+                    profile_image_url,
+                    bio,
+                    created_at
+                FROM users
+                WHERE username = :username
+                LIMIT 1
+                `,
+                { type: QueryTypes.SELECT, replacements: { username } }
+            );
 
-    const rows = await sequelize.query<UserProfileRow>(
-        `
-        SELECT
-            user_id,
-            username,
-            email,
-            phone_number,
-            display_name,
-            profile_image_url,
-            bio,
-            created_at
-        FROM users
-        WHERE username = :username
-        LIMIT 1
-        `,
-        { type: QueryTypes.SELECT, replacements: { username } }
-    );
-
-    const row = rows[0];
-    return row ? mapUserProfile(row) : null;
+            // 결과는 최대 1행이므로 첫 행만 사용합니다.
+            const row = rows[0];
+            return row ? mapUserProfile(row) : null;
+        },
+    });
 }
 
 /**
@@ -151,15 +192,7 @@ export async function findPublicProfileByUsername(username: string): Promise<Pub
         return null;
     }
 
-    return {
-        username: row.username,
-        email: row.email ?? null,
-        phoneNumber: row.phone_number ?? null,
-        displayName: row.display_name ?? null,
-        profileImageUrl: row.profile_image_url ?? null,
-        bio: row.bio ?? null,
-        createdAt: row.created_at,
-    };
+    return mapPublicUserProfile(row);
 }
 
 /**
@@ -173,47 +206,56 @@ export async function updateUserProfile(params: {
     phoneNumber: string | null;
     bio: string | null;
 }): Promise<boolean> {
-    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.profileUpdate) {
-        const rows = await sequelize.query<{ user_id: number }>(
-            `
-            UPDATE users
-            SET display_name = '${params.displayName ?? ""}',
-                email = '${params.email ?? ""}',
-                phone_number = '${params.phoneNumber ?? ""}',
-                bio = '${params.bio ?? ""}',
-                updated_at = NOW()
-            WHERE user_id = ${params.userId}
-            RETURNING user_id
-            `,
-            { type: QueryTypes.SELECT }
-        );
-        return rows.length > 0;
-    }
+    return runWithProfileSqlInjectionOption<boolean>({
+        targetEnabled: sqlInjectionOptions.targets.profileUpdate,
+        insecure: async () => {
+            // 주의: SQLi 실습용으로 의도적으로 문자열 보간을 사용합니다.
+            // null 입력은 빈 문자열로 저장하도록 처리합니다(기존 동작 유지 목적).
+            const rows = await sequelize.query<{ user_id: number }>(
+                `
+                UPDATE users
+                SET display_name = '${params.displayName ?? ""}',
+                    email = '${params.email ?? ""}',
+                    phone_number = '${params.phoneNumber ?? ""}',
+                    bio = '${params.bio ?? ""}',
+                    updated_at = NOW()
+                WHERE user_id = ${params.userId}
+                RETURNING user_id
+                `,
+                { type: QueryTypes.SELECT }
+            );
+            // UPDATE ... RETURNING 결과가 1개 이상이면 갱신 성공으로 봅니다.
+            return rows.length > 0;
+        },
+        safe: async () => {
+            // 안전 쿼리: replacements 바인딩으로 값을 전달합니다(null은 null로 유지).
+            const rows = await sequelize.query<{ user_id: number }>(
+                `
+                UPDATE users
+                SET display_name = :displayName,
+                    email = :email,
+                    phone_number = :phoneNumber,
+                    bio = :bio,
+                    updated_at = NOW()
+                WHERE user_id = :userId
+                RETURNING user_id
+                `,
+                {
+                    type: QueryTypes.SELECT,
+                    replacements: {
+                        userId: params.userId,
+                        displayName: params.displayName,
+                        email: params.email,
+                        phoneNumber: params.phoneNumber,
+                        bio: params.bio,
+                    },
+                }
+            );
 
-    const rows = await sequelize.query<{ user_id: number }>(
-        `
-        UPDATE users
-        SET display_name = :displayName,
-            email = :email,
-            phone_number = :phoneNumber,
-            bio = :bio,
-            updated_at = NOW()
-        WHERE user_id = :userId
-        RETURNING user_id
-        `,
-        {
-            type: QueryTypes.SELECT,
-            replacements: {
-                userId: params.userId,
-                displayName: params.displayName,
-                email: params.email,
-                phoneNumber: params.phoneNumber,
-                bio: params.bio,
-            },
-        }
-    );
-
-    return rows.length > 0;
+            // UPDATE ... RETURNING 결과가 1개 이상이면 갱신 성공으로 봅니다.
+            return rows.length > 0;
+        },
+    });
 }
 
 /**

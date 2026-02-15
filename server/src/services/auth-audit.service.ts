@@ -11,6 +11,44 @@ import type { LoginFailedReason } from "../types/auth.types.js";
  * - 콘솔 출력 여부는 `admin-audit.service`의 `AUDIT_CLI_LOG_LEVEL` 정책을 따릅니다.
  */
 
+type AuthAuditBaseParams = {
+    ipAddress: string | null;
+    userAgent: string | null;
+};
+
+/**
+ * Auth 감사로그 기록을 위한 공통 래퍼입니다.
+ *
+ * 역할:
+ * - `writeAdminAuditLogSafely`에 넘길 payload의 공통 필드를 표준화합니다.
+ * - 호출부에서 action/actor/target/details만 결정하면 되도록 단순화합니다.
+ *
+ * 주의:
+ * - 이 함수는 실패해도 예외를 던지지 않습니다(감사로그 기록 실패가 인증 흐름을 깨면 안 됨).
+ *
+ * @param params 감사로그 공통/가변 필드
+ */
+async function writeAuthAuditSafely(params: {
+    action: "LOGIN" | "LOGIN_FAILED" | "LOGOUT";
+    actorUserId: number | null;
+    actorUsername: string | null;
+    targetUserId: number | null;
+    targetUsername: string | null;
+    details: Record<string, unknown>;
+} & AuthAuditBaseParams): Promise<void> {
+    // 공통 필드(ip/userAgent)는 항상 포함하여, 운영 환경에서 사건 추적성을 유지합니다.
+    await writeAdminAuditLogSafely({
+        action: params.action,
+        actorUserId: params.actorUserId,
+        actorUsername: params.actorUsername,
+        targetUserId: params.targetUserId,
+        targetUsername: params.targetUsername,
+        details: params.details,
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+    });
+}
+
 /**
  * 로그인 실패 이벤트를 감사로그에 기록합니다.
  *
@@ -27,7 +65,9 @@ export async function logLoginFailed(params: {
     ipAddress: string | null;
     userAgent: string | null;
 }): Promise<void> {
-    await writeAdminAuditLogSafely({
+    // 로그인 실패 시점에는 실제 actor(userId)가 없으므로 actorUserId는 null로 기록합니다.
+    // attemptedUsername은 actorUsername/targetUsername에 함께 남겨 검색 가능성을 높입니다.
+    await writeAuthAuditSafely({
         action: "LOGIN_FAILED",
         actorUserId: null,
         actorUsername: params.attemptedUsername,
@@ -55,7 +95,8 @@ export async function logLoginSuccess(params: {
     ipAddress: string | null;
     userAgent: string | null;
 }): Promise<void> {
-    await writeAdminAuditLogSafely({
+    // 로그인 성공은 actor와 target이 동일 사용자이므로 동일 값으로 저장합니다.
+    await writeAuthAuditSafely({
         action: "LOGIN",
         actorUserId: params.userId,
         actorUsername: params.username,
@@ -82,7 +123,8 @@ export async function logLogoutSuccess(params: {
     ipAddress: string | null;
     userAgent: string | null;
 }): Promise<void> {
-    await writeAdminAuditLogSafely({
+    // 로그아웃은 세션 파기 직전에 기록하므로 username/userRole이 null일 수 있습니다.
+    await writeAuthAuditSafely({
         action: "LOGOUT",
         actorUserId: params.userId,
         actorUsername: params.username,

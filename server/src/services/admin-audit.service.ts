@@ -1,11 +1,14 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 import { summarizeErrorMessage } from "../utils/error-summary.util.js";
+import { formatKvLine } from "../utils/log-format.util.js";
 import {
     ADMIN_AUDIT_ACTIONS,
     type AdminAuditAction,
     type AdminAuditLog,
     type AdminAuditLogRow,
+    type AdminAuditCliPayload,
+    type EmitAdminAuditCliLogParams,
 } from "../types/admin-audit.types.js";
 
 export type { AdminAuditAction, AdminAuditLog } from "../types/admin-audit.types.js";
@@ -92,33 +95,14 @@ function sanitizeDetails(value: unknown): Record<string, unknown> {
 }
 
 /**
- * 감사 로그 저장 결과를 Node CLI(JSON 1줄)로 출력합니다.
+ * 감사 로그 콘솔(JSON 1줄) 출력 payload를 구성합니다.
+ * timestamp/source는 내부에서 고정합니다.
  *
- * - 성공: stdout에 JSON 1줄(`[AUDIT] {...}`)
- * - 실패: stderr에 요약 1줄(`[AUDIT][ERROR] ...`)
- *
- * @param params 출력할 감사 이벤트 정보
+ * @param params 콘솔 출력 입력
+ * @returns 콘솔에 출력할 JSON payload
  */
-function emitAdminAuditCliLog(params: {
-    outcome: "success" | "failure";
-    action: string;
-    actorUserId: number | null;
-    actorUsername: string | null;
-    targetUserId: number | null;
-    targetUsername: string | null;
-    details: Record<string, unknown>;
-    ipAddress: string | null;
-    userAgent: string | null;
-    error?: unknown;
-}) {
-    if (auditCliLogLevel === "none") {
-        return;
-    }
-    if (auditCliLogLevel === "errors" && params.outcome === "success") {
-        return;
-    }
-
-    const payload: Record<string, unknown> = {
+function buildAdminAuditCliPayload(params: EmitAdminAuditCliLogParams): AdminAuditCliPayload {
+    return {
         timestamp: new Date().toISOString(),
         source: "admin_audit",
         outcome: params.outcome,
@@ -131,19 +115,182 @@ function emitAdminAuditCliLog(params: {
         ipAddress: params.ipAddress,
         userAgent: params.userAgent,
     };
+}
 
-    if (params.error) {
-        const actor = params.actorUserId === null ? "-" : String(params.actorUserId);
-        const target = params.targetUserId === null ? "-" : String(params.targetUserId);
-        const ip = params.ipAddress ?? "-";
-        const reason = summarizeErrorMessage(params.error);
-        console.error(
-            `[AUDIT][ERROR] action=${params.action} actor=${actor} target=${target} ip=${ip} reason="${reason}"`
-        );
+/**
+ * 감사로그 저장 실패 시, 콘솔에 남길 1줄 요약을 생성합니다.
+ * key=value 형태로 남겨 grep/파싱이 쉽도록 합니다.
+ *
+ * @param params 콘솔 출력 입력(실패 케이스)
+ * @returns `[AUDIT][ERROR] key=value ...` 형태의 1줄 문자열
+ */
+function formatAdminAuditCliErrorLine(params: EmitAdminAuditCliLogParams): string {
+    const reason = params.error ? summarizeErrorMessage(params.error) : "-";
+    return formatKvLine(
+        "[AUDIT][ERROR]",
+        {
+            action: params.action,
+            actor: params.actorUserId,
+            target: params.targetUserId,
+            ip: params.ipAddress,
+            reason,
+        },
+        { nullValue: "-", quoteStrings: "auto" }
+    );
+}
+
+/**
+ * 감사 로그를 Node 콘솔에 출력합니다.
+ *
+ * 정책:
+ * - `AUDIT_CLI_LOG_LEVEL=none`이면 아무것도 출력하지 않습니다.
+ * - `AUDIT_CLI_LOG_LEVEL=errors`이면 성공(outcome=success)은 출력하지 않습니다.
+ *
+ * 출력 포맷:
+ * - 성공: stdout에 JSON 1줄(`[AUDIT] {...}`)
+ * - 실패: stderr에 요약 1줄(`[AUDIT][ERROR] key=value ...`)
+ *
+ * @param params 출력할 감사 이벤트 정보
+ */
+function emitAdminAuditCliLog(params: EmitAdminAuditCliLogParams) {
+    if (auditCliLogLevel === "none") {
+        return;
+    }
+    if (auditCliLogLevel === "errors" && params.outcome === "success") {
         return;
     }
 
+    if (params.error) {
+        console.error(formatAdminAuditCliErrorLine(params));
+        return;
+    }
+
+    const payload = buildAdminAuditCliPayload(params);
     console.log("[AUDIT]", JSON.stringify(payload));
+}
+
+/**
+ * `writeAdminAuditLog` 입력을 DB 저장/콘솔 출력에 적합한 형태로 정규화한 결과입니다.
+ *
+ * 포함:
+ * - trim/길이 제한된 문자열 필드들
+ * - 항상 객체로 보장된 details + JSON 직렬화 문자열(detailsJson)
+ */
+type NormalizedAdminAuditLogWriteInput = {
+    action: AdminAuditAction;
+    actorUserId: number | null;
+    actorUsername: string | null;
+    targetUserId: number | null;
+    targetUsername: string | null;
+    details: Record<string, unknown>;
+    detailsJson: string;
+    ipAddress: string | null;
+    userAgent: string | null;
+};
+
+/**
+ * 감사로그 저장 입력을 정규화합니다.
+ *
+ * 처리:
+ * - 문자열 정규화/길이 제한
+ * - details 객체 형태 강제 및 JSON 직렬화
+ *
+ * @param params writeAdminAuditLog 입력값
+ */
+function normalizeAdminAuditLogWriteInput(params: Parameters<typeof writeAdminAuditLog>[0]): NormalizedAdminAuditLogWriteInput {
+    const actorUserId = params.actorUserId ?? null;
+    const targetUserId = params.targetUserId ?? null;
+    const actorUsername = truncate(normalizeNullable(params.actorUsername), 50);
+    const targetUsername = truncate(normalizeNullable(params.targetUsername), 50);
+    const ipAddress = truncate(normalizeNullable(params.ipAddress), 64);
+    const userAgent = truncate(normalizeNullable(params.userAgent), 255);
+    const details = sanitizeDetails(params.details);
+    const detailsJson = JSON.stringify(details);
+
+    return {
+        action: params.action,
+        actorUserId,
+        actorUsername,
+        targetUserId,
+        targetUsername,
+        details,
+        detailsJson,
+        ipAddress,
+        userAgent,
+    };
+}
+
+/**
+ * 감사로그를 DB에 저장합니다.
+ *
+ * @param input 정규화된 입력
+ */
+async function insertAdminAuditLogRow(input: NormalizedAdminAuditLogWriteInput): Promise<void> {
+    await sequelize.query(
+        `
+        INSERT INTO admin_audit_logs (
+            action,
+            actor_user_id,
+            actor_username,
+            target_user_id,
+            target_username,
+            details,
+            ip_address,
+            user_agent,
+            created_at
+        )
+        VALUES (
+            :action,
+            :actorUserId,
+            :actorUsername,
+            :targetUserId,
+            :targetUsername,
+            CAST(:detailsJson AS jsonb),
+            :ipAddress,
+            :userAgent,
+            NOW()
+        )
+        `,
+        {
+            type: QueryTypes.INSERT,
+            replacements: {
+                action: input.action,
+                actorUserId: input.actorUserId,
+                actorUsername: input.actorUsername,
+                targetUserId: input.targetUserId,
+                targetUsername: input.targetUsername,
+                detailsJson: input.detailsJson,
+                ipAddress: input.ipAddress,
+                userAgent: input.userAgent,
+            },
+        }
+    );
+}
+
+/**
+ * DB 저장 결과를 감사로그 콘솔 출력 함수로 전달합니다.
+ *
+ * @param outcome 성공/실패
+ * @param input 정규화된 입력
+ * @param error 실패 시 에러(선택)
+ */
+function emitAdminAuditWriteOutcomeToCli(
+    outcome: "success" | "failure",
+    input: NormalizedAdminAuditLogWriteInput,
+    error?: unknown
+): void {
+    emitAdminAuditCliLog({
+        outcome,
+        action: input.action,
+        actorUserId: input.actorUserId,
+        actorUsername: input.actorUsername,
+        targetUserId: input.targetUserId,
+        targetUsername: input.targetUsername,
+        details: input.details,
+        ipAddress: input.ipAddress,
+        userAgent: input.userAgent,
+        error,
+    });
 }
 
 /**
@@ -173,79 +320,13 @@ export async function writeAdminAuditLog(params: {
         throw new Error(`Unsupported admin audit action: ${action}`);
     }
 
-    const actorUserId = params.actorUserId ?? null;
-    const targetUserId = params.targetUserId ?? null;
-    const actorUsername = truncate(normalizeNullable(params.actorUsername), 50);
-    const targetUsername = truncate(normalizeNullable(params.targetUsername), 50);
-    const ipAddress = truncate(normalizeNullable(params.ipAddress), 64);
-    const userAgent = truncate(normalizeNullable(params.userAgent), 255);
-    const details = sanitizeDetails(params.details);
-    const detailsJson = JSON.stringify(details);
+    const input = normalizeAdminAuditLogWriteInput(params);
 
     try {
-        await sequelize.query(
-            `
-            INSERT INTO admin_audit_logs (
-                action,
-                actor_user_id,
-                actor_username,
-                target_user_id,
-                target_username,
-                details,
-                ip_address,
-                user_agent,
-                created_at
-            )
-            VALUES (
-                :action,
-                :actorUserId,
-                :actorUsername,
-                :targetUserId,
-                :targetUsername,
-                CAST(:detailsJson AS jsonb),
-                :ipAddress,
-                :userAgent,
-                NOW()
-            )
-            `,
-            {
-                type: QueryTypes.INSERT,
-                replacements: {
-                    action,
-                    actorUserId,
-                    actorUsername,
-                    targetUserId,
-                    targetUsername,
-                    detailsJson,
-                    ipAddress,
-                    userAgent,
-                },
-            },
-        );
-        emitAdminAuditCliLog({
-            outcome: "success",
-            action,
-            actorUserId,
-            actorUsername,
-            targetUserId,
-            targetUsername,
-            details,
-            ipAddress,
-            userAgent,
-        });
+        await insertAdminAuditLogRow(input);
+        emitAdminAuditWriteOutcomeToCli("success", input);
     } catch (err) {
-        emitAdminAuditCliLog({
-            outcome: "failure",
-            action,
-            actorUserId,
-            actorUsername,
-            targetUserId,
-            targetUsername,
-            details,
-            ipAddress,
-            userAgent,
-            error: err,
-        });
+        emitAdminAuditWriteOutcomeToCli("failure", input, err);
         throw err;
     }
 }
@@ -263,7 +344,14 @@ export async function writeAdminAuditLogSafely(
         await writeAdminAuditLog(params);
     } catch (err) {
         console.error(
-            `[AUDIT_LOG_ERROR] action=${params.action} reason="${summarizeErrorMessage(err)}"`
+            formatKvLine(
+                "[AUDIT_LOG_ERROR]",
+                {
+                    action: params.action,
+                    reason: summarizeErrorMessage(err),
+                },
+                { quoteStrings: "auto" }
+            )
         );
     }
 }

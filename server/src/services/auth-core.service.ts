@@ -2,6 +2,7 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 import { getLabOptions } from "../config/lab-options.js";
 import type { AuthUser, AuthUserPublic } from "../types/auth.types.js";
+import { runWithSqlInjectionOption } from "../utils/sql-injection.util.js";
 
 /**
  * 인증(로그인/회원가입/어드민 유저 생성)에 필요한 핵심 DB 쿼리를 제공합니다.
@@ -20,6 +21,35 @@ type UserRow = {
     is_active: boolean;
 };
 
+type UserPublicRow = {
+    user_id: number;
+    user_role: string;
+    username: string;
+    is_active: boolean;
+};
+
+/**
+ * auth-core에서 사용하는 SQLi 분기 헬퍼입니다.
+ * 공통 유틸의 `runWithSqlInjectionOption`에 전역 옵션을 함께 전달합니다.
+ */
+async function runWithAuthSqlInjectionOption<T>(params: {
+    targetEnabled: boolean;
+    insecure: () => Promise<T>;
+    safe: () => Promise<T>;
+}): Promise<T> {
+    return runWithSqlInjectionOption<T>({
+        sqlInjectionOptions,
+        targetEnabled: params.targetEnabled,
+        insecure: params.insecure,
+        safe: params.safe,
+    });
+}
+
+/**
+ * DB 조회 결과(UserRow)를 애플리케이션 타입(AuthUser)으로 매핑합니다.
+ *
+ * @param row DB 행
+ */
 function mapAuthUser(row: UserRow): AuthUser {
     return {
         userId: Number(row.user_id),
@@ -31,11 +61,26 @@ function mapAuthUser(row: UserRow): AuthUser {
 }
 
 /**
+ * DB 조회 결과(UserPublicRow)를 애플리케이션 타입(AuthUserPublic)으로 매핑합니다.
+ *
+ * @param row DB 행
+ */
+function mapAuthUserPublic(row: UserPublicRow): AuthUserPublic {
+    return {
+        userId: Number(row.user_id),
+        userRole: row.user_role as AuthUser["userRole"],
+        username: row.username,
+        isActive: Boolean(row.is_active),
+    };
+}
+
+/**
  * SQLi 실습용: username 조회를 안전하지 않은 문자열 보간 쿼리로 실행합니다.
  *
  * @param params username
  */
 async function findUserByUsernameInsecureForLab(params: { username: string }): Promise<AuthUser | null> {
+    // 주의: 의도적으로 문자열 보간을 사용합니다(SQLi 실습용).
     const query = `
         SELECT
             user_id,
@@ -54,11 +99,11 @@ async function findUserByUsernameInsecureForLab(params: { username: string }): P
 }
 
 /**
- * username으로 사용자(AuthUser)를 안전한 바인딩 쿼리로 조회합니다.
+ * username으로 사용자를 조회하는 안전 쿼리입니다(바인딩 사용).
  *
- * 주의: 이 함수는 SQLi 실습 타깃에 의해 취약 쿼리로 전환되지 않습니다.
+ * @param username username
  */
-export async function findUserByUsername(username: string): Promise<AuthUser | null> {
+async function findUserByUsernameSafe(username: string): Promise<AuthUser | null> {
     const rows = await sequelize.query<UserRow>(
         `
         SELECT
@@ -79,14 +124,26 @@ export async function findUserByUsername(username: string): Promise<AuthUser | n
 }
 
 /**
+ * username으로 사용자(AuthUser)를 안전한 바인딩 쿼리로 조회합니다.
+ *
+ * 주의: 이 함수는 SQLi 실습 타깃에 의해 취약 쿼리로 전환되지 않습니다.
+ */
+export async function findUserByUsername(username: string): Promise<AuthUser | null> {
+    // 회원가입/어드민 생성 등에서 "중복 체크"로 호출되더라도,
+    // 이 엔트리포인트는 항상 안전 쿼리로만 동작합니다(컨텍스트별 함수 사용 권장).
+    return findUserByUsernameSafe(username);
+}
+
+/**
  * 로그인용 사용자 조회입니다.
  * SQLi 실습 옵션이 켜져 있고 `targets.loginUsername`가 true면 취약 쿼리를 사용합니다.
  */
 export async function findUserForLogin(params: { username: string }): Promise<AuthUser | null> {
-    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.loginUsername) {
-        return findUserByUsernameInsecureForLab(params);
-    }
-    return findUserByUsername(params.username);
+    return runWithAuthSqlInjectionOption<AuthUser | null>({
+        targetEnabled: sqlInjectionOptions.targets.loginUsername,
+        insecure: () => findUserByUsernameInsecureForLab({ username: params.username }),
+        safe: () => findUserByUsernameSafe(params.username),
+    });
 }
 
 /**
@@ -94,10 +151,11 @@ export async function findUserForLogin(params: { username: string }): Promise<Au
  * SQLi 실습 옵션이 켜져 있고 `targets.registerUsernameLookup`가 true면 취약 쿼리를 사용합니다.
  */
 export async function findUserByUsernameForRegisterLookup(username: string): Promise<AuthUser | null> {
-    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.registerUsernameLookup) {
-        return findUserByUsernameInsecureForLab({ username });
-    }
-    return findUserByUsername(username);
+    return runWithAuthSqlInjectionOption<AuthUser | null>({
+        targetEnabled: sqlInjectionOptions.targets.registerUsernameLookup,
+        insecure: () => findUserByUsernameInsecureForLab({ username }),
+        safe: () => findUserByUsernameSafe(username),
+    });
 }
 
 /**
@@ -105,24 +163,24 @@ export async function findUserByUsernameForRegisterLookup(username: string): Pro
  * SQLi 실습 옵션이 켜져 있고 `targets.adminUserUsernameLookup`가 true면 취약 쿼리를 사용합니다.
  */
 export async function findUserByUsernameForAdminLookup(username: string): Promise<AuthUser | null> {
-    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.adminUserUsernameLookup) {
-        return findUserByUsernameInsecureForLab({ username });
-    }
-    return findUserByUsername(username);
+    return runWithAuthSqlInjectionOption<AuthUser | null>({
+        targetEnabled: sqlInjectionOptions.targets.adminUserUsernameLookup,
+        insecure: () => findUserByUsernameInsecureForLab({ username }),
+        safe: () => findUserByUsernameSafe(username),
+    });
 }
 
+/**
+ * 사용자 생성(안전 쿼리)입니다.
+ * 바인딩 쿼리를 사용합니다.
+ */
 async function createUserSafe(params: {
     username: string;
     passwordHash: string;
     userRole: AuthUser["userRole"];
     isActive: boolean;
 }): Promise<AuthUserPublic> {
-    const rows = await sequelize.query<{
-        user_id: number;
-        user_role: string;
-        username: string;
-        is_active: boolean;
-    }>(
+    const rows = await sequelize.query<UserPublicRow>(
         `
         INSERT INTO users (
             user_role,
@@ -158,12 +216,7 @@ async function createUserSafe(params: {
         throw new Error("Failed to create user");
     }
 
-    return {
-        userId: Number(row.user_id),
-        userRole: row.user_role as AuthUser["userRole"],
-        username: row.username,
-        isActive: Boolean(row.is_active),
-    };
+    return mapAuthUserPublic(row);
 }
 
 /**
@@ -177,12 +230,8 @@ async function createUserInsecureForLab(params: {
     userRole: AuthUser["userRole"];
     isActive: boolean;
 }): Promise<AuthUserPublic> {
-    const rows = await sequelize.query<{
-        user_id: number;
-        user_role: string;
-        username: string;
-        is_active: boolean;
-    }>(
+    // 주의: 의도적으로 문자열 보간을 사용합니다(SQLi 실습용).
+    const rows = await sequelize.query<UserPublicRow>(
         `
         INSERT INTO users (
             user_role,
@@ -210,12 +259,7 @@ async function createUserInsecureForLab(params: {
         throw new Error("Failed to create user");
     }
 
-    return {
-        userId: Number(row.user_id),
-        userRole: row.user_role as AuthUser["userRole"],
-        username: row.username,
-        isActive: Boolean(row.is_active),
-    };
+    return mapAuthUserPublic(row);
 }
 
 /**
@@ -228,10 +272,12 @@ export async function createUserForRegister(params: {
 }): Promise<AuthUserPublic> {
     const userRole: AuthUser["userRole"] = "user";
     const isActive = true;
-    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.registerCreateUser) {
-        return createUserInsecureForLab({ ...params, userRole, isActive });
-    }
-    return createUserSafe({ ...params, userRole, isActive });
+    // 회원가입은 항상 기본 role/user + 활성 계정으로 생성합니다.
+    return runWithAuthSqlInjectionOption<AuthUserPublic>({
+        targetEnabled: sqlInjectionOptions.targets.registerCreateUser,
+        insecure: () => createUserInsecureForLab({ ...params, userRole, isActive }),
+        safe: () => createUserSafe({ ...params, userRole, isActive }),
+    });
 }
 
 /**
@@ -244,8 +290,10 @@ export async function createUserForAdmin(params: {
     userRole: AuthUser["userRole"];
     isActive: boolean;
 }): Promise<AuthUserPublic> {
-    if (sqlInjectionOptions.enabled && sqlInjectionOptions.targets.adminUserCreate) {
-        return createUserInsecureForLab(params);
-    }
-    return createUserSafe(params);
+    // 어드민 컨텍스트는 role/활성 여부를 UI 입력값으로 결정합니다.
+    return runWithAuthSqlInjectionOption<AuthUserPublic>({
+        targetEnabled: sqlInjectionOptions.targets.adminUserCreate,
+        insecure: () => createUserInsecureForLab(params),
+        safe: () => createUserSafe(params),
+    });
 }
