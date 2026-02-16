@@ -165,6 +165,10 @@ async function renderAdminBoardsIndex(
     });
 }
 
+/**
+ * 유저 관리 화면에서 에러 상태를 공통 형태로 렌더링합니다.
+ * 지정한 상태 코드를 적용한 뒤 동일 인덱스 뷰를 재사용합니다.
+ */
 function renderAdminUsersIndexError(
     req: Request,
     res: Response,
@@ -177,6 +181,9 @@ function renderAdminUsersIndexError(
     });
 }
 
+/**
+ * 어드민 작업 감사로그에 필요한 공통 컨텍스트를 구성합니다.
+ */
 function buildAdminAuditContext(req: Request): AdminAuditContext {
     const actor = getSessionActor(req);
     return {
@@ -213,13 +220,12 @@ export async function getAdminDashboard(_req: Request, res: Response) {
     });
 }
 
-// getAdminUsersPage is exported above (thin wrapper). Keep only one export to avoid confusion.
-
 /**
  * 어드민 유저 활성/비활성 상태 변경 요청을 처리합니다.
  * 자기 자신 비활성화 금지, admin 비활성화 금지 정책을 적용합니다.
  */
 export async function postAdminUserStatus(req: Request, res: Response) {
+    // 1) 대상 userId/요청 status를 읽고 기본 형식을 검증합니다.
     const userId = getPositiveIntParamOrThrow(req, "userId");
 
     const status = normalizeString(req.body?.status);
@@ -230,11 +236,13 @@ export async function postAdminUserStatus(req: Request, res: Response) {
         });
     }
 
+    // 2) 정책 평가를 위해 대상 유저 메타를 조회합니다.
     const target = await findUserMetaForAdminById(userId);
     if (!target) {
         throw new HttpError(404, "Not Found");
     }
 
+    // 3) 자기 자신/관리자 보호 등 상태 변경 정책을 검증합니다.
     const isActive = status === "active";
     const statusPolicy = validateAdminUserStatusPolicy({
         actorUserId: Number(req.session.userId),
@@ -251,11 +259,14 @@ export async function postAdminUserStatus(req: Request, res: Response) {
             message: statusPolicy.message,
         });
     }
+
+    // 4) 변경 사항이 없다면 서비스 호출 없이 성공 플래시만 노출합니다.
     if ("noChange" in statusPolicy && statusPolicy.noChange) {
         req.session.adminUsersFlashMessage = "User status has been updated.";
         return res.redirect("/admin/users");
     }
 
+    // 5) 실제 변경은 서비스 계층으로 위임하고 결과를 확인합니다.
     const updated = await adminUpdateUserStatus(buildAdminAuditContext(req), {
         target,
         nextIsActive: isActive,
@@ -273,6 +284,7 @@ export async function postAdminUserStatus(req: Request, res: Response) {
  * 자기 자신의 admin 권한 회수 금지, 최소 1명 admin 유지 정책을 적용합니다.
  */
 export async function postAdminUserRole(req: Request, res: Response) {
+    // 1) 대상 userId/요청 role을 읽고 기본 형식을 검증합니다.
     const userId = getPositiveIntParamOrThrow(req, "userId");
 
     const role = normalizeString(req.body?.role);
@@ -283,11 +295,13 @@ export async function postAdminUserRole(req: Request, res: Response) {
         });
     }
 
+    // 2) 정책 평가를 위해 대상 유저 메타를 조회합니다.
     const target = await findUserMetaForAdminById(userId);
     if (!target) {
         throw new HttpError(404, "Not Found");
     }
 
+    // 3) admin -> user 강등 시에만 "최소 1명 admin" 검증용 카운트를 조회합니다.
     const requestedRole = role as "admin" | "user";
     const adminCount = target.userRole === "admin" && requestedRole === "user" ? await countAdminUsers() : null;
     const rolePolicy = validateAdminUserRolePolicy({
@@ -306,11 +320,14 @@ export async function postAdminUserRole(req: Request, res: Response) {
             message: rolePolicy.message,
         });
     }
+
+    // 4) 변경 사항이 없다면 서비스 호출 없이 성공 플래시만 노출합니다.
     if ("noChange" in rolePolicy && rolePolicy.noChange) {
         req.session.adminUsersFlashMessage = "User role has been updated.";
         return res.redirect("/admin/users");
     }
 
+    // 5) 실제 변경은 서비스 계층으로 위임하고 결과를 확인합니다.
     const updated = await adminUpdateUserRole(buildAdminAuditContext(req), {
         target,
         requestedRole,
@@ -337,13 +354,12 @@ export async function getAdminAuditLogsPage(req: Request, res: Response) {
     });
 }
 
-// getAdminBoardsPage is exported above (thin wrapper). Keep only one export to avoid confusion.
-
 /**
  * 어드민 보드 생성 요청을 처리합니다.
  * 입력 검증 후 보드를 생성하고, 플래시 메시지로 결과를 전달합니다.
  */
 export async function postAdminBoardCreate(req: Request, res: Response) {
+    // 1) 입력값을 정규화하고, 실패 시 폼 유지에 사용할 기본 formValue를 구성합니다.
     const slug = normalizeLowerString(req.body?.slug);
     const name = normalizeString(req.body?.name);
     const description = normalizeNullableString(req.body?.description);
@@ -366,6 +382,7 @@ export async function postAdminBoardCreate(req: Request, res: Response) {
         });
     }
 
+    // 2) 필드 단위 검증: slug/name/description 제약을 순서대로 확인합니다.
     if (!isValidBoardSlug(slug)) {
         res.status(422);
         return renderAdminBoardsIndex(req, res, {
@@ -393,6 +410,7 @@ export async function postAdminBoardCreate(req: Request, res: Response) {
         });
     }
 
+    // 3) enum 필드(read/create access) 값 검증으로 예기치 않은 정책 입력을 차단합니다.
     if (!isBoardReadAccess(readAccess)) {
         res.status(422);
         return renderAdminBoardsIndex(req, res, {
@@ -411,6 +429,7 @@ export async function postAdminBoardCreate(req: Request, res: Response) {
         });
     }
 
+    // 4) slug 중복을 점검해 보드 식별자 충돌을 방지합니다.
     const existing = await findBoardBySlug(slug);
     if (existing) {
         res.status(409);
@@ -421,6 +440,7 @@ export async function postAdminBoardCreate(req: Request, res: Response) {
         });
     }
 
+    // 5) 생성 성공 시 리다이렉트 후 한 번만 보이는 플래시 메시지를 세팅합니다.
     await adminCreateBoard({
         slug,
         name,
@@ -462,6 +482,7 @@ export async function getAdminBoardEditPage(req: Request, res: Response) {
  * 입력 검증 후 보드를 업데이트하고, 플래시 메시지로 결과를 전달합니다.
  */
 export async function postAdminBoardEdit(req: Request, res: Response) {
+    // 1) 수정 대상 보드 존재 여부를 먼저 확인합니다.
     const boardId = getPositiveIntParamOrThrow(req, "boardId");
 
     const existingBoard = await findBoardById(boardId);
@@ -475,6 +496,7 @@ export async function postAdminBoardEdit(req: Request, res: Response) {
     const readAccess = normalizeLowerString(req.body?.readAccess);
     const createAccess = normalizeLowerString(req.body?.createAccess);
 
+    // 검증 실패 시 입력값을 유지한 채 동일 편집 폼으로 재렌더링합니다.
     const renderInvalid = (message: string, status = 422) => {
         return res.status(status).render("admin/boards/edit", {
             formError: message,
@@ -489,6 +511,7 @@ export async function postAdminBoardEdit(req: Request, res: Response) {
         });
     };
 
+    // 2) 필드 단위 검증: 필수값/slug/name/description을 순서대로 점검합니다.
     if (!slug || !name) {
         return renderInvalid("Slug and name are required.", 400);
     }
@@ -505,6 +528,7 @@ export async function postAdminBoardEdit(req: Request, res: Response) {
         return renderInvalid("Description must be 255 characters or less.");
     }
 
+    // 3) enum 필드(read/create access) 값 검증으로 정책 입력 오류를 방지합니다.
     if (!isBoardReadAccess(readAccess)) {
         return renderInvalid("Invalid read access value.");
     }
@@ -513,11 +537,13 @@ export async function postAdminBoardEdit(req: Request, res: Response) {
         return renderInvalid("Invalid create access value.");
     }
 
+    // 4) slug를 바꾼 경우 다른 보드와 충돌하지 않는지 확인합니다.
     const slugOwner = await findBoardBySlug(slug);
     if (slugOwner && slugOwner.boardId !== boardId) {
         return renderInvalid("This slug is already in use.", 409);
     }
 
+    // 5) 업데이트 성공 시 목록으로 이동하고 플래시 메시지를 남깁니다.
     const updated = await adminUpdateBoard({
         boardId,
         slug,

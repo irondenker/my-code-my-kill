@@ -22,7 +22,7 @@ import { regenerateSession, saveSession } from "../utils/session.util.js";
  * - 성공/실패 감사로그 기록 호출(상세 DB 로직은 서비스가 담당)
  *
  * 주의:
- * - DB 접근은 `auth-core.service` / `profile.service`로 위임합니다.
+ * - DB 접근은 `auth.service` / `profile.service`로 위임합니다.
  */
 
 /**
@@ -101,9 +101,11 @@ export async function getRegisterPage(_req: Request, res: Response) {
  * - 세션 재생성(regenerate) 및 로그인 상태로 전환
  */
 export async function postRegister(req: Request, res: Response) {
+    // 1) 폼 입력을 문자열로 안전하게 정규화합니다.
     const username = normalizeString(req.body?.username);
     const password = String(req.body?.password ?? "");
 
+    // 2) 필수값/형식 검증 실패는 즉시 폼으로 되돌려 사용자 입력을 바로 교정하도록 합니다.
     if (!username) {
         return res.status(400).render("auth/register", {
             formError: "Username is required.",
@@ -128,6 +130,7 @@ export async function postRegister(req: Request, res: Response) {
         });
     }
 
+    // 3) 사용자명 중복 여부를 먼저 확인해 계정 생성 충돌을 방지합니다.
     const existing = await findUserByUsername(username);
     if (existing) {
         return res.status(409).render("auth/register", {
@@ -135,6 +138,7 @@ export async function postRegister(req: Request, res: Response) {
         });
     }
 
+    // 4) 계정 생성 후 세션을 재발급해 fixation 위험을 줄이고 로그인 상태를 확정합니다.
     const passwordHash = hashPassword(password);
     const user = await createUserForRegister({ username, passwordHash });
 
@@ -162,6 +166,10 @@ export async function postRegister(req: Request, res: Response) {
  * - `next`는 open redirect 방지를 위해 `getSafeRedirectPath`로 제한합니다.
  */
 export async function postLogin(req: Request, res: Response) {
+    // 1) 입력값/메타데이터를 먼저 수집합니다.
+    //    - next: 사용자 입력(폼) 기반 이동 경로
+    //    - safeNextForView: 실패 시 폼 재렌더링에 넣을 안전 경로
+    //    - nextPath: 성공 시 최종 redirect 경로(기본 /board)
     const username = normalizeString(req.body?.username);
     const password = String(req.body?.password ?? "");
     const nextFromBody = normalizeString(req.body?.next);
@@ -170,6 +178,7 @@ export async function postLogin(req: Request, res: Response) {
     const ipAddress = getRequestIp(req);
     const userAgent = getRequestUserAgent(req);
 
+    // 2) 필수값 누락은 실패 감사로그를 남기고 400으로 종료합니다.
     if (!username || !password) {
         await writeAdminAuditLogSafely({
             action: "LOGIN_FAILED",
@@ -191,6 +200,7 @@ export async function postLogin(req: Request, res: Response) {
         });
     }
 
+    // 3) 계정 조회 + 비밀번호 검증 실패는 동일 메시지로 응답해 계정 유무 노출을 줄입니다.
     const user = await findUserByUsername(username);
     if (!user || !verifyPassword(password, user.passwordHash)) {
         await writeAdminAuditLogSafely({
@@ -212,6 +222,8 @@ export async function postLogin(req: Request, res: Response) {
             nextPath: safeNextForView || null,
         });
     }
+
+    // 4) 비활성 계정은 인증 성공 여부와 관계없이 접근을 차단합니다.
     if (!user.isActive) {
         await writeAdminAuditLogSafely({
             action: "LOGIN_FAILED",
@@ -233,6 +245,7 @@ export async function postLogin(req: Request, res: Response) {
         });
     }
 
+    // 5) 로그인 성공 시 세션을 재발급하고, UI용 프로필 이미지 캐시를 세션에 동기화합니다.
     await regenerateSession(req);
     req.session.userId = user.userId;
     req.session.userRole = user.userRole;
@@ -241,6 +254,7 @@ export async function postLogin(req: Request, res: Response) {
     req.session.profileImageUrl = profile?.profileImageUrl ?? null;
     await saveSession(req);
 
+    // 6) 성공 감사로그를 남긴 뒤 안전한 경로로 이동합니다.
     await writeAdminAuditLogSafely({
         action: "LOGIN",
         actorUserId: user.userId,
@@ -266,12 +280,14 @@ export async function postLogin(req: Request, res: Response) {
  * - 세션 파기 및 쿠키 제거
  */
 export async function postLogout(req: Request, res: Response) {
+    // 1) 세션 파기 전에 로그 기록에 필요한 값들을 먼저 안전하게 캡처합니다.
     const userId = typeof req.session.userId === "number" ? req.session.userId : null;
     const role = req.session.userRole;
     const username = normalizeString(req.session.username);
     const ipAddress = getRequestIp(req);
     const userAgent = getRequestUserAgent(req);
 
+    // 2) 로그인 상태였던 경우에만 로그아웃 감사로그를 남깁니다.
     if (userId !== null) {
         await writeAdminAuditLogSafely({
             action: "LOGOUT",
@@ -288,6 +304,7 @@ export async function postLogout(req: Request, res: Response) {
         });
     }
 
+    // 3) 서버 세션과 세션 쿠키를 함께 정리해 완전 로그아웃 상태를 만듭니다.
     await destroySession(req);
     res.clearCookie("mcmk.sid");
     return res.redirect("/");

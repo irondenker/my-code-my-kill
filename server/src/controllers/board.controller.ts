@@ -80,6 +80,10 @@ function getPositiveIntParamOrThrow(req: Request, paramName: string): number {
     return Math.trunc(value);
 }
 
+/**
+ * multer 업로드 결과(`req.files`)에서 특정 필드의 첫 파일을 추출합니다.
+ * `array`/`fields` 형태를 모두 지원하며, 파일이 없으면 null을 반환합니다.
+ */
 function getUploadedFile(req: Request, fieldName: string): Express.Multer.File | null {
     const files = req.files;
     if (!files) {
@@ -223,8 +227,10 @@ async function requirePostBySlugDisplayId(params: { slug: string; displayId: num
  * 전체 보드 목록(`/board`)을 렌더링합니다.
  */
 export async function getBoardIndex(req: Request, res: Response) {
+    // 1) 전체 보드 목록에서 현재 세션 기준으로 접근 가능한 보드만 노출합니다.
     const boards = (await listBoards()).filter((board) => canAccessBoardDirectory(req, board));
 
+    // 2) 디렉토리 화면 전용 모델(보드 미선택 상태)을 렌더링합니다.
     return res.render("board/index", {
         boardSlug: null,
         boardDisplayName: "Boards",
@@ -302,9 +308,11 @@ export async function getBoardBySlug(req: Request, res: Response) {
  * 보드 createAccess 정책에 따라 401 redirect 또는 403을 반환할 수 있습니다.
  */
 export async function getBoardCreateForm(req: Request, res: Response) {
+    // 1) 대상 보드를 확인하고, slug가 유효하지 않거나 보드가 없으면 404로 처리합니다.
     const slug = getStringParamOrThrow(req, "slug");
     const board = await requireBoardBySlug(slug);
 
+    // 2) createAccess 정책을 평가해 로그인 유도/권한 거부를 분기합니다.
     const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
     const createAccess = getBoardCreateAccessResult(board, viewerContext);
     if (createAccess === "forbidden") {
@@ -314,6 +322,7 @@ export async function getBoardCreateForm(req: Request, res: Response) {
         return res.status(401).redirect("/login");
     }
 
+    // 3) 접근 가능한 경우 빈 작성 폼을 렌더링합니다.
     return res.render("board/new", { boardSlug: board.slug, boardDisplayName: board.name, formError: null });
 }
 
@@ -411,20 +420,24 @@ export async function postBoardCreate(req: Request, res: Response) {
  * 보드 쓰기 정책 + 작성자/관리자 여부에 따라 403을 반환할 수 있습니다.
  */
 export async function getBoardEditForm(req: Request, res: Response) {
+    // 1) 라우트 파라미터를 정규화하고 수정 대상을 조회합니다.
     const slug = getStringParamOrThrow(req, "slug");
     const displayId = getPositiveIntParamOrThrow(req, "displayId");
     const post = await requirePostBySlugDisplayId({ slug, displayId });
 
+    // 2) 보드 쓰기 정책에 따라 작성자/관리자만 수정 폼 접근을 허용합니다.
     const policy = getBoardWritePolicy(slug);
     const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
     if (!canEditPost(policy, viewerContext, post.userId)) {
         throw new HttpError(403, "Forbidden");
     }
 
+    // 3) 저장된 파일 경로를 뷰에서 사용할 URL/파일명 형태로 변환합니다.
     const imageUrl = buildPostMediaUrl(post.imageUrl, POST_IMAGE_PUBLIC_BASE_PATH);
     const fileUrl = buildPostMediaUrl(post.fileUrl, POST_ATTACHMENT_PUBLIC_BASE_PATH);
     const imageName = post.imageUrl ? path.basename(post.imageUrl) : null;
 
+    // 4) 기존 글/첨부 상태를 채운 편집 폼을 렌더링합니다.
     return res.render("board/edit", {
         boardSlug: post.boardSlug,
         boardDisplayName: post.boardName,
@@ -562,16 +575,17 @@ export async function postBoardEdit(req: Request, res: Response) {
  * - 삭제는 세션 기반 인증이 필요합니다.
  */
 export async function deleteBoardPost(req: Request, res: Response) {
+    // 1) 삭제 대상 식별자를 정규화합니다.
     const slug = getStringParamOrThrow(req, "slug");
     const displayId = getPositiveIntParamOrThrow(req, "displayId");
 
-    // 삭제는 세션 기반 인증이 전제입니다.
+    // 2) 삭제는 세션 기반 인증이 전제입니다.
     const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
     if (!viewerContext.isAuthenticated) {
         throw new HttpError(401, "Unauthorized");
     }
 
-    // 보드 삭제 정책(admin-only vs owner/admin)을 적용합니다.
+    // 3) 보드 삭제 정책(admin-only vs owner/admin)을 적용해 soft delete를 시도합니다.
     const policy = getBoardWritePolicy(slug);
     let deleted = false;
 
@@ -589,8 +603,8 @@ export async function deleteBoardPost(req: Request, res: Response) {
     }
 
     if (deleted) {
-        // HTML 폼은 보통 POST로 오므로 redirect + 플래시를 사용하고,
-        // API/JS 호출은 DELETE로 오므로 204로 응답합니다.
+        // 4) 성공 시 요청 방식에 맞는 응답 형태를 분기합니다.
+        //    HTML 폼(POST)은 redirect+flash, API/JS(DELETE)는 204를 반환합니다.
         if (req.method === "POST") {
             req.session.boardFlashMessage = "Post has been deleted.";
             return res.redirect(`/board/${encodeURIComponent(slug)}`);
@@ -598,7 +612,7 @@ export async function deleteBoardPost(req: Request, res: Response) {
         return res.status(204).send();
     }
 
-    // 삭제 실패의 원인이 "대상 없음"인지 "권한 없음"인지 구분해 응답합니다.
+    // 5) 실패 시 "대상 없음(404)"과 "권한 없음(403)"을 구분해 응답합니다.
     const exists = await doesPostExistBySlugDisplayId({ slug, displayId });
     if (!exists) {
         throw new HttpError(404, "Not Found");
@@ -616,12 +630,13 @@ export async function deleteBoardPost(req: Request, res: Response) {
  * - 이전/다음 게시글(neighbor) 링크 조회
  */
 export async function getBoardShow(req: Request, res: Response) {
+    // 1) 라우트 파라미터를 정규화하고 대상 보드 존재를 확인합니다.
     const slug = getStringParamOrThrow(req, "slug");
     const displayId = getPositiveIntParamOrThrow(req, "displayId");
 
     const board = await requireBoardBySlug(slug);
 
-    // 1) 보드 단위 readAccess 정책을 평가합니다.
+    // 2) 보드 단위 readAccess 정책을 평가합니다.
     const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
     const readAccessResult = getBoardReadAccessResult(board, viewerContext);
     if (readAccessResult === "unauthorized") {
@@ -631,25 +646,25 @@ export async function getBoardShow(req: Request, res: Response) {
         throw new HttpError(403, "Forbidden");
     }
 
-    // 2) 상세 조회는 게시글이 존재하는지 먼저 확인합니다.
+    // 3) 상세 조회는 게시글이 존재하는지 먼저 확인합니다.
     const { viewerUserId, isAdmin } = viewerContext;
     const post = await findBoardPostForShowBySlugDisplayId({ slug, displayId });
     if (!post) {
         throw new HttpError(404, "Not Found");
     }
 
-    // 3) owner_or_admin 보드의 경우 게시글 단위로 작성자/관리자만 접근 가능합니다.
+    // 4) owner_or_admin 보드의 경우 게시글 단위로 작성자/관리자만 접근 가능합니다.
     const canRead = canReadPostForBoard(board.readAccess, viewerContext, post.user_id);
     if (!canRead) {
         throw new HttpError(403, "Forbidden");
     }
 
-    // 4) 글쓰기 정책에 따라 "수정/삭제" UI 노출 여부를 계산합니다.
+    // 5) 글쓰기 정책에 따라 "수정/삭제" UI 노출 여부를 계산합니다.
     const writePolicy = getBoardWritePolicy(slug);
     const canEdit = canEditPost(writePolicy, viewerContext, post.user_id);
     const canDelete = canDeletePost(writePolicy, viewerContext, post.user_id);
 
-    // 5) 이전/다음 글 링크는 readAccess 정책에 따라 조회 범위를 제한합니다.
+    // 6) 이전/다음 글 링크는 readAccess 정책에 따라 조회 범위를 제한합니다.
     //    owner_or_admin 보드에서 관리자가 아닌 경우, 본인 글만 이웃 글로 탐색합니다.
     const neighborParams: { boardId: number; displayId: number; viewerUserId?: number } = {
         boardId: post.board_id,
