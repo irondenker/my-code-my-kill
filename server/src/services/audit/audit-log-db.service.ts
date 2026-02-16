@@ -1,20 +1,23 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
 import { sanitizeRecord } from "../../utils/record.util.js";
-import { isAdminAuditAction, type AdminAuditLog, type AdminAuditLogRow } from "../../types/audit-log.types.js";
-import type { NormalizedAdminAuditLogWriteInput } from "../../types/admin-audit-write.types.js";
+import { isAuditAction } from "../../types/audit-action.types.js";
+import type { AuditLog, AuditLogRow } from "../../types/audit-log-read.types.js";
+import type { NormalizedAuditLogWriteInput } from "../../types/audit-log-write.types.js";
+
+const AUDIT_LOGS_TABLE = "audit_logs";
 
 /**
  * 감사로그 DB 저장 전용 함수입니다.
  *
  * @param input 정규화된 입력
  */
-export async function createAdminAuditLog(
-    input: NormalizedAdminAuditLogWriteInput
+export async function createAuditLog(
+    input: NormalizedAuditLogWriteInput
 ): Promise<void> {
     await sequelize.query(
         `
-        INSERT INTO admin_audit_logs (
+        INSERT INTO ${AUDIT_LOGS_TABLE} (
             action,
             actor_user_id,
             actor_username,
@@ -54,14 +57,14 @@ export async function createAdminAuditLog(
 }
 
 /**
- * 관리자 감사 로그를 최신순으로 조회합니다.
+ * 감사 로그를 최신순으로 조회합니다.
  *
  * @param limit 조회 건수(기본 200, 최소 1, 최대 500)
  * @returns 뷰/컨트롤러에서 사용 가능한 정규화된 감사 로그 목록
  */
-export async function listAdminAuditLogs(limit = 200): Promise<AdminAuditLog[]> {
+export async function listAuditLogs(limit = 200): Promise<AuditLog[]> {
     const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 500);
-    const rows = await sequelize.query<AdminAuditLogRow>(
+    const rows = await sequelize.query<AuditLogRow>(
         `
         SELECT
             audit_log_id,
@@ -74,7 +77,7 @@ export async function listAdminAuditLogs(limit = 200): Promise<AdminAuditLog[]> 
             ip_address,
             user_agent,
             created_at
-        FROM admin_audit_logs
+        FROM ${AUDIT_LOGS_TABLE}
         ORDER BY created_at DESC, audit_log_id DESC
         LIMIT :limit
         `,
@@ -84,9 +87,9 @@ export async function listAdminAuditLogs(limit = 200): Promise<AdminAuditLog[]> 
         }
     );
 
-    const logs: AdminAuditLog[] = [];
+    const logs: AuditLog[] = [];
     for (const row of rows) {
-        if (!isAdminAuditAction(row.action)) {
+        if (!isAuditAction(row.action)) {
             console.warn(
                 `[AUDIT][WARN] Skipping audit_log_id=${String(row.audit_log_id)} with unsupported action="${row.action}".`
             );

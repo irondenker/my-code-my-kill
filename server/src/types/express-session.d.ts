@@ -1,9 +1,10 @@
 import "express-session";
+import type { UserRole } from "./user-role.types.js";
 
 declare module "express-session" {
     interface SessionData {
         userId?: number;
-        userRole?: "admin" | "user";
+        userRole?: UserRole;
         username?: string;
         profileImageUrl?: string | null;
         boardFlashMessage?: string;

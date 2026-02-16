@@ -10,7 +10,7 @@ export function mapBoardMeta(row: BoardMetaRow): BoardMeta {
         slug: row.slug,
         name: row.name,
         description: row.description ?? null,
-        readAccess: row.read_access as BoardMeta["readAccess"],
-        createAccess: row.create_access as BoardMeta["createAccess"],
+        readAccess: row.read_access,
+        createAccess: row.create_access,
     };
 }

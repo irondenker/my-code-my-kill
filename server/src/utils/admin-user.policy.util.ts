@@ -1,19 +1,14 @@
 import type {
-    AdminUserRole,
+    AdminPolicyResult,
     AdminUserStatus,
-    AdminUserTargetMeta,
-    PolicyAllow,
-    PolicyDeny,
-    PolicyNoChange,
 } from "../types/admin.types.js";
+import type { AdminUserMeta } from "../types/auth.types.js";
+import type { UserRole } from "../types/user-role.types.js";
 
 export type {
-    AdminUserRole,
+    AdminPolicyResult,
+    AdminUserMeta,
     AdminUserStatus,
-    AdminUserTargetMeta,
-    PolicyAllow,
-    PolicyDeny,
-    PolicyNoChange,
 };
 
 /**
@@ -26,9 +21,9 @@ export type {
  */
 export function validateAdminUserStatusPolicy(params: {
     actorUserId: number;
-    target: AdminUserTargetMeta;
+    target: AdminUserMeta;
     nextStatus: AdminUserStatus;
-}): PolicyAllow | PolicyDeny | PolicyNoChange {
+}): AdminPolicyResult {
     const nextIsActive = params.nextStatus === "active";
 
     if (params.target.isActive === nextIsActive) {
@@ -56,10 +51,10 @@ export function validateAdminUserStatusPolicy(params: {
  */
 export function validateAdminUserRolePolicy(params: {
     actorUserId: number;
-    target: AdminUserTargetMeta;
-    requestedRole: AdminUserRole;
+    target: AdminUserMeta;
+    requestedRole: UserRole;
     adminCount?: number;
-}): PolicyAllow | PolicyDeny | PolicyNoChange {
+}): AdminPolicyResult {
     if (params.target.userRole === params.requestedRole) {
         return { ok: true, noChange: true };
     }

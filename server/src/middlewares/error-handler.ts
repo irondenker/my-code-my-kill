@@ -2,9 +2,8 @@ import type { Request, Response, NextFunction } from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
-import { writeAdminAuditLog } from "../services/audit.service.js";
+import { logAuthzDeniedSafely } from "../services/audit.service.js";
 import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
-import { summarizeErrorMessage } from "../utils/error-summary.util.js";
 
 const staticErrorStatuses = new Set([403, 404, 500, 503, 504]);
 const sharedErrorPage = path.join(process.cwd(), "views", "errors", "common", "index.html");
@@ -25,23 +24,14 @@ function writeAuthzDeniedAuditLogSafely(req: Request, err: unknown) {
                 ? String((err as { message?: unknown }).message)
                 : "forbidden";
 
-    void writeAdminAuditLog({
-        action: "AUTHZ_DENIED",
+    logAuthzDeniedSafely({
         actorUserId: typeof req.session.userId === "number" ? req.session.userId : null,
         actorUsername: typeof req.session.username === "string" ? req.session.username : null,
-        targetUserId: null,
-        targetUsername: null,
-        details: {
-            method: req.method,
-            path: req.originalUrl,
-            reason,
-        },
+        reason,
+        method: req.method,
+        path: req.originalUrl,
         ipAddress: getRequestIp(req),
         userAgent: getRequestUserAgent(req),
-    }).catch((logErr) => {
-        console.error(
-            `[AUDIT_LOG_ERROR] action=AUTHZ_DENIED path=${req.originalUrl} reason="${summarizeErrorMessage(logErr)}"`
-        );
     });
 }
 

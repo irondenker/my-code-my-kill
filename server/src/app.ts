@@ -4,6 +4,7 @@ import boardRouter from "./routes/board.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
 import adminRouter from "./routes/admin.routes.js";
+import auditRouter from "./routes/audit.routes.js";
 import rootRouter from "./routes/root.routes.js";
 import apiDocsRouter from "./routes/api-docs.routes.js";
 import occurRouter from "./routes/occur.routes.js";
@@ -82,6 +83,7 @@ export function createApp() {
     app.use(authRouter);
     app.use(userRouter);
     app.use(adminRouter);
+    app.use(auditRouter);
     app.use(boardRouter);
     app.use(apiDocsRouter);
     app.use(occurRouter);

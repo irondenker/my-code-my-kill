@@ -1,6 +1,7 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
 import type { AdminUserMeta, AdminUserSummary } from "../../types/auth.types.js";
+import type { UserRole } from "../../types/user-role.types.js";
 
 /**
  * 어드민 유저 관리(목록/메타/상태/역할)에 필요한 DB 쿼리 모음입니다.
@@ -136,7 +137,7 @@ export async function countAdminUsers(): Promise<number> {
  *
  * @param params 변경 파라미터
  */
-export async function updateUserRole(params: { userId: number; userRole: "admin" | "user" }): Promise<boolean> {
+export async function updateUserRole(params: { userId: number; userRole: UserRole }): Promise<boolean> {
     // 대상 유저의 role을 갱신하고, 갱신 여부를 RETURNING으로 확인합니다.
     const rows = await sequelize.query<{ user_id: number }>(
         `

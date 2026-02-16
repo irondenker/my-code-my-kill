@@ -1,18 +1,19 @@
 import {
-    emitAdminAuditWriteOutcomeToCli,
-    formatAdminAuditSafeWriteErrorLine,
+    emitAuditWriteResultToCli,
+    formatAuditSafeWriteErrorLine,
 } from "./audit-log-cli.service.js";
-import { createAdminAuditLog } from "./audit-log-db.service.js";
-import { ADMIN_AUDIT_ACTIONS } from "../../types/audit-log.types.js";
+import { createAuditLog } from "./audit-log-db.service.js";
+import { AUDIT_ACTIONS } from "../../types/audit-action.types.js";
 import { sanitizeRecord } from "../../utils/record.util.js";
 import { truncateString } from "../../utils/string.util.js";
 import type {
-    AdminAuditLogWriteParams,
-    NormalizedAdminAuditLogWriteInput,
-} from "../../types/admin-audit-write.types.js";
+    AuditLogWriteParams,
+    NormalizedAuditLogWriteInput,
+} from "../../types/audit-log-write.types.js";
 
-export type { AdminAuditAction, AdminAuditLog } from "../../types/audit-log.types.js";
-export { listAdminAuditLogs } from "./audit-log-db.service.js";
+export type { AuditAction } from "../../types/audit-action.types.js";
+export type { AuditLog } from "../../types/audit-log-read.types.js";
+export { listAuditLogs } from "./audit-log-db.service.js";
 
 /**
  * 어드민 감사로그(Admin Audit) 서비스입니다.
@@ -29,9 +30,9 @@ export { listAdminAuditLogs } from "./audit-log-db.service.js";
 /**
  * 감사로그 저장 입력을 DB 저장/CLI 출력에 적합한 형태로 정규화합니다.
  */
-function normalizeAdminAuditLogWriteInput(
-    params: AdminAuditLogWriteParams
-): NormalizedAdminAuditLogWriteInput {
+function normalizeAuditLogWriteInput(
+    params: AuditLogWriteParams
+): NormalizedAuditLogWriteInput {
     const actorUserId = params.actorUserId ?? null;
     const targetUserId = params.targetUserId ?? null;
     const actorUsername = truncateString(params.actorUsername, 50, null);
@@ -61,24 +62,24 @@ function normalizeAdminAuditLogWriteInput(
  * 1) 액션 유효성 검증
  * 2) 문자열/세부정보 정규화
  * 3) DB INSERT
- * 4) 성공/실패 결과를 `[AUDIT]` JSON 로그로 출력
+ * 4) 성공/실패 결과를 `[AUDIT]` 요약 로그로 출력
  *
  * @param params 감사 로그 작성 파라미터
  * @throws 지원하지 않는 액션 또는 DB 저장 실패 시 예외를 던집니다.
  */
-export async function writeAdminAuditLog(params: AdminAuditLogWriteParams): Promise<void> {
+export async function writeAuditLog(params: AuditLogWriteParams): Promise<void> {
     const action = params.action;
-    if (!ADMIN_AUDIT_ACTIONS.includes(action)) {
-        throw new Error(`Unsupported admin audit action: ${action}`);
+    if (!AUDIT_ACTIONS.includes(action)) {
+        throw new Error(`Unsupported audit action: ${action}`);
     }
 
-    const input = normalizeAdminAuditLogWriteInput(params);
+    const input = normalizeAuditLogWriteInput(params);
 
     try {
-        await createAdminAuditLog(input);
-        emitAdminAuditWriteOutcomeToCli("success", input);
+        await createAuditLog(input);
+        emitAuditWriteResultToCli(input, "success");
     } catch (err) {
-        emitAdminAuditWriteOutcomeToCli("failure", input, err);
+        emitAuditWriteResultToCli(input, "failure", err);
         throw err;
     }
 }
@@ -89,12 +90,12 @@ export async function writeAdminAuditLog(params: AdminAuditLogWriteParams): Prom
  *
  * @param params 감사 로그 작성 파라미터
  */
-export async function writeAdminAuditLogSafely(
-    params: AdminAuditLogWriteParams
+export async function writeAuditLogSafely(
+    params: AuditLogWriteParams
 ): Promise<void> {
     try {
-        await writeAdminAuditLog(params);
+        await writeAuditLog(params);
     } catch (err) {
-        console.error(formatAdminAuditSafeWriteErrorLine({ action: params.action, error: err }));
+        console.error(formatAuditSafeWriteErrorLine({ action: params.action, error: err }));
     }
 }

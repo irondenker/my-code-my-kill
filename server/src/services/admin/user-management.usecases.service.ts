@@ -1,5 +1,9 @@
 import type { AdminUserMeta } from "../../types/auth.types.js";
-import { writeAdminAuditLogSafely } from "../audit.service.js";
+import type { UserRole } from "../../types/user-role.types.js";
+import {
+    logAccountStatusChangedSafely,
+    logAdminRoleChangedSafely,
+} from "../audit.service.js";
 import { updateUserActiveStatus, updateUserRole } from "./user-management.data.service.js";
 
 export type AdminAuditContext = {
@@ -23,16 +27,13 @@ export async function adminUpdateUserStatus(ctx: AdminAuditContext, params: {
         return false;
     }
 
-    await writeAdminAuditLogSafely({
-        action: params.nextIsActive ? "ACCOUNT_ACTIVATED" : "ACCOUNT_DEACTIVATED",
+    await logAccountStatusChangedSafely({
         actorUserId: ctx.actorUserId,
         actorUsername: ctx.actorUsername,
         targetUserId: params.target.userId,
         targetUsername: params.target.username,
-        details: {
-            previousStatus: params.target.isActive ? "active" : "inactive",
-            currentStatus: params.nextIsActive ? "active" : "inactive",
-        },
+        previousStatus: params.target.isActive ? "active" : "inactive",
+        currentStatus: params.nextIsActive ? "active" : "inactive",
         ipAddress: ctx.ipAddress,
         userAgent: ctx.userAgent,
     });
@@ -47,23 +48,20 @@ export async function adminUpdateUserStatus(ctx: AdminAuditContext, params: {
  */
 export async function adminUpdateUserRole(ctx: AdminAuditContext, params: {
     target: AdminUserMeta;
-    requestedRole: "admin" | "user";
+    requestedRole: UserRole;
 }): Promise<boolean> {
     const updated = await updateUserRole({ userId: params.target.userId, userRole: params.requestedRole });
     if (!updated) {
         return false;
     }
 
-    await writeAdminAuditLogSafely({
-        action: params.requestedRole === "admin" ? "ADMIN_GRANTED" : "ADMIN_REVOKED",
+    await logAdminRoleChangedSafely({
         actorUserId: ctx.actorUserId,
         actorUsername: ctx.actorUsername,
         targetUserId: params.target.userId,
         targetUsername: params.target.username,
-        details: {
-            previousRole: params.target.userRole,
-            currentRole: params.requestedRole,
-        },
+        previousRole: params.target.userRole,
+        currentRole: params.requestedRole,
         ipAddress: ctx.ipAddress,
         userAgent: ctx.userAgent,
     });

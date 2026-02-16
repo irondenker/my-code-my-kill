@@ -1,10 +1,14 @@
 import type { Request, Response } from "express";
 import {
-    findUserByUsername,
     createUserForRegister,
+    findUserByUsername,
 } from "../services/auth.service.js";
 import { findUserProfileById } from "../services/profile.service.js";
-import { writeAdminAuditLogSafely } from "../services/audit.service.js";
+import {
+    logLoginFailedSafely,
+    logLoginSuccessSafely,
+    logLogoutSuccessSafely,
+} from "../services/audit.service.js";
 import { hashPassword, isValidPassword, verifyPassword } from "../utils/password.util.js";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
 import { isValidUsername } from "../utils/username.util.js";
@@ -180,17 +184,12 @@ export async function postLogin(req: Request, res: Response) {
 
     // 2) 필수값 누락은 실패 감사로그를 남기고 400으로 종료합니다.
     if (!username || !password) {
-        await writeAdminAuditLogSafely({
-            action: "LOGIN_FAILED",
-            actorUserId: null,
+        await logLoginFailedSafely({
             actorUsername: username || null,
             targetUserId: null,
             targetUsername: username || null,
-            details: {
-                loginResult: "failure",
-                reason: "missing_credentials",
-                attemptedUsername: username || null,
-            },
+            attemptedUsername: username || null,
+            reason: "missing_credentials",
             ipAddress,
             userAgent,
         });
@@ -203,17 +202,12 @@ export async function postLogin(req: Request, res: Response) {
     // 3) 계정 조회 + 비밀번호 검증 실패는 동일 메시지로 응답해 계정 유무 노출을 줄입니다.
     const user = await findUserByUsername(username);
     if (!user || !verifyPassword(password, user.passwordHash)) {
-        await writeAdminAuditLogSafely({
-            action: "LOGIN_FAILED",
-            actorUserId: null,
+        await logLoginFailedSafely({
             actorUsername: username,
             targetUserId: user?.userId ?? null,
             targetUsername: user?.username ?? username,
-            details: {
-                loginResult: "failure",
-                reason: "invalid_credentials",
-                attemptedUsername: username,
-            },
+            attemptedUsername: username,
+            reason: "invalid_credentials",
             ipAddress,
             userAgent,
         });
@@ -225,17 +219,12 @@ export async function postLogin(req: Request, res: Response) {
 
     // 4) 비활성 계정은 인증 성공 여부와 관계없이 접근을 차단합니다.
     if (!user.isActive) {
-        await writeAdminAuditLogSafely({
-            action: "LOGIN_FAILED",
-            actorUserId: null,
+        await logLoginFailedSafely({
             actorUsername: username,
             targetUserId: user.userId,
             targetUsername: user.username,
-            details: {
-                loginResult: "failure",
-                reason: "inactive_account",
-                attemptedUsername: username,
-            },
+            attemptedUsername: username,
+            reason: "inactive_account",
             ipAddress,
             userAgent,
         });
@@ -255,16 +244,10 @@ export async function postLogin(req: Request, res: Response) {
     await saveSession(req);
 
     // 6) 성공 감사로그를 남긴 뒤 안전한 경로로 이동합니다.
-    await writeAdminAuditLogSafely({
-        action: "LOGIN",
-        actorUserId: user.userId,
-        actorUsername: user.username,
-        targetUserId: user.userId,
-        targetUsername: user.username,
-        details: {
-            loginResult: "success",
-            userRole: user.userRole,
-        },
+    await logLoginSuccessSafely({
+        userId: user.userId,
+        username: user.username,
+        userRole: user.userRole,
         ipAddress,
         userAgent,
     });
@@ -289,16 +272,10 @@ export async function postLogout(req: Request, res: Response) {
 
     // 2) 로그인 상태였던 경우에만 로그아웃 감사로그를 남깁니다.
     if (userId !== null) {
-        await writeAdminAuditLogSafely({
-            action: "LOGOUT",
-            actorUserId: userId,
-            actorUsername: username || null,
-            targetUserId: userId,
-            targetUsername: username || null,
-            details: {
-                logoutResult: "success",
-                userRole: role ?? null,
-            },
+        await logLogoutSuccessSafely({
+            userId,
+            username: username || null,
+            userRole: role ?? null,
             ipAddress,
             userAgent,
         });

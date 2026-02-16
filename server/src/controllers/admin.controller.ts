@@ -16,7 +16,6 @@ import {
     findUserMetaForAdminById,
     listUsersForAdmin,
 } from "../services/admin.service.js";
-import { listAdminAuditLogs } from "../services/audit.service.js";
 import { isBoardCreateAccess, isBoardReadAccess, isValidBoardSlug } from "../utils/board-validation.util.js";
 import {
     validateAdminUserRolePolicy,
@@ -27,6 +26,7 @@ import { getPositiveIntParamOrThrow } from "../utils/route-param.util.js";
 import { normalizeString } from "../utils/string.util.js";
 import type { AdminAuditContext } from "../services/admin.service.js";
 import type { BoardFormValue } from "../types/admin.types.js";
+import type { UserRole } from "../types/user-role.types.js";
 
 /**
  * 어드민 컨트롤러입니다.
@@ -232,11 +232,7 @@ export async function postAdminUserStatus(req: Request, res: Response) {
     const isActive = status === "active";
     const statusPolicy = validateAdminUserStatusPolicy({
         actorUserId: Number(req.session.userId),
-        target: {
-            userId: target.userId,
-            userRole: target.userRole,
-            isActive: target.isActive,
-        },
+        target,
         nextStatus: status,
     });
     if (!statusPolicy.ok) {
@@ -288,15 +284,11 @@ export async function postAdminUserRole(req: Request, res: Response) {
     }
 
     // 3) admin -> user 강등 시에만 "최소 1명 admin" 검증용 카운트를 조회합니다.
-    const requestedRole = role as "admin" | "user";
+    const requestedRole = role as UserRole;
     const adminCount = target.userRole === "admin" && requestedRole === "user" ? await countAdminUsers() : null;
     const rolePolicy = validateAdminUserRolePolicy({
         actorUserId: Number(req.session.userId),
-        target: {
-            userId: target.userId,
-            userRole: target.userRole,
-            isActive: target.isActive,
-        },
+        target,
         requestedRole,
         ...(adminCount === null ? {} : { adminCount }),
     });
@@ -324,20 +316,6 @@ export async function postAdminUserRole(req: Request, res: Response) {
 
     req.session.adminUsersFlashMessage = "User role has been updated.";
     return res.redirect("/admin/users");
-}
-
-/**
- * 어드민 감사로그 조회 페이지를 렌더링합니다.
- * limit 쿼리 파라미터를 안전하게 정규화하여 적용합니다.
- */
-export async function getAdminAuditLogsPage(req: Request, res: Response) {
-    const queryLimit = Number(req.query?.limit);
-    const limit = Number.isFinite(queryLimit) && queryLimit > 0 ? queryLimit : 200;
-    const logs = await listAdminAuditLogs(limit);
-    return res.render("admin/audit-logs/index", {
-        logs,
-        selectedLimit: Math.min(Math.max(Math.trunc(limit), 1), 500),
-    });
 }
 
 /**

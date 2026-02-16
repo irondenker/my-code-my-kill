@@ -1,9 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
 import { HttpError } from "../utils/http-error.js";
-import { writeAdminAuditLog } from "../services/audit.service.js";
+import { logAdminPageAccessAttemptSafely } from "../services/audit.service.js";
 import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
-import { summarizeErrorMessage } from "../utils/error-summary.util.js";
 
 /**
  * 관리자 페이지 접근 시도 이벤트를 감사 로그에 안전하게 기록합니다.
@@ -16,24 +15,15 @@ function writeAdminAccessAttemptLogSafely(
     req: Request,
     params: { result: "allowed" | "redirect_login" | "forbidden"; reason: string }
 ) {
-    void writeAdminAuditLog({
-        action: "ADMIN_PAGE_ACCESS_ATTEMPT",
+    logAdminPageAccessAttemptSafely({
         actorUserId: typeof req.session.userId === "number" ? req.session.userId : null,
         actorUsername: typeof req.session.username === "string" ? req.session.username : null,
-        targetUserId: null,
-        targetUsername: null,
-        details: {
-            result: params.result,
-            reason: params.reason,
-            method: req.method,
-            path: req.originalUrl,
-        },
+        result: params.result,
+        reason: params.reason,
+        method: req.method,
+        path: req.originalUrl,
         ipAddress: getRequestIp(req),
         userAgent: getRequestUserAgent(req),
-    }).catch((err) => {
-        console.error(
-            `[AUDIT_LOG_ERROR] action=ADMIN_PAGE_ACCESS_ATTEMPT path=${req.originalUrl} reason="${summarizeErrorMessage(err)}"`
-        );
     });
 }
 

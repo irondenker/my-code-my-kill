@@ -27,6 +27,7 @@
     "dev": "nodemon",
     "dev:tsx": "tsx watch src/server.ts",
     "build": "tsc",
+    "test": "tsx --test src/**/*.test.ts",
     "start": "node dist/server.js",
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",

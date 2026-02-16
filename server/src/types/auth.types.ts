@@ -1,3 +1,5 @@
+import type { UserRole } from "./user-role.types.js";
+
 /**
  * 로그인 실패 사유 코드입니다.
  * 감사로그(details.reason)로 저장되어 분석/필터링에 사용됩니다.
@@ -10,7 +12,7 @@ export type LoginFailedReason = "missing_credentials" | "invalid_credentials" | 
  */
 export type AuthUser = {
     userId: number;
-    userRole: "admin" | "user";
+    userRole: UserRole;
     username: string;
     passwordHash: string;
     isActive: boolean;
@@ -40,15 +42,7 @@ export type UserProfile = {
 /**
  * 공개 프로필(공개 가능한 필드만)입니다.
  */
-export type PublicUserProfile = {
-    username: string;
-    email: string | null;
-    phoneNumber: string | null;
-    displayName: string | null;
-    profileImageUrl: string | null;
-    bio: string | null;
-    createdAt: Date;
-};
+export type PublicUserProfile = Omit<UserProfile, "userId">;
 
 /**
  * 어드민 유저 목록 화면에 사용하는 요약 정보입니다.
@@ -56,7 +50,7 @@ export type PublicUserProfile = {
 export type AdminUserSummary = {
     userId: number;
     username: string;
-    userRole: "admin" | "user";
+    userRole: UserRole;
     isActive: boolean;
     createdAt: Date;
 };
@@ -64,9 +58,4 @@ export type AdminUserSummary = {
 /**
  * 어드민 유저 정책 판단/변경에 필요한 최소 메타 정보입니다.
  */
-export type AdminUserMeta = {
-    userId: number;
-    username: string;
-    userRole: "admin" | "user";
-    isActive: boolean;
-};
+export type AdminUserMeta = Omit<AdminUserSummary, "createdAt">;

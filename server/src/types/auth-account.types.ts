@@ -6,10 +6,4 @@ export type UserRow = {
     is_active: boolean;
 };
 
-export type UserPublicRow = {
-    user_id: number;
-    user_role: string;
-    username: string;
-    is_active: boolean;
-};
-
+export type UserPublicRow = Omit<UserRow, "password_hash">;

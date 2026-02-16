@@ -1,7 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { writeAdminAuditLog } from "../services/audit.service.js";
+import { logCsrfInvalidSafely } from "../services/audit.service.js";
 import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
-import { summarizeErrorMessage } from "../utils/error-summary.util.js";
 import { HttpError } from "../utils/http-error.js";
 
 /**
@@ -15,23 +14,13 @@ export function csrfErrorMiddleware(err: any, req: Request, res: Response, next:
         return next(err);
     }
 
-    void writeAdminAuditLog({
-        action: "CSRF_INVALID",
+    logCsrfInvalidSafely({
         actorUserId: typeof req.session.userId === "number" ? req.session.userId : null,
         actorUsername: typeof req.session.username === "string" ? req.session.username : null,
-        targetUserId: null,
-        targetUsername: null,
-        details: {
-            method: req.method,
-            path: req.originalUrl,
-            reason: "invalid_csrf_token",
-        },
+        method: req.method,
+        path: req.originalUrl,
         ipAddress: getRequestIp(req),
         userAgent: getRequestUserAgent(req),
-    }).catch((logErr) => {
-        console.error(
-            `[AUDIT_LOG_ERROR] action=CSRF_INVALID path=${req.originalUrl} reason="${summarizeErrorMessage(logErr)}"`
-        );
     });
 
     // error-handler.ts에서 중복 감사 로그를 남기지 않도록 플래그 처리
