@@ -12,7 +12,7 @@ import type {
 } from "../../types/audit-log-write.types.js";
 
 export type { AuditAction } from "../../types/audit-action.types.js";
-export type { AuditLog } from "../../types/audit-log-read.types.js";
+export type { AuditLog } from "../../types/audit-log.types.js";
 export { listAuditLogs } from "./audit-log-db.service.js";
 
 /**

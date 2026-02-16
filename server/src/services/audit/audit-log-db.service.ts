@@ -2,7 +2,8 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
 import { sanitizeRecord } from "../../utils/record.util.js";
 import { isAuditAction } from "../../types/audit-action.types.js";
-import type { AuditLog, AuditLogRow } from "../../types/audit-log-read.types.js";
+import type { AuditLogRow } from "../../types/audit-log-data.types.js";
+import type { AuditLog } from "../../types/audit-log.types.js";
 import type { NormalizedAuditLogWriteInput } from "../../types/audit-log-write.types.js";
 
 const AUDIT_LOGS_TABLE = "audit_logs";
