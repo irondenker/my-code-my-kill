@@ -12,17 +12,23 @@ import type { PublicUserProfile, UserProfile } from "../../types/auth.types.js";
  */
 
 export async function findUserProfileById(userId: number): Promise<UserProfile | null> {
+    if (isSqlInjectionTargetEnabled("profileLookupByUsername")) {
+        return labImplementation.findUserProfileById(userId);
+    }
     return normalImplementation.findUserProfileById(userId);
 }
 
-export async function findUserProfileByUsername(username: string): Promise<UserProfile | null> {
+export async function findPrivateProfileByUsername(username: string): Promise<UserProfile | null> {
     if (isSqlInjectionTargetEnabled("profileLookupByUsername")) {
-        return labImplementation.findUserProfileByUsername(username);
+        return labImplementation.findPrivateProfileByUsername(username);
     }
-    return normalImplementation.findUserProfileByUsername(username);
+    return normalImplementation.findPrivateProfileByUsername(username);
 }
 
 export async function findPublicProfileByUsername(username: string): Promise<PublicUserProfile | null> {
+    if (isSqlInjectionTargetEnabled("profileLookupByUsername")) {
+        return labImplementation.findPublicProfileByUsername(username);
+    }
     return normalImplementation.findPublicProfileByUsername(username);
 }
 
@@ -43,5 +49,8 @@ export async function updateUserProfileImage(params: {
     userId: number;
     profileImageUrl: string | null;
 }): Promise<boolean> {
+    if (isSqlInjectionTargetEnabled("profileUpdate")) {
+        return labImplementation.updateUserProfileImage(params);
+    }
     return normalImplementation.updateUserProfileImage(params);
 }

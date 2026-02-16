@@ -1,8 +1,8 @@
 ﻿import type { Request, Response } from "express";
-import { findUserProfileById, findUserProfileByUsername, updateUserProfile } from "../services/profile.service.js";
-import { isPublicProfileHandle, normalizeUsernameParam } from "../utils/username.util.js";
+import { findUserProfileById, findPrivateProfileByUsername, updateUserProfile } from "../services/profile.service.js";
+import { isPublicProfileHandle } from "../utils/username.util.js";
 import { HttpError } from "../utils/http-error.js";
-import { normalizeNullableString } from "../utils/string.util.js";
+import { normalizeNullableString, normalizeString } from "../utils/string.util.js";
 
 /**
  * 사용자 프로필(공개 페이지 + 설정 페이지) 컨트롤러입니다.
@@ -36,13 +36,13 @@ function isValidPhone(value: string): boolean {
  */
 export async function getUserProfile(req: Request, res: Response) {
     // 1) `/:username` 파라미터를 정규화하고, 공개 프로필 핸들 형식인지 확인합니다.
-    const username = normalizeUsernameParam(req.params.username);
+    const username = normalizeString(req.params.username);
     if (!isPublicProfileHandle(username)) {
         throw new HttpError(400, "Invalid username");
     }
 
     // 2) 공개 프로필은 username으로 조회합니다.
-    const profile = await findUserProfileByUsername(username);
+    const profile = await findPrivateProfileByUsername(username);
     if (!profile) {
         throw new HttpError(404, "Not Found");
     }

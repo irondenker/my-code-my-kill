@@ -8,7 +8,7 @@
 
 export {
     findUserProfileById,
-    findUserProfileByUsername,
+    findPrivateProfileByUsername,
     findPublicProfileByUsername,
     updateUserProfile,
     updateUserProfileImage,

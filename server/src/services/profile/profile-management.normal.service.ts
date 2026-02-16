@@ -2,7 +2,6 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
 import type { PublicUserProfile, UserProfile } from "../../types/auth.types.js";
 import type { PublicProfileRow, UserProfileRow } from "../../types/profile-data.types.js";
-import { mapPublicUserProfile, mapUserProfile } from "../../utils/profile-mapper.util.js";
 
 /**
  * 프로필 관리 정상 모드 서비스입니다.
@@ -35,13 +34,24 @@ export async function findUserProfileById(userId: number): Promise<UserProfile |
     );
 
     const row = rows[0];
-    return row ? mapUserProfile(row) : null;
+    return row
+        ? {
+              userId: Number(row.user_id),
+              username: row.username,
+              email: row.email ?? null,
+              phoneNumber: row.phone_number ?? null,
+              displayName: row.display_name ?? null,
+              profileImageUrl: row.profile_image_url ?? null,
+              bio: row.bio ?? null,
+              createdAt: row.created_at,
+          }
+        : null;
 }
 
 /**
  * username으로 사용자 프로필(사적 정보 포함)을 안전하게 조회합니다.
  */
-export async function findUserProfileByUsernameSafe(username: string): Promise<UserProfile | null> {
+export async function findPrivateProfileByUsername(username: string): Promise<UserProfile | null> {
     const rows = await sequelize.query<UserProfileRow>(
         `
         SELECT
@@ -61,14 +71,18 @@ export async function findUserProfileByUsernameSafe(username: string): Promise<U
     );
 
     const row = rows[0];
-    return row ? mapUserProfile(row) : null;
-}
-
-/**
- * username으로 사용자 프로필(사적 정보 포함)을 조회합니다.
- */
-export async function findUserProfileByUsername(username: string): Promise<UserProfile | null> {
-    return findUserProfileByUsernameSafe(username);
+    return row
+        ? {
+              userId: Number(row.user_id),
+              username: row.username,
+              email: row.email ?? null,
+              phoneNumber: row.phone_number ?? null,
+              displayName: row.display_name ?? null,
+              profileImageUrl: row.profile_image_url ?? null,
+              bio: row.bio ?? null,
+              createdAt: row.created_at,
+          }
+        : null;
 }
 
 /**
@@ -98,13 +112,21 @@ export async function findPublicProfileByUsername(username: string): Promise<Pub
         return null;
     }
 
-    return mapPublicUserProfile(row);
+    return {
+        username: row.username,
+        email: row.email ?? null,
+        phoneNumber: row.phone_number ?? null,
+        displayName: row.display_name ?? null,
+        profileImageUrl: row.profile_image_url ?? null,
+        bio: row.bio ?? null,
+        createdAt: row.created_at,
+    };
 }
 
 /**
- * 사용자 프로필을 안전하게 업데이트합니다.
+ * 사용자 프로필을 업데이트합니다.
  */
-export async function updateUserProfileSafe(params: {
+export async function updateUserProfile(params: {
     userId: number;
     displayName: string | null;
     email: string | null;
@@ -135,19 +157,6 @@ export async function updateUserProfileSafe(params: {
     );
 
     return rows.length > 0;
-}
-
-/**
- * 사용자 프로필을 업데이트합니다.
- */
-export async function updateUserProfile(params: {
-    userId: number;
-    displayName: string | null;
-    email: string | null;
-    phoneNumber: string | null;
-    bio: string | null;
-}): Promise<boolean> {
-    return updateUserProfileSafe(params);
 }
 
 /**
