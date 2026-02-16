@@ -1,8 +1,8 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import type { BoardPostForShow, NeighborPost } from "../../types/board.types.js";
-import type { BoardPostShowRow, NeighborPostRow } from "../../types/board-data.types.js";
-import { mapBoardPostForShow, mapNeighborPost } from "../../utils/board-mapper.util.js";
+import type { ArticleForShow, NeighborPost } from "../../types/board.types.js";
+import type { ArticleShowRow, NeighborPostRow } from "../../types/board-data.types.js";
+import { mapBoardArticleForShow, mapNeighborArticle } from "../../utils/article-mapper.util.js";
 
 /**
  * 게시글 상세/이웃 조회 정상 모드 서비스입니다.
@@ -12,13 +12,13 @@ import { mapBoardPostForShow, mapNeighborPost } from "../../utils/board-mapper.u
  * - 모든 DB 접근은 안전한 바인딩 쿼리를 사용합니다.
  */
 
-export async function findBoardPostForShowBySlugDisplayId(params: {
+export async function findBoardArticleForShowBySlugDisplayId(params: {
     slug: string;
     displayId: number;
-}): Promise<BoardPostForShow | null> {
+}): Promise<ArticleForShow | null> {
     const { slug, displayId } = params;
 
-    const rows = await sequelize.query<BoardPostShowRow>(
+    const rows = await sequelize.query<ArticleShowRow>(
         `
         SELECT
             b.board_id,
@@ -45,10 +45,10 @@ export async function findBoardPostForShowBySlugDisplayId(params: {
     );
 
     const row = rows[0];
-    return row ? mapBoardPostForShow(row) : null;
+    return row ? mapBoardArticleForShow(row) : null;
 }
 
-export async function findNeighborPosts(params: {
+export async function findNeighborArticles(params: {
     boardId: number;
     displayId: number;
     viewerUserId?: number;
@@ -88,8 +88,8 @@ export async function findNeighborPosts(params: {
         ),
     ]);
 
-    const prevPost: NeighborPost = mapNeighborPost(prevRows[0]);
-    const nextPost: NeighborPost = mapNeighborPost(nextRows[0]);
+    const prevPost: NeighborPost = mapNeighborArticle(prevRows[0]);
+    const nextPost: NeighborPost = mapNeighborArticle(nextRows[0]);
 
     return { prevPost, nextPost };
 }

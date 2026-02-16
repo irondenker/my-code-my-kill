@@ -7,7 +7,7 @@ export type BoardMetaRow = {
     create_access: string;
 };
 
-export type BoardPostOutlineRow = {
+export type ArticleOutlineRow = {
     board_slug: string;
     display_id: number;
     user_id: number;
@@ -16,7 +16,7 @@ export type BoardPostOutlineRow = {
     created_at: Date;
 };
 
-export type BoardPostRecordRow = {
+export type ArticleRecordRow = {
     post_id: number;
     board_id: number;
     board_slug: string;
@@ -29,7 +29,7 @@ export type BoardPostRecordRow = {
     file_url: string | null;
 };
 
-export type BoardPostShowRow = {
+export type ArticleShowRow = {
     board_id: number;
     board_name: string;
     board_slug: string;

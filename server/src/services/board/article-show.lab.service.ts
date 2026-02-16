@@ -1,28 +1,28 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import type { BoardPostForShow, NeighborPost } from "../../types/board.types.js";
-import type { BoardPostShowRow, NeighborPostRow } from "../../types/board-data.types.js";
-import { mapBoardPostForShow, mapNeighborPost } from "../../utils/board-mapper.util.js";
+import type { ArticleForShow, NeighborPost } from "../../types/board.types.js";
+import type { ArticleShowRow, NeighborPostRow } from "../../types/board-data.types.js";
+import { mapBoardArticleForShow, mapNeighborArticle } from "../../utils/article-mapper.util.js";
 
 /**
  * 게시글 상세/이웃 조회 lab 모드 서비스입니다.
  *
  * 책임:
  * - facade가 lab 경로로 라우팅한 기능을 취약 쿼리로 실행합니다.
- * - 타깃 활성 여부 판정은 facade(`post-show.service.ts`)에서 담당합니다.
+ * - 타깃 활성 여부 판정은 facade(`article-show.service.ts`)에서 담당합니다.
  */
 
 /**
  * 게시글 상세 화면에서 필요한 데이터를 조회합니다.
  * (facade에서 타깃 활성화 시에만 이 lab 구현이 호출됩니다.)
  */
-export async function findBoardPostForShowBySlugDisplayId(params: {
+export async function findBoardArticleForShowBySlugDisplayId(params: {
     slug: string;
     displayId: number;
-}): Promise<BoardPostForShow | null> {
+}): Promise<ArticleForShow | null> {
     const { slug, displayId } = params;
 
-    const rows = await sequelize.query<BoardPostShowRow>(
+    const rows = await sequelize.query<ArticleShowRow>(
         `
         SELECT
             b.board_id,
@@ -49,13 +49,13 @@ export async function findBoardPostForShowBySlugDisplayId(params: {
     );
 
     const row = rows[0];
-    return row ? mapBoardPostForShow(row) : null;
+    return row ? mapBoardArticleForShow(row) : null;
 }
 
 /**
  * 게시글 상세 화면에서 이전/다음 게시글 링크를 조회합니다.
  */
-export async function findNeighborPosts(params: {
+export async function findNeighborArticles(params: {
     boardId: number;
     displayId: number;
     viewerUserId?: number;
@@ -91,8 +91,8 @@ export async function findNeighborPosts(params: {
         ),
     ]);
 
-    const prevPost: NeighborPost = mapNeighborPost(prevRows[0]);
-    const nextPost: NeighborPost = mapNeighborPost(nextRows[0]);
+    const prevPost: NeighborPost = mapNeighborArticle(prevRows[0]);
+    const nextPost: NeighborPost = mapNeighborArticle(nextRows[0]);
 
     return { prevPost, nextPost };
 }

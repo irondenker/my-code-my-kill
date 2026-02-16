@@ -1,8 +1,8 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import type { BoardPostOutline, BoardPostRecord } from "../../types/board.types.js";
-import type { BoardPostOutlineRow, BoardPostRecordRow } from "../../types/board-data.types.js";
-import { mapBoardPostOutline, mapBoardPostRecord } from "../../utils/board-mapper.util.js";
+import type { ArticleOutline, ArticleRecord } from "../../types/board.types.js";
+import type { ArticleOutlineRow, ArticleRecordRow } from "../../types/board-data.types.js";
+import { mapBoardArticleOutline, mapBoardArticleRecord } from "../../utils/article-mapper.util.js";
 
 /**
  * 게시글 조회/존재확인 정상 모드 서비스입니다.
@@ -12,7 +12,7 @@ import { mapBoardPostOutline, mapBoardPostRecord } from "../../utils/board-mappe
  * - 모든 DB 접근은 안전한 바인딩 쿼리를 사용합니다.
  */
 
-export async function countBoardPosts(): Promise<number> {
+export async function countBoardArticles(): Promise<number> {
     const rows = await sequelize.query<{ total_count: string }>(
         `
         SELECT COUNT(*) AS total_count
@@ -25,7 +25,7 @@ export async function countBoardPosts(): Promise<number> {
     return Number(rows[0]?.total_count ?? 0);
 }
 
-export async function countBoardPostsBySlug(slug: string): Promise<number> {
+export async function countBoardArticlesBySlug(slug: string): Promise<number> {
     const rows = await sequelize.query<{ total_count: string }>(
         `
         SELECT COUNT(*) AS total_count
@@ -43,10 +43,10 @@ export async function countBoardPostsBySlug(slug: string): Promise<number> {
     return Number(rows[0]?.total_count ?? 0);
 }
 
-export async function listBoardPostOutlines(params: { offset: number; limit: number }): Promise<BoardPostOutline[]> {
+export async function listBoardArticleOutlines(params: { offset: number; limit: number }): Promise<ArticleOutline[]> {
     const { offset, limit } = params;
 
-    const rows = await sequelize.query<BoardPostOutlineRow>(
+    const rows = await sequelize.query<ArticleOutlineRow>(
         `
         SELECT
             b.slug AS board_slug,
@@ -66,17 +66,17 @@ export async function listBoardPostOutlines(params: { offset: number; limit: num
         { type: QueryTypes.SELECT, replacements: { limit, offset } }
     );
 
-    return rows.map(mapBoardPostOutline);
+    return rows.map(mapBoardArticleOutline);
 }
 
-export async function listBoardPostOutlinesBySlug(params: {
+export async function listBoardArticleOutlinesBySlug(params: {
     slug: string;
     offset: number;
     limit: number;
-}): Promise<BoardPostOutline[]> {
+}): Promise<ArticleOutline[]> {
     const { slug, offset, limit } = params;
 
-    const rows = await sequelize.query<BoardPostOutlineRow>(
+    const rows = await sequelize.query<ArticleOutlineRow>(
         `
         SELECT
             b.slug AS board_slug,
@@ -97,15 +97,15 @@ export async function listBoardPostOutlinesBySlug(params: {
         { type: QueryTypes.SELECT, replacements: { slug, limit, offset } }
     );
 
-    return rows.map(mapBoardPostOutline);
+    return rows.map(mapBoardArticleOutline);
 }
 
-export async function findPostBySlugDisplayId(params: {
+export async function findArticleBySlugDisplayId(params: {
     slug: string;
     displayId: number;
-}): Promise<BoardPostRecord | null> {
+}): Promise<ArticleRecord | null> {
     const { slug, displayId } = params;
-    const rows = await sequelize.query<BoardPostRecordRow>(
+    const rows = await sequelize.query<ArticleRecordRow>(
         `
         SELECT
             p.post_id,
@@ -129,10 +129,10 @@ export async function findPostBySlugDisplayId(params: {
     );
 
     const row = rows[0];
-    return row ? mapBoardPostRecord(row) : null;
+    return row ? mapBoardArticleRecord(row) : null;
 }
 
-export async function doesPostExistBySlugDisplayId(params: { slug: string; displayId: number }): Promise<boolean> {
+export async function doesArticleExistBySlugDisplayId(params: { slug: string; displayId: number }): Promise<boolean> {
     const { slug, displayId } = params;
     const rows = await sequelize.query<{ exists: boolean }>(
         `

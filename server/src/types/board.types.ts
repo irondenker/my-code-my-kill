@@ -31,7 +31,7 @@ export type BoardMeta = {
 /**
  * 게시글 기본 레코드(서비스 계층에서 사용하는 공통 형태)입니다.
  */
-export type BoardPostRecord = {
+export type ArticleRecord = {
     postId: number;
     boardId: number;
     boardSlug: string;
@@ -47,7 +47,7 @@ export type BoardPostRecord = {
 /**
  * 게시글 목록(outline)에서 사용하는 요약 타입입니다.
  */
-export interface BoardPostOutline {
+export interface ArticleOutline {
     boardSlug: string;
     displayId: number;
     userId: number;
@@ -77,7 +77,7 @@ export type ViewerContext = {
  * 게시글 상세 화면에서 사용하는 데이터 형태입니다.
  * (템플릿 호환을 위해 snake_case 키를 유지합니다.)
  */
-export type BoardPostForShow = {
+export type ArticleForShow = {
     board_slug: string;
     display_id: number;
     title: string;

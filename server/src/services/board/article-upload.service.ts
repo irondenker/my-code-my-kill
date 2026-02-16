@@ -12,17 +12,17 @@ import {
     validateMagicNumberForImage,
 } from "../../utils/upload-validation.util.js";
 import {
-    POST_ATTACHMENT_EXTENSIONS,
-    POST_ATTACHMENT_MAX_BYTES,
-    POST_ATTACHMENT_ALLOWED_MIME_TYPES,
-    POST_ATTACHMENT_UPLOAD_DIR,
-    POST_IMAGE_ALLOWED_MIME_TYPES,
-    POST_IMAGE_MAX_BYTES,
-    POST_IMAGE_MAX_DIMENSION,
-    POST_IMAGE_MAX_OUTPUT_WIDTH,
-    POST_IMAGE_OUTPUT_QUALITY,
-    POST_IMAGE_UPLOAD_DIR,
-} from "../../constants/upload-post.constants.js";
+    ARTICLE_ATTACHMENT_EXTENSIONS,
+    ARTICLE_ATTACHMENT_MAX_BYTES,
+    ARTICLE_ATTACHMENT_ALLOWED_MIME_TYPES,
+    ARTICLE_ATTACHMENT_UPLOAD_DIR,
+    ARTICLE_IMAGE_ALLOWED_MIME_TYPES,
+    ARTICLE_IMAGE_MAX_BYTES,
+    ARTICLE_IMAGE_MAX_DIMENSION,
+    ARTICLE_IMAGE_MAX_OUTPUT_WIDTH,
+    ARTICLE_IMAGE_OUTPUT_QUALITY,
+    ARTICLE_IMAGE_UPLOAD_DIR,
+} from "../../constants/upload-article.constants.js";
 
 /**
  * 게시글 업로드(이미지/첨부파일) 저장을 담당하는 서비스입니다.
@@ -41,15 +41,15 @@ import {
  * 게시글 이미지/첨부 업로드 디렉토리를 보장합니다.
  * `recursive: true`로 idempotent하게 처리합니다.
  */
-async function ensurePostUploadDirs(): Promise<void> {
-    await Promise.all([ensureDir(POST_IMAGE_UPLOAD_DIR), ensureDir(POST_ATTACHMENT_UPLOAD_DIR)]);
+async function ensureArticleUploadDirs(): Promise<void> {
+    await Promise.all([ensureDir(ARTICLE_IMAGE_UPLOAD_DIR), ensureDir(ARTICLE_ATTACHMENT_UPLOAD_DIR)]);
 }
 
 /**
  * 업로드 파일명을 생성합니다.
  * timestamp + random suffix로 충돌 가능성을 낮춥니다.
  *
- * @param prefix 파일 용도 prefix(예: post-image)
+ * @param prefix 파일 용도 prefix(예: article-image)
  * @param extension 파일 확장자(예: .webp, .pdf)
  */
 function createUploadName(prefix: string, extension: string): string {
@@ -63,19 +63,19 @@ function createUploadName(prefix: string, extension: string): string {
  *
  * @throws 검증 실패 시 Error(message)
  */
-export async function storePostImage(file: Express.Multer.File): Promise<string> {
+export async function storeArticleImage(file: Express.Multer.File): Promise<string> {
     if (isMagicNumberCheckEnabled()) {
         validateMagicNumberForImage(file.buffer);
     }
-    if (!POST_IMAGE_ALLOWED_MIME_TYPES.has(file.mimetype)) {
+    if (!ARTICLE_IMAGE_ALLOWED_MIME_TYPES.has(file.mimetype)) {
         throw new Error("Unsupported image type.");
     }
-    if (file.size > POST_IMAGE_MAX_BYTES) {
+    if (file.size > ARTICLE_IMAGE_MAX_BYTES) {
         throw new Error("Image file is too large.");
     }
 
     const image = sharp(file.buffer, {
-        limitInputPixels: POST_IMAGE_MAX_DIMENSION * POST_IMAGE_MAX_DIMENSION,
+        limitInputPixels: ARTICLE_IMAGE_MAX_DIMENSION * ARTICLE_IMAGE_MAX_DIMENSION,
     });
     const metadata = await image.metadata();
     const width = metadata.width ?? 0;
@@ -84,17 +84,17 @@ export async function storePostImage(file: Express.Multer.File): Promise<string>
     if (!width || !height) {
         throw new Error("Invalid image data.");
     }
-    if (width > POST_IMAGE_MAX_DIMENSION || height > POST_IMAGE_MAX_DIMENSION) {
+    if (width > ARTICLE_IMAGE_MAX_DIMENSION || height > ARTICLE_IMAGE_MAX_DIMENSION) {
         throw new Error("Image dimensions exceed the limit.");
     }
 
-    await ensurePostUploadDirs();
-    const filename = createUploadName("post-image", ".webp");
-    const outputPath = path.join(POST_IMAGE_UPLOAD_DIR, filename);
+    await ensureArticleUploadDirs();
+    const filename = createUploadName("article-image", ".webp");
+    const outputPath = path.join(ARTICLE_IMAGE_UPLOAD_DIR, filename);
 
     await image
-        .resize(POST_IMAGE_MAX_OUTPUT_WIDTH, POST_IMAGE_MAX_OUTPUT_WIDTH, { fit: "inside", withoutEnlargement: true })
-        .webp({ quality: POST_IMAGE_OUTPUT_QUALITY })
+        .resize(ARTICLE_IMAGE_MAX_OUTPUT_WIDTH, ARTICLE_IMAGE_MAX_OUTPUT_WIDTH, { fit: "inside", withoutEnlargement: true })
+        .webp({ quality: ARTICLE_IMAGE_OUTPUT_QUALITY })
         .toFile(outputPath);
 
     return filename;
@@ -105,17 +105,17 @@ export async function storePostImage(file: Express.Multer.File): Promise<string>
  *
  * @throws 검증 실패 시 Error(message)
  */
-export async function storePostAttachment(file: Express.Multer.File): Promise<string> {
-    if (!POST_ATTACHMENT_ALLOWED_MIME_TYPES.has(file.mimetype)) {
+export async function storeArticleAttachment(file: Express.Multer.File): Promise<string> {
+    if (!ARTICLE_ATTACHMENT_ALLOWED_MIME_TYPES.has(file.mimetype)) {
         throw new Error("Unsupported attachment type.");
     }
-    if (file.size > POST_ATTACHMENT_MAX_BYTES) {
+    if (file.size > ARTICLE_ATTACHMENT_MAX_BYTES) {
         throw new Error("Attachment file is too large.");
     }
 
     const extension = path.extname(file.originalname).toLowerCase();
     if (isExtensionCheckEnabled()) {
-        validateAllowedExtension(file.originalname, POST_ATTACHMENT_EXTENSIONS);
+        validateAllowedExtension(file.originalname, ARTICLE_ATTACHMENT_EXTENSIONS);
     }
     if (isMagicNumberCheckEnabled()) {
         const expectation = resolveAttachmentExpectation({
@@ -129,9 +129,9 @@ export async function storePostAttachment(file: Express.Multer.File): Promise<st
         validateMagicNumberForAttachment(file.buffer, expectation);
     }
 
-    await ensurePostUploadDirs();
-    const filename = createUploadName("post-file", extension);
-    const outputPath = path.join(POST_ATTACHMENT_UPLOAD_DIR, filename);
+    await ensureArticleUploadDirs();
+    const filename = createUploadName("article-file", extension);
+    const outputPath = path.join(ARTICLE_ATTACHMENT_UPLOAD_DIR, filename);
     await fs.writeFile(outputPath, file.buffer);
 
     return filename;
@@ -142,11 +142,11 @@ export async function storePostAttachment(file: Express.Multer.File): Promise<st
  *
  * @param filename DB에 저장된 파일명
  */
-export async function deleteStoredPostImage(filename: string | null): Promise<void> {
+export async function deleteStoredArticleImage(filename: string | null): Promise<void> {
     if (!filename) {
         return;
     }
-    await safeUnlink(path.join(POST_IMAGE_UPLOAD_DIR, path.basename(filename)));
+    await safeUnlink(path.join(ARTICLE_IMAGE_UPLOAD_DIR, path.basename(filename)));
 }
 
 /**
@@ -154,9 +154,9 @@ export async function deleteStoredPostImage(filename: string | null): Promise<vo
  *
  * @param filename DB에 저장된 파일명
  */
-export async function deleteStoredPostAttachment(filename: string | null): Promise<void> {
+export async function deleteStoredArticleAttachment(filename: string | null): Promise<void> {
     if (!filename) {
         return;
     }
-    await safeUnlink(path.join(POST_ATTACHMENT_UPLOAD_DIR, path.basename(filename)));
+    await safeUnlink(path.join(ARTICLE_ATTACHMENT_UPLOAD_DIR, path.basename(filename)));
 }

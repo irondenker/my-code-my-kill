@@ -11,7 +11,7 @@ export type {
     BoardReadAccess,
     BoardCreateAccess,
     BoardMeta,
-    BoardPostRecord,
+    ArticleRecord,
 } from "../types/board.types.js";
 
 // Board management (boards)
@@ -21,34 +21,34 @@ export {
     findBoardById,
 } from "./board/board-management.service.js";
 
-// Post read (posts: count/list/find/exists)
+// Article read (articles: count/list/find/exists)
 export {
-    countBoardPosts,
-    countBoardPostsBySlug,
-    listBoardPostOutlines,
-    listBoardPostOutlinesBySlug,
-    findPostBySlugDisplayId,
-    doesPostExistBySlugDisplayId,
-} from "./board/post-read.service.js";
+    countBoardArticles,
+    countBoardArticlesBySlug,
+    listBoardArticleOutlines,
+    listBoardArticleOutlinesBySlug,
+    findArticleBySlugDisplayId,
+    doesArticleExistBySlugDisplayId,
+} from "./board/article-read.service.js";
 
-// Post write (posts: create/update/delete)
+// Article write (articles: create/update/delete)
 export {
-    createBoardPost,
-    updateBoardPost,
-    softDeletePostBySlugDisplayIdAsAdmin,
-    softDeletePostBySlugDisplayId,
-} from "./board/post-write.service.js";
+    createBoardArticle,
+    updateBoardArticle,
+    softDeleteArticleBySlugDisplayIdAsAdmin,
+    softDeleteArticleBySlugDisplayId,
+} from "./board/article-write.service.js";
 
-// Post show (view model data: post detail + neighbors)
+// Article show (view model data: article detail + neighbors)
 export {
-    findBoardPostForShowBySlugDisplayId,
-    findNeighborPosts,
-} from "./board/post-show.service.js";
+    findBoardArticleForShowBySlugDisplayId,
+    findNeighborArticles,
+} from "./board/article-show.service.js";
 
-// Post upload (filesystem)
+// Article upload (filesystem)
 export {
-    storePostImage,
-    storePostAttachment,
-    deleteStoredPostImage,
-    deleteStoredPostAttachment,
-} from "./board/post-upload.service.js";
+    storeArticleImage,
+    storeArticleAttachment,
+    deleteStoredArticleImage,
+    deleteStoredArticleAttachment,
+} from "./board/article-upload.service.js";

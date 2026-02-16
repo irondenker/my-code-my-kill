@@ -11,7 +11,7 @@
  *
  * @param title 게시글 제목
  */
-export function isValidPostTitle(title: string): boolean {
+export function isValidArticleTitle(title: string): boolean {
     return title.length >= 2 && title.length <= 255;
 }
 
@@ -20,6 +20,6 @@ export function isValidPostTitle(title: string): boolean {
  *
  * @param content 게시글 본문
  */
-export function isValidPostContent(content: string): boolean {
+export function isValidArticleContent(content: string): boolean {
     return content.length >= 2 && content.length <= 10_000;
 }

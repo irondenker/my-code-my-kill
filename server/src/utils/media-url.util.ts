@@ -12,7 +12,7 @@
  * @param value DB에 저장된 값(파일명 또는 경로)
  * @param basePath 파일명일 때 붙일 public base 경로
  */
-export function buildPostMediaUrl(value: string | null, basePath: string): string | null {
+export function buildMediaUrl(value: string | null, basePath: string): string | null {
     if (!value) {
         return null;
     }

@@ -6,6 +6,7 @@ import type { BoardCreateAccess, BoardReadAccess } from "../types/board.types.js
  * 원칙:
  * - I/O(req/res/session) 없이 동작하는 순수 함수만 둡니다.
  * - 권한 판정(policy)과 분리해 "보드 입력값 형태 검증"만 담당합니다.
+ * - 게시글(Article) 입력 검증은 `article-validation.util.ts`에서 담당합니다.
  */
 
 const BOARD_READ_ACCESS_VALUES: readonly BoardReadAccess[] = ["public", "auth", "admin", "owner_or_admin"];

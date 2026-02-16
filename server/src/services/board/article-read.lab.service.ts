@@ -1,21 +1,21 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import type { BoardPostOutline, BoardPostRecord } from "../../types/board.types.js";
-import type { BoardPostOutlineRow, BoardPostRecordRow } from "../../types/board-data.types.js";
-import { mapBoardPostOutline, mapBoardPostRecord } from "../../utils/board-mapper.util.js";
+import type { ArticleOutline, ArticleRecord } from "../../types/board.types.js";
+import type { ArticleOutlineRow, ArticleRecordRow } from "../../types/board-data.types.js";
+import { mapBoardArticleOutline, mapBoardArticleRecord } from "../../utils/article-mapper.util.js";
 
 /**
  * 게시글 조회/존재확인 lab 모드 서비스입니다.
  *
  * 책임:
  * - facade가 lab 경로로 라우팅한 기능을 취약 쿼리로 실행합니다.
- * - 타깃 활성 여부 판정은 facade(`post-read.service.ts`)에서 담당합니다.
+ * - 타깃 활성 여부 판정은 facade(`article-read.service.ts`)에서 담당합니다.
  */
 
 /**
  * 특정 보드(slug)의 활성 게시글 수를 반환합니다.
  */
-export async function countBoardPostsBySlug(slug: string): Promise<number> {
+export async function countBoardArticlesBySlug(slug: string): Promise<number> {
     const rows = await sequelize.query<{ total_count: string }>(
         `
         SELECT COUNT(*) AS total_count
@@ -33,10 +33,10 @@ export async function countBoardPostsBySlug(slug: string): Promise<number> {
 /**
  * 전체 게시글 목록(outline)을 페이지네이션 형태로 조회합니다.
  */
-export async function listBoardPostOutlines(params: { offset: number; limit: number }): Promise<BoardPostOutline[]> {
+export async function listBoardArticleOutlines(params: { offset: number; limit: number }): Promise<ArticleOutline[]> {
     const { offset, limit } = params;
 
-    const rows = await sequelize.query<BoardPostOutlineRow>(
+    const rows = await sequelize.query<ArticleOutlineRow>(
         `
         SELECT
             b.slug AS board_slug,
@@ -56,20 +56,20 @@ export async function listBoardPostOutlines(params: { offset: number; limit: num
         { type: QueryTypes.SELECT }
     );
 
-    return rows.map(mapBoardPostOutline);
+    return rows.map(mapBoardArticleOutline);
 }
 
 /**
  * 특정 보드(slug)의 게시글 목록(outline)을 페이지네이션 형태로 조회합니다.
  */
-export async function listBoardPostOutlinesBySlug(params: {
+export async function listBoardArticleOutlinesBySlug(params: {
     slug: string;
     offset: number;
     limit: number;
-}): Promise<BoardPostOutline[]> {
+}): Promise<ArticleOutline[]> {
     const { slug, offset, limit } = params;
 
-    const rows = await sequelize.query<BoardPostOutlineRow>(
+    const rows = await sequelize.query<ArticleOutlineRow>(
         `
         SELECT
             b.slug AS board_slug,
@@ -90,16 +90,16 @@ export async function listBoardPostOutlinesBySlug(params: {
         { type: QueryTypes.SELECT }
     );
 
-    return rows.map(mapBoardPostOutline);
+    return rows.map(mapBoardArticleOutline);
 }
 
 /**
  * 보드 slug + 게시글 displayId로 게시글을 조회합니다.
  * (facade에서 타깃 활성화 시에만 이 lab 구현이 호출됩니다.)
  */
-export async function findPostBySlugDisplayId(params: { slug: string; displayId: number }): Promise<BoardPostRecord | null> {
+export async function findArticleBySlugDisplayId(params: { slug: string; displayId: number }): Promise<ArticleRecord | null> {
     const { slug, displayId } = params;
-    const rows = await sequelize.query<BoardPostRecordRow>(
+    const rows = await sequelize.query<ArticleRecordRow>(
         `
         SELECT
             p.post_id,
@@ -123,14 +123,14 @@ export async function findPostBySlugDisplayId(params: { slug: string; displayId:
     );
 
     const row = rows[0];
-    return row ? mapBoardPostRecord(row) : null;
+    return row ? mapBoardArticleRecord(row) : null;
 }
 
 /**
  * 게시글이 존재하는지 여부를 반환합니다.
  * (삭제/권한 판정에서 404 vs 403을 구분할 때 사용)
  */
-export async function doesPostExistBySlugDisplayId(params: { slug: string; displayId: number }): Promise<boolean> {
+export async function doesArticleExistBySlugDisplayId(params: { slug: string; displayId: number }): Promise<boolean> {
     const { slug, displayId } = params;
     const rows = await sequelize.query<{ exists: boolean }>(
         `
