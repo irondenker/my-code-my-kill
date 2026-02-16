@@ -49,7 +49,7 @@ export type FormatKvLineOptions = {
  * @param value 문자열 값
  */
 function shouldQuoteString(value: string): boolean {
-    // key=value 로그에서 구분자를 깨기 쉬운 문자들을 auto-quote 대상으로 둡니다.
+    // key=value 로그에서 파싱을 깨기 쉬운 문자(공백/따옴표/등호 등)는 자동 인용 대상으로 둡니다.
     return /[\s"=]/.test(value);
 }
 

@@ -25,4 +25,3 @@ export function getRequestUserAgent(req: Request): string | null {
     const trimmed = value.trim();
     return trimmed || null;
 }
-

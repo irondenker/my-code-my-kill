@@ -34,7 +34,7 @@ function hasBytesAt(buf: ByteArray, offset: number, bytes: readonly number[]): b
  * @param buf 대상 버퍼
  */
 export function isJpegSignature(buf: ByteArray): boolean {
-    // FF D8 FF
+    // JPEG 파일 시작 시그니처
     return hasBytesAt(buf, 0, [0xff, 0xd8, 0xff]);
 }
 
@@ -44,7 +44,7 @@ export function isJpegSignature(buf: ByteArray): boolean {
  * @param buf 대상 버퍼
  */
 export function isPngSignature(buf: ByteArray): boolean {
-    // 89 50 4E 47 0D 0A 1A 0A
+    // PNG 파일 시작 시그니처
     return hasBytesAt(buf, 0, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 }
 
@@ -54,7 +54,7 @@ export function isPngSignature(buf: ByteArray): boolean {
  * @param buf 대상 버퍼
  */
 export function isWebpSignature(buf: ByteArray): boolean {
-    // "RIFF" .... "WEBP"
+    // RIFF 컨테이너 + WEBP 브랜드 시그니처
     return hasBytesAt(buf, 0, [0x52, 0x49, 0x46, 0x46]) && hasBytesAt(buf, 8, [0x57, 0x45, 0x42, 0x50]);
 }
 
@@ -64,7 +64,7 @@ export function isWebpSignature(buf: ByteArray): boolean {
  * @param buf 대상 버퍼
  */
 export function isPdfSignature(buf: ByteArray): boolean {
-    // "%PDF-"
+    // PDF 파일 시작 시그니처("%PDF-")
     return hasBytesAt(buf, 0, [0x25, 0x50, 0x44, 0x46, 0x2d]);
 }
 
@@ -75,7 +75,7 @@ export function isPdfSignature(buf: ByteArray): boolean {
  * @param buf 대상 버퍼
  */
 export function isZipSignature(buf: ByteArray): boolean {
-    // "PK" + (local file header / end of central directory / spanned archive)
+    // "PK" + (로컬 헤더 / 중앙 디렉터리 종료 / 분할 아카이브) 시그니처 허용
     if (!hasBytesAt(buf, 0, [0x50, 0x4b])) return false;
     if (buf.length < 4) return false;
     const b2 = buf[2];
@@ -96,7 +96,7 @@ export function isZipSignature(buf: ByteArray): boolean {
  */
 export function looksLikePdf(buffer: Buffer): boolean {
     if (!isPdfSignature(buffer)) return false;
-    // Light sanity check: for most PDFs, "%%EOF" appears near the end.
+    // 라이트 sanity check: 대부분의 PDF는 파일 끝 근처에 "%%EOF"가 존재합니다.
     const tailSize = Math.min(buffer.length, 2048);
     const tail = buffer.subarray(buffer.length - tailSize);
     return tail.includes("%%EOF");
@@ -136,7 +136,7 @@ function countSuspiciousControlChars(text: string): { suspicious: number; total:
     for (let i = 0; i < text.length; i += 1) {
         const code = text.charCodeAt(i);
         total += 1;
-        // Allow common whitespace controls only.
+        // 일반적인 공백 제어문자(tab/newline/carriage return)만 허용합니다.
         if (code === 0x09 || code === 0x0a || code === 0x0d) continue;
         if (code < 0x20 || code === 0x7f) suspicious += 1;
     }
@@ -156,7 +156,7 @@ export function assertLooksLikeUtf8Text(buffer: Buffer, options: TextLooksLikeOp
     const sampleBytes = options.sampleBytes ?? 64 * 1024;
     const maxControlCharRatio = options.maxControlCharRatio ?? 0.02;
 
-    // A lot of binary formats can still be valid UTF-8. Block obvious binary markers first.
+    // 일부 바이너리도 UTF-8 디코딩 자체는 될 수 있으므로, 명백한 바이너리 마커를 먼저 차단합니다.
     if (buffer.includes(0x00)) {
         throw new Error("Attachment is not a valid text file (contains NUL bytes).");
     }
