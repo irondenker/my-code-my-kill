@@ -161,7 +161,7 @@ docker compose -f docker-compose.prod.yml logs -f nginx
 
 ## 감사로그 콘솔 출력 설정 (`AUDIT_CLI_LOG_LEVEL`)
 
-감사로그는 기본적으로 DB(`admin_audit_logs`)에 저장되며, Node 콘솔 출력은 아래 환경변수로 제어합니다.
+감사로그는 기본적으로 DB(`audit_logs`)에 저장되며, Node 콘솔 출력은 아래 환경변수로 제어합니다.
 
 - `none` (기본): 감사로그 콘솔 출력 안 함
 - `errors`: 감사로그 저장 실패 등 오류만 1줄 요약 출력
