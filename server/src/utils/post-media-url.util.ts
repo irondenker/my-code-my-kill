@@ -6,26 +6,15 @@
  */
 
 /**
- * 게시글 이미지 URL을 public 경로로 정규화합니다.
+ * 미디어 값을 public 경로로 정규화합니다.
+ * 이미 절대 경로(`/...`)면 그대로 사용하고, 파일명이면 basePath를 붙입니다.
  *
  * @param value DB에 저장된 값(파일명 또는 경로)
+ * @param basePath 파일명일 때 붙일 public base 경로
  */
-export function buildPostImageUrl(value: string | null): string | null {
+export function buildPostMediaUrl(value: string | null, basePath: string): string | null {
     if (!value) {
         return null;
     }
-    return value.startsWith("/") ? value : `/uploads/posts/images/${value}`;
+    return value.startsWith("/") ? value : `${basePath}/${value}`;
 }
-
-/**
- * 게시글 첨부파일 URL을 public 경로로 정규화합니다.
- *
- * @param value DB에 저장된 값(파일명 또는 경로)
- */
-export function buildPostFileUrl(value: string | null): string | null {
-    if (!value) {
-        return null;
-    }
-    return value.startsWith("/") ? value : `/uploads/posts/files/${value}`;
-}
-

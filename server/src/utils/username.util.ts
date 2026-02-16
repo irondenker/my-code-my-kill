@@ -1,17 +1,13 @@
 /**
- * username 관련 정규화/검증 유틸입니다.
+ * username 관련 검증 유틸입니다.
  * (I/O 없이 동작하는 순수 함수만 둡니다.)
  */
 
-import { normalizeString } from "./string.util.js";
-
 /**
- * 라우트 param 등에서 username 값을 안전하게 문자열로 정규화합니다.
- *
- * @param value 후보 입력값
+ * username 문자열이 유효한 길이인지 판정합니다.
  */
-export function normalizeUsernameParam(value: unknown): string {
-    return normalizeString(value);
+export function isValidUsername(username: string): boolean {
+    return username.length >= 3 && username.length <= 50;
 }
 
 /**

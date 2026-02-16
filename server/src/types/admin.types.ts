@@ -1,3 +1,5 @@
+import type { BoardCreateAccess, BoardReadAccess } from "./board.types.js";
+
 /**
  * 어드민 관점의 사용자 역할 타입입니다.
  */
@@ -33,3 +35,14 @@ export type PolicyDeny = { ok: false; message: string };
  */
 export type PolicyNoChange = { ok: true; noChange: true };
 
+/**
+ * 어드민 보드 생성/수정 폼에서 사용하는 값 모델입니다.
+ * (뷰 렌더링 시 사용)
+ */
+export type BoardFormValue = {
+    slug: string;
+    name: string;
+    description: string;
+    readAccess: BoardReadAccess;
+    createAccess: BoardCreateAccess;
+};

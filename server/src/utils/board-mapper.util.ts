@@ -7,7 +7,8 @@ import type {
     BoardPostShowRow,
     NeighborPostRow,
 } from "../types/board-data.types.js";
-import { buildPostFileUrl, buildPostImageUrl } from "./post-media-url.util.js";
+import { POST_ATTACHMENT_PUBLIC_BASE_PATH, POST_IMAGE_PUBLIC_BASE_PATH } from "../constants/post-upload.constants.js";
+import { buildPostMediaUrl } from "./post-media-url.util.js";
 
 /**
  * DB 조회 결과(BoardMetaRow)를 애플리케이션 타입(BoardMeta)으로 매핑합니다.
@@ -65,8 +66,8 @@ export function mapBoardPostForShow(row: BoardPostShowRow): BoardPostForShow {
         title: row.title,
         username: row.username,
         content: row.content,
-        image_url: buildPostImageUrl(row.image_url),
-        file_url: buildPostFileUrl(row.file_url),
+        image_url: buildPostMediaUrl(row.image_url, POST_IMAGE_PUBLIC_BASE_PATH),
+        file_url: buildPostMediaUrl(row.file_url, POST_ATTACHMENT_PUBLIC_BASE_PATH),
         file_name: row.file_url ? path.basename(row.file_url) : null,
         created_at: new Date(row.created_at).toISOString(),
         updated_at: row.updated_at ? new Date(row.updated_at).toISOString() : null,

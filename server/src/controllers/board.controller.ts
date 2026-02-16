@@ -9,10 +9,10 @@ import {
     getBoardCreateAccessResult,
     getBoardReadAccessResult,
     getBoardWritePolicy,
-    isValidPostContent,
-    isValidPostTitle,
 } from "../utils/board.policy.util.js";
-import { buildPostFileUrl, buildPostImageUrl } from "../utils/post-media-url.util.js";
+import { isValidPostContent, isValidPostTitle } from "../utils/post-validation.util.js";
+import { buildPostMediaUrl } from "../utils/post-media-url.util.js";
+import { POST_ATTACHMENT_PUBLIC_BASE_PATH, POST_IMAGE_PUBLIC_BASE_PATH } from "../constants/post-upload.constants.js";
 import {
     createBoardPost,
     doesPostExistBySlugDisplayId,
@@ -421,8 +421,8 @@ export async function getBoardEditForm(req: Request, res: Response) {
         throw new HttpError(403, "Forbidden");
     }
 
-    const imageUrl = buildPostImageUrl(post.imageUrl);
-    const fileUrl = buildPostFileUrl(post.fileUrl);
+    const imageUrl = buildPostMediaUrl(post.imageUrl, POST_IMAGE_PUBLIC_BASE_PATH);
+    const fileUrl = buildPostMediaUrl(post.fileUrl, POST_ATTACHMENT_PUBLIC_BASE_PATH);
     const imageName = post.imageUrl ? path.basename(post.imageUrl) : null;
 
     return res.render("board/edit", {
@@ -464,8 +464,8 @@ export async function postBoardEdit(req: Request, res: Response) {
     const title = String(req.body?.title ?? "").trim();
     const content = String(req.body?.content ?? "").trim();
 
-    const currentImageUrl = buildPostImageUrl(post.imageUrl);
-    const currentFileUrl = buildPostFileUrl(post.fileUrl);
+    const currentImageUrl = buildPostMediaUrl(post.imageUrl, POST_IMAGE_PUBLIC_BASE_PATH);
+    const currentFileUrl = buildPostMediaUrl(post.fileUrl, POST_ATTACHMENT_PUBLIC_BASE_PATH);
     const currentImageName = post.imageUrl ? path.basename(post.imageUrl) : null;
     const currentFileName = post.fileUrl ? path.basename(post.fileUrl) : null;
 

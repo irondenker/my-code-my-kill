@@ -45,7 +45,7 @@ function escapeRegExp(input: string): string {
  *
  * @param options lab-options의 xss 설정
  */
-export function buildXssEscapeRules(options: XssSideOptions): EscapeRule[] {
+function buildXssEscapeRules(options: XssSideOptions): EscapeRule[] {
     const rules: EscapeRule[] = [];
     DEFAULT_ESCAPE_RULES.forEach((rule) => {
         if (!options.defaultRuleToggles[rule.key]) {

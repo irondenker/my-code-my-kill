@@ -1,7 +1,7 @@
 import type { BoardCreateAccess, BoardReadAccess, BoardMeta, BoardWritePolicy, ViewerContext } from "../types/board.types.js";
 
 /**
- * 보드/게시글 접근 정책 및 입력 검증 유틸입니다.
+ * 보드/게시글 접근 정책 유틸입니다.
  *
  * 원칙:
  * - 이 파일은 "순수 판정/계산"만 담당합니다(HTTP/DB/파일 I/O 없음).
@@ -93,7 +93,7 @@ export function getBoardCreateAccessResult(
         return context.isAdmin ? "ok" : "forbidden";
     }
 
-    // auth
+    // 인증 사용자(auth) 보드는 로그인 여부만 확인합니다.
     return context.isAuthenticated ? "ok" : "redirect_login";
 }
 
@@ -119,18 +119,4 @@ export function canEditPost(policy: BoardWritePolicy, context: ViewerContext, po
 export function canDeletePost(policy: BoardWritePolicy, context: ViewerContext, postUserId: number): boolean {
     const isOwner = context.viewerUserId === postUserId;
     return policy.delete === "admin" ? context.isAdmin : isOwner || context.isAdmin;
-}
-
-/**
- * 게시글 제목 길이를 검증합니다.
- */
-export function isValidPostTitle(title: string): boolean {
-    return title.length >= 2 && title.length <= 255;
-}
-
-/**
- * 게시글 본문 길이를 검증합니다.
- */
-export function isValidPostContent(content: string): boolean {
-    return content.length >= 2 && content.length <= 10_000;
 }

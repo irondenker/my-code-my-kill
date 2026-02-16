@@ -100,7 +100,7 @@ export async function listBoardPostOutlinesBySlug(params: {
     return rows.map(mapBoardPostOutline);
 }
 
-export async function findPostBySlugDisplayIdSafe(params: {
+export async function findPostBySlugDisplayId(params: {
     slug: string;
     displayId: number;
 }): Promise<BoardPostRecord | null> {
@@ -130,13 +130,6 @@ export async function findPostBySlugDisplayIdSafe(params: {
 
     const row = rows[0];
     return row ? mapBoardPostRecord(row) : null;
-}
-
-export async function findPostBySlugDisplayId(params: {
-    slug: string;
-    displayId: number;
-}): Promise<BoardPostRecord | null> {
-    return findPostBySlugDisplayIdSafe(params);
 }
 
 export async function doesPostExistBySlugDisplayId(params: { slug: string; displayId: number }): Promise<boolean> {

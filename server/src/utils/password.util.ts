@@ -5,6 +5,15 @@ const KEY_LENGTH = 64;
 const SCRYPT_OPTIONS = { N: 16384, r: 8, p: 1 };
 
 /**
+ * password 문자열이 유효한 길이인지 판정합니다.
+ *
+ * @param password password(평문)
+ */
+export function isValidPassword(password: string): boolean {
+    return password.length >= 8 && password.length <= 128;
+}
+
+/**
  * 패스워드를 scrypt 기반 해시 문자열로 변환합니다.
  *
  * 포맷: `scrypt$<salt-hex>$<derivedKey-hex>`

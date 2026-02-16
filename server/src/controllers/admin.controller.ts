@@ -17,12 +17,7 @@ import {
     listUsersForAdmin,
 } from "../services/admin.service.js";
 import { listAdminAuditLogs } from "../services/audit.service.js";
-import {
-    type BoardFormValue,
-    isBoardCreateAccess,
-    isBoardReadAccess,
-    isValidBoardSlug,
-} from "../utils/admin-input.util.js";
+import { isBoardCreateAccess, isBoardReadAccess, isValidBoardSlug } from "../utils/board-validation.util.js";
 import {
     validateAdminUserRolePolicy,
     validateAdminUserStatusPolicy,
@@ -30,6 +25,7 @@ import {
 import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
 import { normalizeLowerString, normalizeNullableString, normalizeString } from "../utils/string.util.js";
 import type { AdminAuditContext } from "../services/admin.service.js";
+import type { BoardFormValue } from "../types/admin.types.js";
 
 /**
  * 어드민 컨트롤러입니다.

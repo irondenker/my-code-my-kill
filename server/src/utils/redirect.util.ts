@@ -17,7 +17,7 @@
  *
  * @param value 후보 입력값
  */
-export function isSafeRedirectPath(value: unknown): value is string {
+function isSafeRedirectPath(value: unknown): value is string {
     if (typeof value !== "string") {
         return false;
     }

@@ -32,6 +32,8 @@ export const POST_IMAGE_MAX_DIMENSION = 5120;
 export const POST_IMAGE_QUALITY = 82;
 export const POST_IMAGE_MAX_WIDTH = 1280;
 
+export const POST_IMAGE_PUBLIC_BASE_PATH = "/uploads/posts/images";
+export const POST_ATTACHMENT_PUBLIC_BASE_PATH = "/uploads/posts/files";
+
 export const POST_IMAGE_UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "posts", "images");
 export const POST_ATTACHMENT_UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "posts", "files");
-
