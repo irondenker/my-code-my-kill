@@ -5,7 +5,7 @@ import {
     findUserByUsernameForRegisterLookup,
 } from "../services/auth.service.js";
 import { findUserProfileById } from "../services/profile.service.js";
-import { logLoginFailed, logLoginSuccess, logLogoutSuccess } from "../services/audit.service.js";
+import { writeAdminAuditLogSafely } from "../services/audit.service.js";
 import { hashPassword, verifyPassword } from "../utils/password.util.js";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
 import { isValidPassword, isValidUsername } from "../utils/auth.validation.js";
@@ -172,10 +172,17 @@ export async function postLogin(req: Request, res: Response) {
     const userAgent = getRequestUserAgent(req);
 
     if (!username || !password) {
-        await logLoginFailed({
-            attemptedUsername: username || null,
-            reason: "missing_credentials",
+        await writeAdminAuditLogSafely({
+            action: "LOGIN_FAILED",
+            actorUserId: null,
+            actorUsername: username || null,
+            targetUserId: null,
             targetUsername: username || null,
+            details: {
+                loginResult: "failure",
+                reason: "missing_credentials",
+                attemptedUsername: username || null,
+            },
             ipAddress,
             userAgent,
         });
@@ -189,11 +196,17 @@ export async function postLogin(req: Request, res: Response) {
         username,
     });
     if (!user || !verifyPassword(password, user.passwordHash)) {
-        await logLoginFailed({
-            attemptedUsername: username,
-            reason: "invalid_credentials",
+        await writeAdminAuditLogSafely({
+            action: "LOGIN_FAILED",
+            actorUserId: null,
+            actorUsername: username,
             targetUserId: user?.userId ?? null,
             targetUsername: user?.username ?? username,
+            details: {
+                loginResult: "failure",
+                reason: "invalid_credentials",
+                attemptedUsername: username,
+            },
             ipAddress,
             userAgent,
         });
@@ -203,11 +216,17 @@ export async function postLogin(req: Request, res: Response) {
         });
     }
     if (!user.isActive) {
-        await logLoginFailed({
-            attemptedUsername: username,
-            reason: "inactive_account",
+        await writeAdminAuditLogSafely({
+            action: "LOGIN_FAILED",
+            actorUserId: null,
+            actorUsername: username,
             targetUserId: user.userId,
             targetUsername: user.username,
+            details: {
+                loginResult: "failure",
+                reason: "inactive_account",
+                attemptedUsername: username,
+            },
             ipAddress,
             userAgent,
         });
@@ -225,10 +244,16 @@ export async function postLogin(req: Request, res: Response) {
     req.session.profileImageUrl = profile?.profileImageUrl ?? null;
     await saveSession(req);
 
-    await logLoginSuccess({
-        userId: user.userId,
-        username: user.username,
-        userRole: user.userRole,
+    await writeAdminAuditLogSafely({
+        action: "LOGIN",
+        actorUserId: user.userId,
+        actorUsername: user.username,
+        targetUserId: user.userId,
+        targetUsername: user.username,
+        details: {
+            loginResult: "success",
+            userRole: user.userRole,
+        },
         ipAddress,
         userAgent,
     });
@@ -251,10 +276,16 @@ export async function postLogout(req: Request, res: Response) {
     const userAgent = getRequestUserAgent(req);
 
     if (userId !== null) {
-        await logLogoutSuccess({
-            userId,
-            username: username || null,
-            userRole: role ?? null,
+        await writeAdminAuditLogSafely({
+            action: "LOGOUT",
+            actorUserId: userId,
+            actorUsername: username || null,
+            targetUserId: userId,
+            targetUsername: username || null,
+            details: {
+                logoutResult: "success",
+                userRole: role ?? null,
+            },
             ipAddress,
             userAgent,
         });
