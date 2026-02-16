@@ -34,18 +34,3 @@ export async function createUserForRegister(params: {
     }
     return normalImplementation.createUserForRegister(params);
 }
-
-/**
- * 어드민 컨텍스트 사용자 생성입니다.
- */
-export async function createUserForAdmin(params: {
-    username: string;
-    passwordHash: string;
-    userRole: AuthUser["userRole"];
-    isActive: boolean;
-}): Promise<AuthUserPublic> {
-    if (isSqlInjectionTargetEnabled("adminUserCreate")) {
-        return labImplementation.createUserForAdmin(params);
-    }
-    return normalImplementation.createUserForAdmin(params);
-}

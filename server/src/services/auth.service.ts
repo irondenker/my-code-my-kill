@@ -9,5 +9,4 @@
 export {
     findUserByUsername,
     createUserForRegister,
-    createUserForAdmin,
 } from "./auth/auth-account.service.js";

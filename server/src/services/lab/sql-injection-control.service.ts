@@ -1,5 +1,4 @@
 import { getLabOptions, type SqlInjectionOptions } from "../../config/lab-options.js";
-import { runWithSqlInjectionOption } from "../../utils/sql-injection.util.js";
 
 /**
  * SQLi 실습 토글(전역 + 타깃) 제어 서비스입니다.
@@ -21,21 +20,4 @@ function getSqlInjectionOptions(): SqlInjectionOptions {
 export function isSqlInjectionTargetEnabled(target: SqlInjectionTargetKey): boolean {
     const sqlInjectionOptions = getSqlInjectionOptions();
     return sqlInjectionOptions.enabled && sqlInjectionOptions.targets[target];
-}
-
-/**
- * 특정 SQLi 타깃 기준으로 취약/안전 분기를 실행합니다.
- */
-export async function runWithSqlInjectionTarget<T>(params: {
-    target: SqlInjectionTargetKey;
-    insecure: () => Promise<T>;
-    safe: () => Promise<T>;
-}): Promise<T> {
-    const sqlInjectionOptions = getSqlInjectionOptions();
-    return runWithSqlInjectionOption<T>({
-        sqlInjectionOptions,
-        targetEnabled: sqlInjectionOptions.targets[params.target],
-        insecure: params.insecure,
-        safe: params.safe,
-    });
 }

@@ -48,7 +48,6 @@ export type SqlInjectionOptions = {
     targets: {
         usernameLookup: boolean;
         registerCreateUser: boolean;
-        adminUserCreate: boolean;
         profileLookupByUsername: boolean;
         profileUpdate: boolean;
         boardLookupBySlug: boolean;
@@ -102,7 +101,6 @@ const DEFAULT_LAB_OPTIONS: LabOptions = {
         targets: {
             usernameLookup: false,
             registerCreateUser: false,
-            adminUserCreate: false,
             profileLookupByUsername: false,
             profileUpdate: false,
             boardLookupBySlug: false,
@@ -489,7 +487,7 @@ function parseDebugErrorRoutesOption(value: unknown): boolean {
  * - `sqlInjection: { "enabled": boolean, "targets": { "<targetKey>": boolean, ... } }`
  *
  * targets 키 목록:
- * - usernameLookup, registerCreateUser, adminUserCreate
+ * - usernameLookup, registerCreateUser
  * - profileLookupByUsername, profileUpdate
  * - boardLookupBySlug, boardCreate, boardUpdate
  * - postLookup, postCreate, postUpdate
@@ -536,11 +534,6 @@ function parseSqlInjectionOptions(value: unknown): SqlInjectionOptions {
             parsedTargets?.registerCreateUser,
             "sqlInjection.targets.registerCreateUser",
             DEFAULT_LAB_OPTIONS.sqlInjection.targets.registerCreateUser,
-        ),
-        adminUserCreate: parseBooleanOption(
-            parsedTargets?.adminUserCreate,
-            "sqlInjection.targets.adminUserCreate",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.adminUserCreate,
         ),
         profileLookupByUsername: parseBooleanOption(
             parsedTargets?.profileLookupByUsername,

@@ -9,7 +9,6 @@
     "targets": {
       "usernameLookup": false,
       "registerCreateUser": false,
-      "adminUserCreate": false,
       "profileLookupByUsername": false,
       "profileUpdate": false,
       "boardLookupBySlug": false,

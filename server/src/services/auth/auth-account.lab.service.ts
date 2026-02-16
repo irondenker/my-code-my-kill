@@ -5,7 +5,7 @@ import type { UserPublicRow, UserRow } from "../../types/auth-account.types.js";
 import { mapAuthUser, mapAuthUserPublic } from "../../utils/auth-user-mapper.util.js";
 
 /**
- * 인증(로그인/회원가입/어드민 유저 생성) lab 모드 서비스입니다.
+ * 인증(로그인/회원가입) lab 모드 서비스입니다.
  *
  * 책임:
  * - facade가 lab 경로로 라우팅한 기능을 취약 쿼리로 실행합니다.
@@ -17,13 +17,6 @@ import { mapAuthUser, mapAuthUserPublic } from "../../utils/auth-user-mapper.uti
  * (facade에서 타깃 활성화 시에만 이 lab 구현이 호출됩니다.)
  */
 export async function findUserByUsername(username: string): Promise<AuthUser | null> {
-    return findUserByUsernameInsecure(username);
-}
-
-/**
- * SQLi 실습용: username 조회를 안전하지 않은 문자열 보간 쿼리로 실행합니다.
- */
-async function findUserByUsernameInsecure(username: string): Promise<AuthUser | null> {
     // 주의: 의도적으로 문자열 보간을 사용합니다(SQLi 실습용).
     const query = `
         SELECT
@@ -43,14 +36,16 @@ async function findUserByUsernameInsecure(username: string): Promise<AuthUser | 
 }
 
 /**
- * SQLi 실습용: INSERT를 안전하지 않은 문자열 보간 쿼리로 실행합니다.
+ * 사용자 생성(회원가입 컨텍스트)입니다.
+ * (facade에서 타깃 활성화 시에만 이 lab 구현이 호출됩니다.)
  */
-async function createUserInsecure(params: {
+export async function createUserForRegister(params: {
     username: string;
     passwordHash: string;
-    userRole: AuthUser["userRole"];
-    isActive: boolean;
 }): Promise<AuthUserPublic> {
+    const userRole: AuthUser["userRole"] = "user";
+    const isActive = true;
+    // 회원가입은 항상 기본 role/user + 활성 계정으로 생성합니다.
     // 주의: 의도적으로 문자열 보간을 사용합니다(SQLi 실습용).
     const rows = await sequelize.query<UserPublicRow>(
         `
@@ -63,10 +58,10 @@ async function createUserInsecure(params: {
             updated_at
         )
         VALUES (
-            '${params.userRole}',
+            '${userRole}',
             '${params.username}',
             '${params.passwordHash}',
-            ${params.isActive ? "true" : "false"},
+            ${isActive ? "true" : "false"},
             NOW(),
             NOW()
         )
@@ -81,32 +76,4 @@ async function createUserInsecure(params: {
     }
 
     return mapAuthUserPublic(row);
-}
-
-/**
- * 사용자 생성(회원가입 컨텍스트)입니다.
- * (facade에서 타깃 활성화 시에만 이 lab 구현이 호출됩니다.)
- */
-export async function createUserForRegister(params: {
-    username: string;
-    passwordHash: string;
-}): Promise<AuthUserPublic> {
-    const userRole: AuthUser["userRole"] = "user";
-    const isActive = true;
-    // 회원가입은 항상 기본 role/user + 활성 계정으로 생성합니다.
-    return createUserInsecure({ ...params, userRole, isActive });
-}
-
-/**
- * 사용자 생성(어드민 컨텍스트)입니다.
- * (facade에서 타깃 활성화 시에만 이 lab 구현이 호출됩니다.)
- */
-export async function createUserForAdmin(params: {
-    username: string;
-    passwordHash: string;
-    userRole: AuthUser["userRole"];
-    isActive: boolean;
-}): Promise<AuthUserPublic> {
-    // 어드민 컨텍스트는 role/활성 여부를 UI 입력값으로 결정합니다.
-    return createUserInsecure(params);
 }

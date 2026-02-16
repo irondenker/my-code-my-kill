@@ -24,7 +24,6 @@
     "targets": {
       "usernameLookup": false,
       "registerCreateUser": false,
-      "adminUserCreate": false,
       "profileLookupByUsername": false,
       "profileUpdate": false,
       "boardLookupBySlug": false,
@@ -55,17 +54,17 @@
   - 회원가입 시 “사용자 생성(INSERT)”이 취약해집니다.
   - 입력 지점: `/register` 폼의 `username` (및 내부적으로 `passwordHash` 등)
 
-- `adminUserCreate`
-  - 어드민에서 “사용자 생성(INSERT)”이 취약해집니다.
-  - 입력 지점: `/admin/users`의 Create account 폼
-
 - `profileLookupByUsername`
-  - 공개 프로필 조회가 취약해집니다.
-  - 입력 지점: `GET /@:username`의 path param `username`
+  - 프로필 조회(username/userId 기반)가 취약해집니다.
+  - 입력 지점:
+    - `GET /@:username`의 path param `username`
+    - 프로필/아바타 처리 과정에서 사용되는 `userId` 조회 경로
 
 - `profileUpdate`
-  - 프로필 수정(UPDATE)이 취약해집니다.
-  - 입력 지점: `/settings/profile` 폼의 `displayName`, `email`, `phoneNumber`, `bio`
+  - 프로필 수정(UPDATE) 및 프로필 이미지 경로 업데이트가 취약해집니다.
+  - 입력 지점:
+    - `/settings/profile` 폼의 `displayName`, `email`, `phoneNumber`, `bio`
+    - 아바타 업로드/삭제 처리의 `profileImageUrl` 경로 업데이트
 
 - `boardLookupBySlug`
   - 보드 조회가 취약해집니다. (slug 조회 + boardId 조회 포함)
@@ -121,7 +120,6 @@
     "targets": {
       "usernameLookup": true,
       "registerCreateUser": true,
-      "adminUserCreate": true,
       "profileLookupByUsername": true,
       "profileUpdate": true,
       "boardLookupBySlug": true,
