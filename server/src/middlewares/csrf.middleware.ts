@@ -1,8 +1,8 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 import csrf from "csurf";
 import multer from "multer";
-import { POST_IMAGE_MAX_BYTES } from "../constants/post-upload.constants.js";
-import { MAX_FILE_SIZE_BYTES } from "../constants/upload.constants.js";
+import { POST_IMAGE_MAX_BYTES } from "../constants/upload-post.constants.js";
+import { AVATAR_IMAGE_MAX_BYTES } from "../constants/upload-avatar.constants.js";
 
 /**
  * 전역 CSRF 보호 미들웨어 체인을 생성합니다.
@@ -25,7 +25,7 @@ export function createGlobalCsrfMiddlewares(options: { csrfLabEnabled: boolean }
 
     // multer의 fileSize 제한은 "파싱 단계" 보호용입니다.
     // 각 도메인(아바타/게시글)은 컨트롤러/서비스에서 별도의 정책 검증을 추가로 수행할 수 있습니다.
-    const MULTIPART_MAX_FILE_SIZE_BYTES = Math.max(POST_IMAGE_MAX_BYTES, MAX_FILE_SIZE_BYTES);
+    const MULTIPART_MAX_FILE_SIZE_BYTES = Math.max(POST_IMAGE_MAX_BYTES, AVATAR_IMAGE_MAX_BYTES);
     const upload = multer({
         storage: multer.memoryStorage(),
         limits: { fileSize: MULTIPART_MAX_FILE_SIZE_BYTES },

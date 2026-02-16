@@ -14,15 +14,15 @@ import {
 import {
     POST_ATTACHMENT_EXTENSIONS,
     POST_ATTACHMENT_MAX_BYTES,
-    POST_ATTACHMENT_MIME_TYPES,
+    POST_ATTACHMENT_ALLOWED_MIME_TYPES,
     POST_ATTACHMENT_UPLOAD_DIR,
+    POST_IMAGE_ALLOWED_MIME_TYPES,
     POST_IMAGE_MAX_BYTES,
     POST_IMAGE_MAX_DIMENSION,
-    POST_IMAGE_MAX_WIDTH,
-    POST_IMAGE_MIME_TYPES,
-    POST_IMAGE_QUALITY,
+    POST_IMAGE_MAX_OUTPUT_WIDTH,
+    POST_IMAGE_OUTPUT_QUALITY,
     POST_IMAGE_UPLOAD_DIR,
-} from "../../constants/post-upload.constants.js";
+} from "../../constants/upload-post.constants.js";
 
 /**
  * 게시글 업로드(이미지/첨부파일) 저장을 담당하는 서비스입니다.
@@ -67,7 +67,7 @@ export async function storePostImage(file: Express.Multer.File): Promise<string>
     if (isMagicNumberCheckEnabled()) {
         validateMagicNumberForImage(file.buffer);
     }
-    if (!POST_IMAGE_MIME_TYPES.has(file.mimetype)) {
+    if (!POST_IMAGE_ALLOWED_MIME_TYPES.has(file.mimetype)) {
         throw new Error("Unsupported image type.");
     }
     if (file.size > POST_IMAGE_MAX_BYTES) {
@@ -93,8 +93,8 @@ export async function storePostImage(file: Express.Multer.File): Promise<string>
     const outputPath = path.join(POST_IMAGE_UPLOAD_DIR, filename);
 
     await image
-        .resize(POST_IMAGE_MAX_WIDTH, POST_IMAGE_MAX_WIDTH, { fit: "inside", withoutEnlargement: true })
-        .webp({ quality: POST_IMAGE_QUALITY })
+        .resize(POST_IMAGE_MAX_OUTPUT_WIDTH, POST_IMAGE_MAX_OUTPUT_WIDTH, { fit: "inside", withoutEnlargement: true })
+        .webp({ quality: POST_IMAGE_OUTPUT_QUALITY })
         .toFile(outputPath);
 
     return filename;
@@ -106,7 +106,7 @@ export async function storePostImage(file: Express.Multer.File): Promise<string>
  * @throws 검증 실패 시 Error(message)
  */
 export async function storePostAttachment(file: Express.Multer.File): Promise<string> {
-    if (!POST_ATTACHMENT_MIME_TYPES.has(file.mimetype)) {
+    if (!POST_ATTACHMENT_ALLOWED_MIME_TYPES.has(file.mimetype)) {
         throw new Error("Unsupported attachment type.");
     }
     if (file.size > POST_ATTACHMENT_MAX_BYTES) {

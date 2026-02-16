@@ -7,7 +7,7 @@ import type {
     BoardPostShowRow,
     NeighborPostRow,
 } from "../types/board-data.types.js";
-import { POST_ATTACHMENT_PUBLIC_BASE_PATH, POST_IMAGE_PUBLIC_BASE_PATH } from "../constants/post-upload.constants.js";
+import { POST_ATTACHMENT_PUBLIC_BASE_PATH, POST_IMAGE_PUBLIC_BASE_PATH } from "../constants/upload-post.constants.js";
 import { buildPostMediaUrl } from "./post-media-url.util.js";
 
 /**

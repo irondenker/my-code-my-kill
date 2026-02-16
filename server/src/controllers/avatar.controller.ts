@@ -2,7 +2,15 @@
 import path from "node:path";
 import sharp from "sharp";
 import { findUserProfileById, updateUserProfileImage } from "../services/profile.service.js";
-import { ALLOWED_MIME_TYPES, MAX_DIMENSION, MAX_FILE_SIZE_BYTES, MIN_DIMENSION, OUTPUT_QUALITY, OUTPUT_SIZE, UPLOAD_DIR } from "../constants/upload.constants.js";
+import {
+    AVATAR_IMAGE_ALLOWED_MIME_TYPES,
+    AVATAR_IMAGE_MAX_BYTES,
+    AVATAR_IMAGE_MAX_DIMENSION,
+    AVATAR_IMAGE_MIN_DIMENSION,
+    AVATAR_IMAGE_OUTPUT_QUALITY,
+    AVATAR_IMAGE_OUTPUT_SIZE,
+    AVATAR_IMAGE_UPLOAD_DIR,
+} from "../constants/upload-avatar.constants.js";
 import { HttpError } from "../utils/http-error.js";
 import { ensureDir, safeUnlink } from "../utils/fs.util.js";
 import { isMagicNumberCheckEnabled, validateMagicNumberForImage } from "../utils/upload-validation.util.js";
@@ -19,14 +27,6 @@ import { isMagicNumberCheckEnabled, validateMagicNumberForImage } from "../utils
  * - DB 업데이트는 `profile.service`로 위임합니다.
  * - 파일 시스템 작업은 실패 가능성이 높으므로, 예외 처리 흐름을 명확히 유지합니다.
  */
-
-/**
- * 업로드 디렉토리가 없으면 생성합니다.
- * 업로드가 자주 발생할 수 있으므로 `recursive: true`로 idempotent하게 처리합니다.
- */
-async function ensureUploadDir() {
-    await ensureDir(UPLOAD_DIR);
-}
 
 /**
  * 아바타 처리 중 발생한 오류를 동일한 프로필 설정 화면으로 되돌려 보여줍니다.
@@ -97,18 +97,18 @@ export async function postAvatarUpload(req: Request, res: Response, next: NextFu
     }
 
     // 업로드된 mimetype은 조작 가능하지만, UI 상의 빠른 피드백을 위해 1차로 제한합니다.
-    if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
+    if (!AVATAR_IMAGE_ALLOWED_MIME_TYPES.has(file.mimetype)) {
         return renderAvatarError(req, res, next, 422, "Unsupported image type.");
     }
 
     // 메모리 스토리지를 사용하므로 파일 크기 제한은 서버 안정성에 직접 영향이 있습니다.
-    if (file.size > MAX_FILE_SIZE_BYTES) {
+    if (file.size > AVATAR_IMAGE_MAX_BYTES) {
         return renderAvatarError(req, res, next, 413, "Avatar file is too large.");
     }
 
     // sharp는 디코딩 비용이 크므로, 과도한 픽셀 입력을 제한합니다.
     const image = sharp(file.buffer, {
-        limitInputPixels: MAX_DIMENSION * MAX_DIMENSION,
+        limitInputPixels: AVATAR_IMAGE_MAX_DIMENSION * AVATAR_IMAGE_MAX_DIMENSION,
     });
     const metadata = await image.metadata();
 
@@ -117,23 +117,24 @@ export async function postAvatarUpload(req: Request, res: Response, next: NextFu
     if (!width || !height) {
         return renderAvatarError(req, res, next, 422, "Invalid image data.");
     }
-    if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+    if (width > AVATAR_IMAGE_MAX_DIMENSION || height > AVATAR_IMAGE_MAX_DIMENSION) {
         return renderAvatarError(req, res, next, 422, "Image dimensions exceed the limit.");
     }
-    if (width < MIN_DIMENSION || height < MIN_DIMENSION) {
+    if (width < AVATAR_IMAGE_MIN_DIMENSION || height < AVATAR_IMAGE_MIN_DIMENSION) {
         return renderAvatarError(req, res, next, 422, "Image dimensions are too small.");
     }
 
-    await ensureUploadDir();
+    // 업로드 경로가 없으면 생성합니다. (ensureDir는 idempotent)
+    await ensureDir(AVATAR_IMAGE_UPLOAD_DIR);
 
     // 파일명은 userId + timestamp 기반으로 충돌 가능성을 낮춥니다.
     const filename = `user-${userId}-${Date.now()}.webp`;
-    const outputPath = path.join(UPLOAD_DIR, filename);
+    const outputPath = path.join(AVATAR_IMAGE_UPLOAD_DIR, filename);
 
     // 출력은 고정 사이즈(정사각형)로 잘라내며, webp로 통일합니다.
     await image
-        .resize(OUTPUT_SIZE, OUTPUT_SIZE, { fit: "cover", position: "centre" })
-        .webp({ quality: OUTPUT_QUALITY })
+        .resize(AVATAR_IMAGE_OUTPUT_SIZE, AVATAR_IMAGE_OUTPUT_SIZE, { fit: "cover", position: "centre" })
+        .webp({ quality: AVATAR_IMAGE_OUTPUT_QUALITY })
         .toFile(outputPath);
 
     // DB 업데이트는 "저장 완료 후" 수행해, DB에만 파일명이 남고 파일이 없는 상태를 줄입니다.
@@ -144,7 +145,7 @@ export async function postAvatarUpload(req: Request, res: Response, next: NextFu
     // 이전 파일 삭제는 best-effort로 처리합니다(실패해도 업로드 성공을 깨지 않음).
     if (existing?.profileImageUrl) {
         const previousName = path.basename(existing.profileImageUrl);
-        const previousPath = path.join(UPLOAD_DIR, previousName);
+        const previousPath = path.join(AVATAR_IMAGE_UPLOAD_DIR, previousName);
         if (previousName !== filename) {
             await safeUnlink(previousPath);
         }
@@ -176,7 +177,7 @@ export async function postAvatarDelete(req: Request, res: Response) {
 
     if (profile?.profileImageUrl) {
         const previousName = path.basename(profile.profileImageUrl);
-        const previousPath = path.join(UPLOAD_DIR, previousName);
+        const previousPath = path.join(AVATAR_IMAGE_UPLOAD_DIR, previousName);
         await safeUnlink(previousPath);
     }
 

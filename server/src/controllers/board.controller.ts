@@ -12,7 +12,7 @@ import {
 } from "../utils/board.policy.util.js";
 import { isValidPostContent, isValidPostTitle } from "../utils/post-validation.util.js";
 import { buildPostMediaUrl } from "../utils/post-media-url.util.js";
-import { POST_ATTACHMENT_PUBLIC_BASE_PATH, POST_IMAGE_PUBLIC_BASE_PATH } from "../constants/post-upload.constants.js";
+import { POST_ATTACHMENT_PUBLIC_BASE_PATH, POST_IMAGE_PUBLIC_BASE_PATH } from "../constants/upload-post.constants.js";
 import {
     createBoardPost,
     doesPostExistBySlugDisplayId,
