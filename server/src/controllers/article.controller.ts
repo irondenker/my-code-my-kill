@@ -10,16 +10,18 @@ import {
     canDeleteArticle,
     canEditArticle,
     canReadArticleForBoard,
-    getBoardWritePolicy,
+    getArticleMutationPolicy,
 } from "../utils/article.policy.util.js";
 import { isValidArticleContent, isValidArticleTitle } from "../utils/article-validation.util.js";
 import { buildMediaUrl } from "../utils/media-url.util.js";
 import { ARTICLE_ATTACHMENT_PUBLIC_BASE_PATH, ARTICLE_IMAGE_PUBLIC_BASE_PATH } from "../constants/upload-article.constants.js";
 import { getPositiveIntParamOrThrow, getStringParamOrThrow } from "../utils/route-param.util.js";
 import {
+    findBoardBySlug,
+} from "../services/board.service.js";
+import {
     createBoardArticle,
     doesArticleExistBySlugDisplayId,
-    findBoardBySlug,
     findBoardArticleForShowBySlugDisplayId,
     findNeighborArticles,
     findArticleBySlugDisplayId,
@@ -30,7 +32,7 @@ import {
     softDeleteArticleBySlugDisplayId,
     softDeleteArticleBySlugDisplayIdAsAdmin,
     updateBoardArticle,
-} from "../services/board.service.js";
+} from "../services/article.service.js";
 
 /**
  * 게시글 컨트롤러입니다.
@@ -235,7 +237,7 @@ export async function postArticleCreate(req: Request, res: Response) {
 
 /**
  * 게시글 수정 폼(`/board/:slug/:displayId/edit`)을 렌더링합니다.
- * 보드 쓰기 정책 + 작성자/관리자 여부에 따라 403을 반환할 수 있습니다.
+ * 게시글 변경 정책 + 작성자/관리자 여부에 따라 403을 반환할 수 있습니다.
  */
 export async function getArticleEditForm(req: Request, res: Response) {
     // 1) 라우트 파라미터를 정규화하고 수정 대상을 조회합니다.
@@ -243,8 +245,8 @@ export async function getArticleEditForm(req: Request, res: Response) {
     const displayId = getPositiveIntParamOrThrow(req, "displayId");
     const post = await requirePostBySlugDisplayId({ slug, displayId });
 
-    // 2) 보드 쓰기 정책에 따라 작성자/관리자만 수정 폼 접근을 허용합니다.
-    const policy = getBoardWritePolicy(slug);
+    // 2) 게시글 변경 정책에 따라 작성자/관리자만 수정 폼 접근을 허용합니다.
+    const policy = getArticleMutationPolicy(slug);
     const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
     if (!canEditArticle(policy, viewerContext, post.userId)) {
         throw new HttpError(403, "Forbidden");
@@ -274,7 +276,7 @@ export async function getArticleEditForm(req: Request, res: Response) {
  * 게시글 수정 요청(`/board/:slug/:displayId/edit`)을 처리합니다.
  *
  * 처리:
- * - 보드 쓰기 정책 + 작성자/관리자 권한 체크
+ * - 게시글 변경 정책 + 작성자/관리자 권한 체크
  * - title/content 검증
  * - (옵션) 새 이미지/첨부 업로드 저장
  * - 게시글 업데이트(DB) 및 이전 파일 정리(best-effort)
@@ -284,8 +286,8 @@ export async function postArticleEdit(req: Request, res: Response) {
     const displayId = getPositiveIntParamOrThrow(req, "displayId");
     const post = await requirePostBySlugDisplayId({ slug, displayId });
 
-    // 1) 보드 쓰기 정책 + 작성자/관리자 권한을 확인합니다.
-    const policy = getBoardWritePolicy(slug);
+    // 1) 게시글 변경 정책 + 작성자/관리자 권한을 확인합니다.
+    const policy = getArticleMutationPolicy(slug);
     const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
     if (!canEditArticle(policy, viewerContext, post.userId)) {
         throw new HttpError(403, "Forbidden");
@@ -404,7 +406,7 @@ export async function deleteArticle(req: Request, res: Response) {
     }
 
     // 3) 보드 삭제 정책(admin-only vs owner/admin)을 적용해 soft delete를 시도합니다.
-    const policy = getBoardWritePolicy(slug);
+    const policy = getArticleMutationPolicy(slug);
     let deleted = false;
 
     if (policy.delete === "admin") {
@@ -477,10 +479,10 @@ export async function getArticleShow(req: Request, res: Response) {
         throw new HttpError(403, "Forbidden");
     }
 
-    // 5) 글쓰기 정책에 따라 "수정/삭제" UI 노출 여부를 계산합니다.
-    const writePolicy = getBoardWritePolicy(slug);
-    const canEdit = canEditArticle(writePolicy, viewerContext, post.user_id);
-    const canDelete = canDeleteArticle(writePolicy, viewerContext, post.user_id);
+    // 5) 게시글 변경 정책에 따라 "수정/삭제" UI 노출 여부를 계산합니다.
+    const mutationPolicy = getArticleMutationPolicy(slug);
+    const canEdit = canEditArticle(mutationPolicy, viewerContext, post.user_id);
+    const canDelete = canDeleteArticle(mutationPolicy, viewerContext, post.user_id);
 
     // 6) 이전/다음 글 링크는 readAccess 정책에 따라 조회 범위를 제한합니다.
     //    owner_or_admin 보드에서 관리자가 아닌 경우, 본인 글만 이웃 글로 탐색합니다.

@@ -5,11 +5,13 @@ import {
     getBoardReadAccessResult,
 } from "../utils/board.policy.util.js";
 import {
-    countBoardArticlesBySlug,
     findBoardBySlug,
-    listBoardArticleOutlinesBySlug,
     listBoards,
 } from "../services/board.service.js";
+import {
+    countArticlesBySlug,
+    listArticleOutlinesBySlug,
+} from "../services/article.service.js";
 import { computeTotalPages } from "../utils/pagination.util.js";
 import { PAGINATION_DEFAULT_LIMIT } from "../constants/board.constants.js";
 import { getStringParamOrThrow } from "../utils/route-param.util.js";
@@ -147,13 +149,13 @@ export async function getBoardBySlug(req: Request, res: Response) {
     const formSuccess = consumeBoardFlashMessage(req);
 
     // 3) 전체 개수 -> 페이지 메타 계산 -> 현재 페이지 오프셋 계산 순서로 목록을 조회합니다.
-    const totalCount = await countBoardArticlesBySlug(slug);
+    const totalCount = await countArticlesBySlug(slug);
     const limit = PAGINATION_DEFAULT_LIMIT;
 
     const totalPages = computeTotalPages(totalCount, limit);
     const offset = (page - 1) * limit;
 
-    const outlines = await listBoardArticleOutlinesBySlug({
+    const outlines = await listArticleOutlinesBySlug({
         slug,
         offset,
         limit,

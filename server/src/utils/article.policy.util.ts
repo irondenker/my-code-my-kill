@@ -1,4 +1,5 @@
-import type { BoardReadAccess, BoardWritePolicy, ViewerContext } from "../types/board.types.js";
+import type { BoardReadAccess, ViewerContext } from "../types/board.types.js";
+import type { ArticleMutationPolicy } from "../types/article.types.js";
 
 /**
  * 게시글(Article) 접근 정책 유틸입니다.
@@ -8,15 +9,15 @@ import type { BoardReadAccess, BoardWritePolicy, ViewerContext } from "../types/
  * - 컨트롤러는 세션/요청 값을 읽어와 여기로 전달합니다.
  */
 
-export type { BoardWritePolicy } from "../types/board.types.js";
+export type { ArticleMutationPolicy } from "../types/article.types.js";
 
 /**
- * 보드 slug에 따른 "쓰기 권한 정책"을 결정합니다.
+ * 보드 slug에 따른 "게시글 변경 정책(수정/삭제)"을 결정합니다.
  * (예: 공지 보드는 수정/삭제가 admin만 가능)
  *
  * @param slug 보드 slug
  */
-export function getBoardWritePolicy(slug: string): BoardWritePolicy {
+export function getArticleMutationPolicy(slug: string): ArticleMutationPolicy {
     if (slug === "announcement") {
         return { update: "admin", delete: "admin" };
     }
@@ -40,11 +41,11 @@ export function canReadArticleForBoard(readAccess: BoardReadAccess, context: Vie
 /**
  * 게시글 수정 가능 여부를 판정합니다.
  *
- * @param policy 보드 쓰기 정책(수정)
+ * @param policy 게시글 변경 정책(수정)
  * @param context viewer 컨텍스트
  * @param postUserId 게시글 작성자 userId
  */
-export function canEditArticle(policy: BoardWritePolicy, context: ViewerContext, postUserId: number): boolean {
+export function canEditArticle(policy: ArticleMutationPolicy, context: ViewerContext, postUserId: number): boolean {
     const isOwner = context.viewerUserId === postUserId;
     return policy.update === "admin" ? context.isAdmin : isOwner;
 }
@@ -52,11 +53,11 @@ export function canEditArticle(policy: BoardWritePolicy, context: ViewerContext,
 /**
  * 게시글 삭제 가능 여부를 판정합니다.
  *
- * @param policy 보드 쓰기 정책(삭제)
+ * @param policy 게시글 변경 정책(삭제)
  * @param context viewer 컨텍스트
  * @param postUserId 게시글 작성자 userId
  */
-export function canDeleteArticle(policy: BoardWritePolicy, context: ViewerContext, postUserId: number): boolean {
+export function canDeleteArticle(policy: ArticleMutationPolicy, context: ViewerContext, postUserId: number): boolean {
     const isOwner = context.viewerUserId === postUserId;
     return policy.delete === "admin" ? context.isAdmin : isOwner || context.isAdmin;
 }

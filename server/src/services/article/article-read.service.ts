@@ -1,7 +1,7 @@
 import { isSqlInjectionTargetEnabled } from "../lab/sql-injection-control.service.js";
 import * as labImplementation from "./article-read.lab.service.js";
 import * as normalImplementation from "./article-read.normal.service.js";
-import type { ArticleOutline, ArticleRecord } from "../../types/board.types.js";
+import type { ArticleOutline, ArticleRecord } from "../../types/article.types.js";
 
 /**
  * 게시글 조회/존재확인 서비스 facade입니다.
@@ -11,33 +11,33 @@ import type { ArticleOutline, ArticleRecord } from "../../types/board.types.js";
  * - 그 외 기능은 `article-read.normal.service`를 사용합니다.
  */
 
-export async function countBoardArticles(): Promise<number> {
-    return normalImplementation.countBoardArticles();
+export async function countArticles(): Promise<number> {
+    return normalImplementation.countArticles();
 }
 
-export async function countBoardArticlesBySlug(slug: string): Promise<number> {
+export async function countArticlesBySlug(slug: string): Promise<number> {
     if (isSqlInjectionTargetEnabled("postLookup")) {
-        return labImplementation.countBoardArticlesBySlug(slug);
+        return labImplementation.countArticlesBySlug(slug);
     }
-    return normalImplementation.countBoardArticlesBySlug(slug);
+    return normalImplementation.countArticlesBySlug(slug);
 }
 
-export async function listBoardArticleOutlines(params: { offset: number; limit: number }): Promise<ArticleOutline[]> {
+export async function listArticleOutlines(params: { offset: number; limit: number }): Promise<ArticleOutline[]> {
     if (isSqlInjectionTargetEnabled("postLookup")) {
-        return labImplementation.listBoardArticleOutlines(params);
+        return labImplementation.listArticleOutlines(params);
     }
-    return normalImplementation.listBoardArticleOutlines(params);
+    return normalImplementation.listArticleOutlines(params);
 }
 
-export async function listBoardArticleOutlinesBySlug(params: {
+export async function listArticleOutlinesBySlug(params: {
     slug: string;
     offset: number;
     limit: number;
 }): Promise<ArticleOutline[]> {
     if (isSqlInjectionTargetEnabled("postLookup")) {
-        return labImplementation.listBoardArticleOutlinesBySlug(params);
+        return labImplementation.listArticleOutlinesBySlug(params);
     }
-    return normalImplementation.listBoardArticleOutlinesBySlug(params);
+    return normalImplementation.listArticleOutlinesBySlug(params);
 }
 
 export async function findArticleBySlugDisplayId(params: {

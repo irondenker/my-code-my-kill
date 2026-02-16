@@ -1,6 +1,6 @@
 import path from "node:path";
-import type { ArticleForShow, ArticleOutline, ArticleRecord, NeighborPost } from "../types/board.types.js";
-import type { ArticleOutlineRow, ArticleRecordRow, ArticleShowRow, NeighborPostRow } from "../types/board-data.types.js";
+import type { ArticleForShow, ArticleOutline, ArticleRecord, NeighborPost } from "../types/article.types.js";
+import type { ArticleOutlineRow, ArticleRecordRow, ArticleShowRow, NeighborPostRow } from "../types/article-data.types.js";
 import { ARTICLE_ATTACHMENT_PUBLIC_BASE_PATH, ARTICLE_IMAGE_PUBLIC_BASE_PATH } from "../constants/upload-article.constants.js";
 import { buildMediaUrl } from "./media-url.util.js";
 

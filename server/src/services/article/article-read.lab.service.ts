@@ -1,7 +1,7 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import type { ArticleOutline, ArticleRecord } from "../../types/board.types.js";
-import type { ArticleOutlineRow, ArticleRecordRow } from "../../types/board-data.types.js";
+import type { ArticleOutline, ArticleRecord } from "../../types/article.types.js";
+import type { ArticleOutlineRow, ArticleRecordRow } from "../../types/article-data.types.js";
 import { mapBoardArticleOutline, mapBoardArticleRecord } from "../../utils/article-mapper.util.js";
 
 /**
@@ -15,7 +15,7 @@ import { mapBoardArticleOutline, mapBoardArticleRecord } from "../../utils/artic
 /**
  * 특정 보드(slug)의 활성 게시글 수를 반환합니다.
  */
-export async function countBoardArticlesBySlug(slug: string): Promise<number> {
+export async function countArticlesBySlug(slug: string): Promise<number> {
     const rows = await sequelize.query<{ total_count: string }>(
         `
         SELECT COUNT(*) AS total_count
@@ -33,7 +33,7 @@ export async function countBoardArticlesBySlug(slug: string): Promise<number> {
 /**
  * 전체 게시글 목록(outline)을 페이지네이션 형태로 조회합니다.
  */
-export async function listBoardArticleOutlines(params: { offset: number; limit: number }): Promise<ArticleOutline[]> {
+export async function listArticleOutlines(params: { offset: number; limit: number }): Promise<ArticleOutline[]> {
     const { offset, limit } = params;
 
     const rows = await sequelize.query<ArticleOutlineRow>(
@@ -62,7 +62,7 @@ export async function listBoardArticleOutlines(params: { offset: number; limit: 
 /**
  * 특정 보드(slug)의 게시글 목록(outline)을 페이지네이션 형태로 조회합니다.
  */
-export async function listBoardArticleOutlinesBySlug(params: {
+export async function listArticleOutlinesBySlug(params: {
     slug: string;
     offset: number;
     limit: number;
