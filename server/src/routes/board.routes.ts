@@ -1,25 +1,27 @@
 import { Router } from "express";
 import {
-    deleteBoardPost,
     getBoardBySlug,
-    getBoardCreateForm,
-    getBoardEditForm,
     getBoardIndex,
-    getBoardShow,
-    postBoardCreate,
-    postBoardEdit,
 } from "../controllers/board.controller.js";
+import {
+    deleteArticle,
+    getArticleCreateForm,
+    getArticleEditForm,
+    getArticleShow,
+    postArticleCreate,
+    postArticleEdit,
+} from "../controllers/article.controller.js";
 import { requireAuth, requireAuthRedirect } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.get("/board/:slug/new", requireAuthRedirect, getBoardCreateForm);
-router.post("/board/:slug", requireAuthRedirect, postBoardCreate);
-router.get("/board/:slug/:displayId/edit", requireAuthRedirect, getBoardEditForm);
-router.post("/board/:slug/:displayId/edit", requireAuthRedirect, postBoardEdit);
-router.post("/board/:slug/:displayId/delete", requireAuthRedirect, deleteBoardPost);
-router.get("/board/:slug/:displayId", getBoardShow);
-router.delete("/board/:slug/:displayId", requireAuth, deleteBoardPost);
+router.get("/board/:slug/new", requireAuthRedirect, getArticleCreateForm);
+router.post("/board/:slug", requireAuthRedirect, postArticleCreate);
+router.get("/board/:slug/:displayId/edit", requireAuthRedirect, getArticleEditForm);
+router.post("/board/:slug/:displayId/edit", requireAuthRedirect, postArticleEdit);
+router.post("/board/:slug/:displayId/delete", requireAuthRedirect, deleteArticle);
+router.get("/board/:slug/:displayId", getArticleShow);
+router.delete("/board/:slug/:displayId", requireAuth, deleteArticle);
 router.get("/board/:slug", getBoardBySlug);
 router.get("/board", getBoardIndex);
 
