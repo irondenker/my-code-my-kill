@@ -1,13 +1,12 @@
 import { QueryTypes, type Transaction } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import { runWithSqlInjectionTarget } from "../lab/sql-injection-control.service.js";
 
 /**
  * 게시글 쓰기/수정/삭제 lab 모드 서비스입니다.
  *
  * 책임:
- * - SQLi 실습 타깃 기준으로 취약/안전 쿼리를 분기합니다.
- * - 타깃 비활성화 경로는 안전 쿼리(safe)로 동작합니다.
+ * - facade가 lab 경로로 라우팅한 기능을 취약 쿼리로 실행합니다.
+ * - 타깃 활성 여부 판정은 facade(`post-write.service.ts`)에서 담당합니다.
  */
 
 /**
@@ -15,7 +14,7 @@ import { runWithSqlInjectionTarget } from "../lab/sql-injection-control.service.
  *
  * 구현:
  * - 동일 보드 내 displayId를 트랜잭션으로 할당하여 중복을 방지합니다.
- * - SQLi 실습 옵션에 따라 취약 쿼리로 동작할 수 있습니다.
+ * - INSERT는 취약 쿼리로 실행됩니다.
  */
 export async function createBoardPost(params: {
     boardId: number;
@@ -57,82 +56,35 @@ export async function createBoardPost(params: {
             throw new Error("Failed to allocate display id");
         }
 
-        await runWithSqlInjectionTarget<void>({
-            target: "postCreate",
-            insecure: async () => {
-                await sequelize.query(
-                    `
-                    INSERT INTO posts (
-                        board_id,
-                        display_id,
-                        user_id,
-                        title,
-                        content,
-                        image_url,
-                        file_url,
-                        created_at,
-                        updated_at,
-                        use_yn
-                    )
-                    VALUES (
-                        ${boardId},
-                        ${displayId},
-                        ${userId},
-                        '${title}',
-                        '${content}',
-                        ${imageUrl ? `'${imageUrl}'` : "NULL"},
-                        ${fileUrl ? `'${fileUrl}'` : "NULL"},
-                        NOW(),
-                        NOW(),
-                        true
-                    )
-                    `,
-                    { transaction }
-                );
-            },
-            safe: async () => {
-                await sequelize.query(
-                    `
-                    INSERT INTO posts (
-                        board_id,
-                        display_id,
-                        user_id,
-                        title,
-                        content,
-                        image_url,
-                        file_url,
-                        created_at,
-                        updated_at,
-                        use_yn
-                    )
-                    VALUES (
-                        :boardId,
-                        :displayId,
-                        :userId,
-                        :title,
-                        :content,
-                        :imageUrl,
-                        :fileUrl,
-                        NOW(),
-                        NOW(),
-                        true
-                    )
-                    `,
-                    {
-                        replacements: {
-                            boardId,
-                            displayId,
-                            userId,
-                            title,
-                            content,
-                            imageUrl: imageUrl ?? null,
-                            fileUrl: fileUrl ?? null,
-                        },
-                        transaction,
-                    }
-                );
-            },
-        });
+        await sequelize.query(
+            `
+            INSERT INTO posts (
+                board_id,
+                display_id,
+                user_id,
+                title,
+                content,
+                image_url,
+                file_url,
+                created_at,
+                updated_at,
+                use_yn
+            )
+            VALUES (
+                ${boardId},
+                ${displayId},
+                ${userId},
+                '${title}',
+                '${content}',
+                ${imageUrl ? `'${imageUrl}'` : "NULL"},
+                ${fileUrl ? `'${fileUrl}'` : "NULL"},
+                NOW(),
+                NOW(),
+                true
+            )
+            `,
+            { transaction }
+        );
 
         return { displayId };
     });
@@ -140,7 +92,7 @@ export async function createBoardPost(params: {
 
 /**
  * 게시글을 업데이트합니다.
- * SQLi 실습 옵션에 따라 취약 쿼리로 동작할 수 있습니다.
+ * (facade에서 타깃 활성화 시에만 이 lab 구현이 호출됩니다.)
  */
 export async function updateBoardPost(params: {
     postId: number;
@@ -151,52 +103,21 @@ export async function updateBoardPost(params: {
 }): Promise<boolean> {
     const { postId, title, content, imageUrl, fileUrl } = params;
 
-    return runWithSqlInjectionTarget<boolean>({
-        target: "postUpdate",
-        insecure: async () => {
-            const rows = await sequelize.query<{ post_id: number }>(
-                `
-                UPDATE posts
-                SET title = '${title}',
-                    content = '${content}',
-                    image_url = ${imageUrl ? `'${imageUrl}'` : "NULL"},
-                    file_url = ${fileUrl ? `'${fileUrl}'` : "NULL"},
-                    updated_at = NOW()
-                WHERE post_id = ${postId}
-                  AND use_yn = true
-                RETURNING post_id
-                `,
-                { type: QueryTypes.SELECT }
-            );
-            return rows.length > 0;
-        },
-        safe: async () => {
-            const rows = await sequelize.query<{ post_id: number }>(
-                `
-                UPDATE posts
-                SET title = :title,
-                    content = :content,
-                    image_url = :imageUrl,
-                    file_url = :fileUrl,
-                    updated_at = NOW()
-                WHERE post_id = :postId
-                  AND use_yn = true
-                RETURNING post_id
-                `,
-                {
-                    type: QueryTypes.SELECT,
-                    replacements: {
-                        postId,
-                        title,
-                        content,
-                        imageUrl: imageUrl ?? null,
-                        fileUrl: fileUrl ?? null,
-                    },
-                }
-            );
-            return rows.length > 0;
-        },
-    });
+    const rows = await sequelize.query<{ post_id: number }>(
+        `
+        UPDATE posts
+        SET title = '${title}',
+            content = '${content}',
+            image_url = ${imageUrl ? `'${imageUrl}'` : "NULL"},
+            file_url = ${fileUrl ? `'${fileUrl}'` : "NULL"},
+            updated_at = NOW()
+        WHERE post_id = ${postId}
+          AND use_yn = true
+        RETURNING post_id
+        `,
+        { type: QueryTypes.SELECT }
+    );
+    return rows.length > 0;
 }
 
 /**

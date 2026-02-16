@@ -11,19 +11,15 @@ import { runWithSqlInjectionOption } from "../../utils/sql-injection.util.js";
 
 export type SqlInjectionTargetKey = keyof SqlInjectionOptions["targets"];
 
-const sqlInjectionOptions = getLabOptions().sqlInjection;
-
-/**
- * SQLi 실습(전역) 활성 여부를 반환합니다.
- */
-export function isSqlInjectionLabEnabled(): boolean {
-    return sqlInjectionOptions.enabled;
+function getSqlInjectionOptions(): SqlInjectionOptions {
+    return getLabOptions().sqlInjection;
 }
 
 /**
  * 특정 SQLi 타깃의 취약 모드 활성 여부를 반환합니다.
  */
 export function isSqlInjectionTargetEnabled(target: SqlInjectionTargetKey): boolean {
+    const sqlInjectionOptions = getSqlInjectionOptions();
     return sqlInjectionOptions.enabled && sqlInjectionOptions.targets[target];
 }
 
@@ -35,6 +31,7 @@ export async function runWithSqlInjectionTarget<T>(params: {
     insecure: () => Promise<T>;
     safe: () => Promise<T>;
 }): Promise<T> {
+    const sqlInjectionOptions = getSqlInjectionOptions();
     return runWithSqlInjectionOption<T>({
         sqlInjectionOptions,
         targetEnabled: sqlInjectionOptions.targets[params.target],
