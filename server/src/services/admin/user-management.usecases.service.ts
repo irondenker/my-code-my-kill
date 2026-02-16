@@ -1,6 +1,6 @@
 import type { AdminUserMeta } from "../../types/auth.types.js";
-import { writeAdminAuditLog } from "../audit.service.js";
-import { updateUserActiveStatus, updateUserRole } from "./user-management.service.js";
+import { writeAdminAuditLogSafely } from "../audit.service.js";
+import { updateUserActiveStatus, updateUserRole } from "./user-management.data.service.js";
 
 export type AdminAuditContext = {
     actorUserId: number;
@@ -23,7 +23,7 @@ export async function adminUpdateUserStatus(ctx: AdminAuditContext, params: {
         return false;
     }
 
-    await writeAdminAuditLog({
+    await writeAdminAuditLogSafely({
         action: params.nextIsActive ? "ACCOUNT_ACTIVATED" : "ACCOUNT_DEACTIVATED",
         actorUserId: ctx.actorUserId,
         actorUsername: ctx.actorUsername,
@@ -54,7 +54,7 @@ export async function adminUpdateUserRole(ctx: AdminAuditContext, params: {
         return false;
     }
 
-    await writeAdminAuditLog({
+    await writeAdminAuditLogSafely({
         action: params.requestedRole === "admin" ? "ADMIN_GRANTED" : "ADMIN_REVOKED",
         actorUserId: ctx.actorUserId,
         actorUsername: ctx.actorUsername,

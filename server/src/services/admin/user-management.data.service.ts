@@ -1,12 +1,12 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import type { AdminUserMeta, AdminUserSummary, DeleteUserForAdminResult } from "../../types/auth.types.js";
+import type { AdminUserMeta, AdminUserSummary } from "../../types/auth.types.js";
 
 /**
- * 어드민 유저 관리(목록/메타/상태/역할/삭제)에 필요한 DB 쿼리 모음입니다.
+ * 어드민 유저 관리(목록/메타/상태/역할)에 필요한 DB 쿼리 모음입니다.
  *
  * 책임:
- * - 사용자 목록/메타/상태/역할/삭제 관련 DB 접근
+ * - 사용자 목록/메타/상태/역할 관련 DB 접근
  *
  * 반대 책임(여기서 하지 않음):
  * - 정책 판정(예: admin 최소 1명 유지)은 유틸/컨트롤러에서 결정 후 이 서비스를 호출합니다.
@@ -151,53 +151,4 @@ export async function updateUserRole(params: { userId: number; userRole: "admin"
 
     // 갱신된 행이 1개 이상이면 성공으로 봅니다.
     return rows.length > 0;
-}
-
-/**
- * 어드민용 사용자 삭제를 수행합니다.
- *
- * 정책:
- * - 게시글이 있는 사용자는 삭제하지 않습니다(`has_posts`).
- *
- * @param userId 대상 사용자 ID
- */
-export async function deleteUserForAdmin(userId: number): Promise<DeleteUserForAdminResult> {
-    // 게시글이 없는 사용자만 삭제되도록 조건부 DELETE를 시도합니다.
-    const deletedRows = await sequelize.query<{ user_id: number }>(
-        `
-        DELETE FROM users
-        WHERE user_id = :userId
-          AND NOT EXISTS (
-            SELECT 1
-            FROM posts
-            WHERE user_id = :userId
-          )
-        RETURNING user_id
-        `,
-        { type: QueryTypes.SELECT, replacements: { userId } }
-    );
-
-    // DELETE가 성공하면 RETURNING 결과가 존재합니다.
-    if (deletedRows.length > 0) {
-        return "deleted";
-    }
-
-    // 삭제가 실패한 경우: (1) 사용자가 없거나 (2) 게시글이 있어 삭제가 막혔을 수 있습니다.
-    const existingRows = await sequelize.query<{ user_id: number }>(
-        `
-        SELECT user_id
-        FROM users
-        WHERE user_id = :userId
-        LIMIT 1
-        `,
-        { type: QueryTypes.SELECT, replacements: { userId } }
-    );
-
-    // 사용자 자체가 없다면 not_found입니다.
-    if (existingRows.length === 0) {
-        return "not_found";
-    }
-
-    // 사용자는 존재하지만 삭제가 되지 않았다면 게시글이 존재하는 케이스로 봅니다.
-    return "has_posts";
 }

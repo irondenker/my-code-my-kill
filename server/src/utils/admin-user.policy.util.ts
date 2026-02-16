@@ -17,33 +17,6 @@ export type {
 };
 
 /**
- * 어드민 유저 삭제 정책을 검증합니다.
- *
- * - 자기 자신은 삭제 불가
- * - admin 계정 삭제 시 최소 1명의 admin은 남아야 함
- *
- * @param params 정책 판단에 필요한 최소 정보
- */
-export function validateAdminUserDeletePolicy(params: {
-    actorUserId: number;
-    target: AdminUserTargetMeta;
-    adminCount?: number;
-}): PolicyAllow | PolicyDeny {
-    if (params.actorUserId === params.target.userId) {
-        return { ok: false, message: "You cannot delete your own account." };
-    }
-
-    if (params.target.userRole === "admin") {
-        const adminCount = typeof params.adminCount === "number" ? params.adminCount : 0;
-        if (adminCount <= 1) {
-            return { ok: false, message: "At least one admin account must remain." };
-        }
-    }
-
-    return { ok: true };
-}
-
-/**
  * 어드민 유저 활성/비활성 변경 정책을 검증합니다.
  *
  * - 자기 자신(admin)의 비활성화는 금지
@@ -107,18 +80,4 @@ export function validateAdminUserRolePolicy(params: {
     }
 
     return { ok: true };
-}
-
-/**
- * deleteUserForAdmin 결과를 UI 메시지로 매핑합니다.
- *
- * @param result 삭제 시도 결과
- */
-export function mapDeleteUserResultToErrorMessage(
-    result: "deleted" | "not_found" | "has_posts"
-): string | null {
-    if (result === "has_posts") {
-        return "Users with posts cannot be deleted. Deactivate instead.";
-    }
-    return null;
 }
