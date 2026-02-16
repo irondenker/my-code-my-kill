@@ -18,5 +18,9 @@ export {
     adminUpdateUserRole,
     adminUpdateUserStatus,
 } from "./admin/user-management.usecases.service.js";
+export {
+    adminCreateBoard,
+    adminUpdateBoard,
+} from "./admin/board-management.usecases.service.js";
 
 export type { AdminAuditContext } from "./admin/user-management.usecases.service.js";

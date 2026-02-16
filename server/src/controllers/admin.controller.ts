@@ -3,13 +3,13 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 import { HttpError } from "../utils/http-error.js";
 import {
-    createBoard,
     findBoardById,
     findBoardBySlug,
     listBoards,
-    updateBoard,
 } from "../services/board.service.js";
 import {
+    adminCreateBoard,
+    adminUpdateBoard,
     adminUpdateUserRole,
     adminUpdateUserStatus,
     countAdminUsers,
@@ -425,7 +425,7 @@ export async function postAdminBoardCreate(req: Request, res: Response) {
         });
     }
 
-    await createBoard({
+    await adminCreateBoard({
         slug,
         name,
         description,
@@ -522,7 +522,7 @@ export async function postAdminBoardEdit(req: Request, res: Response) {
         return renderInvalid("This slug is already in use.", 409);
     }
 
-    const updated = await updateBoard({
+    const updated = await adminUpdateBoard({
         boardId,
         slug,
         name,

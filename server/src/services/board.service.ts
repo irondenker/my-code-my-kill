@@ -19,8 +19,6 @@ export {
     listBoards,
     findBoardBySlug,
     findBoardById,
-    createBoard,
-    updateBoard,
 } from "./board/board-management.service.js";
 
 // Post read (posts: count/list/find/exists)
