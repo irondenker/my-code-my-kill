@@ -5,7 +5,7 @@ import {
 import { createAdminAuditLog } from "./audit-log-db.service.js";
 import { ADMIN_AUDIT_ACTIONS } from "../../types/audit-log.types.js";
 import { sanitizeRecord } from "../../utils/record.util.js";
-import { normalizeNullableString, truncateNullableString } from "../../utils/string.util.js";
+import { truncateString } from "../../utils/string.util.js";
 import type {
     AdminAuditLogWriteParams,
     NormalizedAdminAuditLogWriteInput,
@@ -34,10 +34,10 @@ function normalizeAdminAuditLogWriteInput(
 ): NormalizedAdminAuditLogWriteInput {
     const actorUserId = params.actorUserId ?? null;
     const targetUserId = params.targetUserId ?? null;
-    const actorUsername = truncateNullableString(normalizeNullableString(params.actorUsername), 50);
-    const targetUsername = truncateNullableString(normalizeNullableString(params.targetUsername), 50);
-    const ipAddress = truncateNullableString(normalizeNullableString(params.ipAddress), 64);
-    const userAgent = truncateNullableString(normalizeNullableString(params.userAgent), 255);
+    const actorUsername = truncateString(params.actorUsername, 50, null);
+    const targetUsername = truncateString(params.targetUsername, 50, null);
+    const ipAddress = truncateString(params.ipAddress, 64, null);
+    const userAgent = truncateString(params.userAgent, 255, null);
     const details = sanitizeRecord(params.details);
     const detailsJson = JSON.stringify(details);
 

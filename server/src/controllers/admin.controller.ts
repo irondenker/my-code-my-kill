@@ -23,7 +23,7 @@ import {
     validateAdminUserStatusPolicy,
 } from "../utils/admin-user.policy.util.js";
 import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
-import { normalizeLowerString, normalizeNullableString, normalizeString } from "../utils/string.util.js";
+import { normalizeString } from "../utils/string.util.js";
 import type { AdminAuditContext } from "../services/admin.service.js";
 import type { BoardFormValue } from "../types/admin.types.js";
 
@@ -53,7 +53,7 @@ function getSessionActor(req: Request): { userId: number; username: string | nul
     }
     return {
         userId,
-        username: normalizeNullableString(req.session.username),
+        username: normalizeString(req.session.username, null),
     };
 }
 
@@ -360,11 +360,11 @@ export async function getAdminAuditLogsPage(req: Request, res: Response) {
  */
 export async function postAdminBoardCreate(req: Request, res: Response) {
     // 1) 입력값을 정규화하고, 실패 시 폼 유지에 사용할 기본 formValue를 구성합니다.
-    const slug = normalizeLowerString(req.body?.slug);
+    const slug = normalizeString(req.body?.slug).toLowerCase();
     const name = normalizeString(req.body?.name);
-    const description = normalizeNullableString(req.body?.description);
-    const readAccess = normalizeLowerString(req.body?.readAccess);
-    const createAccess = normalizeLowerString(req.body?.createAccess);
+    const description = normalizeString(req.body?.description, null);
+    const readAccess = normalizeString(req.body?.readAccess).toLowerCase();
+    const createAccess = normalizeString(req.body?.createAccess).toLowerCase();
     const formValue: BoardFormValue = {
         slug,
         name,
@@ -490,11 +490,11 @@ export async function postAdminBoardEdit(req: Request, res: Response) {
         throw new HttpError(404, "Not Found");
     }
 
-    const slug = normalizeLowerString(req.body?.slug);
+    const slug = normalizeString(req.body?.slug).toLowerCase();
     const name = normalizeString(req.body?.name);
-    const description = normalizeNullableString(req.body?.description);
-    const readAccess = normalizeLowerString(req.body?.readAccess);
-    const createAccess = normalizeLowerString(req.body?.createAccess);
+    const description = normalizeString(req.body?.description, null);
+    const readAccess = normalizeString(req.body?.readAccess).toLowerCase();
+    const createAccess = normalizeString(req.body?.createAccess).toLowerCase();
 
     // 검증 실패 시 입력값을 유지한 채 동일 편집 폼으로 재렌더링합니다.
     const renderInvalid = (message: string, status = 422) => {
