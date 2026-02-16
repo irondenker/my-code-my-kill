@@ -46,10 +46,8 @@ export type UploadValidationOptions = {
 export type SqlInjectionOptions = {
     enabled: boolean;
     targets: {
-        loginUsername: boolean;
-        registerUsernameLookup: boolean;
+        usernameLookup: boolean;
         registerCreateUser: boolean;
-        adminUserUsernameLookup: boolean;
         adminUserCreate: boolean;
         profileLookupByUsername: boolean;
         profileUpdate: boolean;
@@ -102,10 +100,8 @@ const DEFAULT_LAB_OPTIONS: LabOptions = {
     sqlInjection: {
         enabled: false,
         targets: {
-            loginUsername: false,
-            registerUsernameLookup: false,
+            usernameLookup: false,
             registerCreateUser: false,
-            adminUserUsernameLookup: false,
             adminUserCreate: false,
             profileLookupByUsername: false,
             profileUpdate: false,
@@ -493,7 +489,7 @@ function parseDebugErrorRoutesOption(value: unknown): boolean {
  * - `sqlInjection: { "enabled": boolean, "targets": { "<targetKey>": boolean, ... } }`
  *
  * targets 키 목록:
- * - loginUsername, registerUsernameLookup, registerCreateUser, adminUserUsernameLookup, adminUserCreate
+ * - usernameLookup, registerCreateUser, adminUserCreate
  * - profileLookupByUsername, profileUpdate
  * - boardLookupBySlug, boardCreate, boardUpdate
  * - postLookup, postCreate, postUpdate
@@ -531,25 +527,15 @@ function parseSqlInjectionOptions(value: unknown): SqlInjectionOptions {
     }
 
     const targets = {
-        loginUsername: parseBooleanOption(
-            parsedTargets?.loginUsername,
-            "sqlInjection.targets.loginUsername",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.loginUsername,
-        ),
-        registerUsernameLookup: parseBooleanOption(
-            parsedTargets?.registerUsernameLookup,
-            "sqlInjection.targets.registerUsernameLookup",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.registerUsernameLookup,
+        usernameLookup: parseBooleanOption(
+            parsedTargets?.usernameLookup,
+            "sqlInjection.targets.usernameLookup",
+            DEFAULT_LAB_OPTIONS.sqlInjection.targets.usernameLookup,
         ),
         registerCreateUser: parseBooleanOption(
             parsedTargets?.registerCreateUser,
             "sqlInjection.targets.registerCreateUser",
             DEFAULT_LAB_OPTIONS.sqlInjection.targets.registerCreateUser,
-        ),
-        adminUserUsernameLookup: parseBooleanOption(
-            parsedTargets?.adminUserUsernameLookup,
-            "sqlInjection.targets.adminUserUsernameLookup",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.adminUserUsernameLookup,
         ),
         adminUserCreate: parseBooleanOption(
             parsedTargets?.adminUserCreate,

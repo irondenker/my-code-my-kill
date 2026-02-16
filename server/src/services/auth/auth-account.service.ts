@@ -1,4 +1,4 @@
-import { isSqlInjectionLabEnabled } from "../lab/sql-injection-control.service.js";
+import { isSqlInjectionTargetEnabled } from "../lab/sql-injection-control.service.js";
 import * as labImplementation from "./auth-account.lab.service.js";
 import * as normalImplementation from "./auth-account.normal.service.js";
 import type { AuthUser, AuthUserPublic } from "../../types/auth.types.js";
@@ -7,55 +7,19 @@ import type { AuthUser, AuthUserPublic } from "../../types/auth.types.js";
  * 인증 계정 서비스 facade입니다.
  *
  * 모드:
- * - SQLi lab 활성화: `auth-account.lab.service`
- * - SQLi lab 비활성화: `auth-account.normal.service`
- *
- * 참고:
- * - 모드 선택은 모듈 로드 시 1회 결정됩니다(프로세스 재시작 전까지 고정).
+ * - 타깃별 SQLi가 활성화된 기능만 `auth-account.lab.service`를 사용합니다.
+ * - 그 외 기능은 `auth-account.normal.service`를 사용합니다.
  */
-
-// 시작 시점의 lab 토글 값을 기준으로 구현체를 선택합니다.
-const useLabImplementation = isSqlInjectionLabEnabled();
 
 /**
  * username으로 사용자를 조회합니다.
- * (항상 safe 조회이며, 모드에 따라 내부 구현체만 달라집니다.)
+ * SQLi username 조회 타깃이 하나라도 활성화된 경우 lab 경로를 사용합니다.
  */
 export async function findUserByUsername(username: string): Promise<AuthUser | null> {
-    if (useLabImplementation) {
+    if (isSqlInjectionTargetEnabled("usernameLookup")) {
         return labImplementation.findUserByUsername(username);
     }
     return normalImplementation.findUserByUsername(username);
-}
-
-/**
- * 로그인 컨텍스트 사용자 조회입니다.
- */
-export async function findUserForLogin(params: { username: string }): Promise<AuthUser | null> {
-    if (useLabImplementation) {
-        return labImplementation.findUserForLogin(params);
-    }
-    return normalImplementation.findUserForLogin(params);
-}
-
-/**
- * 회원가입 화면 username 중복 체크용 조회입니다.
- */
-export async function findUserByUsernameForRegisterLookup(username: string): Promise<AuthUser | null> {
-    if (useLabImplementation) {
-        return labImplementation.findUserByUsernameForRegisterLookup(username);
-    }
-    return normalImplementation.findUserByUsernameForRegisterLookup(username);
-}
-
-/**
- * 어드민 유저 생성 화면 username 중복 체크용 조회입니다.
- */
-export async function findUserByUsernameForAdminLookup(username: string): Promise<AuthUser | null> {
-    if (useLabImplementation) {
-        return labImplementation.findUserByUsernameForAdminLookup(username);
-    }
-    return normalImplementation.findUserByUsernameForAdminLookup(username);
 }
 
 /**
@@ -65,7 +29,7 @@ export async function createUserForRegister(params: {
     username: string;
     passwordHash: string;
 }): Promise<AuthUserPublic> {
-    if (useLabImplementation) {
+    if (isSqlInjectionTargetEnabled("registerCreateUser")) {
         return labImplementation.createUserForRegister(params);
     }
     return normalImplementation.createUserForRegister(params);
@@ -80,7 +44,7 @@ export async function createUserForAdmin(params: {
     userRole: AuthUser["userRole"];
     isActive: boolean;
 }): Promise<AuthUserPublic> {
-    if (useLabImplementation) {
+    if (isSqlInjectionTargetEnabled("adminUserCreate")) {
         return labImplementation.createUserForAdmin(params);
     }
     return normalImplementation.createUserForAdmin(params);

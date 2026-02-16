@@ -92,27 +92,6 @@ export async function findUserByUsername(username: string): Promise<AuthUser | n
 }
 
 /**
- * 로그인용 사용자 조회입니다.
- */
-export async function findUserForLogin(params: { username: string }): Promise<AuthUser | null> {
-    return findUserByUsernameSafe(params.username);
-}
-
-/**
- * 회원가입 화면에서 사용하는 username 중복 체크용 조회입니다.
- */
-export async function findUserByUsernameForRegisterLookup(username: string): Promise<AuthUser | null> {
-    return findUserByUsernameSafe(username);
-}
-
-/**
- * 어드민 유저 생성 화면에서 사용하는 username 중복 체크용 조회입니다.
- */
-export async function findUserByUsernameForAdminLookup(username: string): Promise<AuthUser | null> {
-    return findUserByUsernameSafe(username);
-}
-
-/**
  * 사용자 생성(회원가입 컨텍스트)입니다.
  */
 export async function createUserForRegister(params: {

@@ -1,8 +1,7 @@
 import type { Request, Response } from "express";
 import {
-    findUserForLogin,
+    findUserByUsername,
     createUserForRegister,
-    findUserByUsernameForRegisterLookup,
 } from "../services/auth.service.js";
 import { findUserProfileById } from "../services/profile.service.js";
 import { writeAdminAuditLogSafely } from "../services/audit.service.js";
@@ -129,7 +128,7 @@ export async function postRegister(req: Request, res: Response) {
         });
     }
 
-    const existing = await findUserByUsernameForRegisterLookup(username);
+    const existing = await findUserByUsername(username);
     if (existing) {
         return res.status(409).render("auth/register", {
             formError: "Username is already taken.",
@@ -192,9 +191,7 @@ export async function postLogin(req: Request, res: Response) {
         });
     }
 
-    const user = await findUserForLogin({
-        username,
-    });
+    const user = await findUserByUsername(username);
     if (!user || !verifyPassword(password, user.passwordHash)) {
         await writeAdminAuditLogSafely({
             action: "LOGIN_FAILED",

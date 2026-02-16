@@ -22,10 +22,8 @@
   "sqlInjection": {
     "enabled": false,
     "targets": {
-      "loginUsername": false,
-      "registerUsernameLookup": false,
+      "usernameLookup": false,
       "registerCreateUser": false,
-      "adminUserUsernameLookup": false,
       "adminUserCreate": false,
       "profileLookupByUsername": false,
       "profileUpdate": false,
@@ -49,21 +47,13 @@
 
 아래 항목들은 모두 “사용자 입력이 들어간 SQL 문자열을 직접 이어붙이는 형태”로 바뀌는 지점입니다.
 
-- `loginUsername`
-  - 로그인 시 username으로 사용자 조회가 취약해집니다.
-  - 입력 지점: `/login` 폼의 `username`
-
-- `registerUsernameLookup`
-  - 회원가입 시 “username 중복 체크(조회)”가 취약해집니다.
-  - 입력 지점: `/register` 폼의 `username`
+- `usernameLookup`
+  - 로그인/회원가입/어드민 유저 생성에서 username 조회(중복 체크 포함)가 취약해집니다.
+  - 입력 지점: `/login`, `/register`, `/admin/users` 폼의 `username`
 
 - `registerCreateUser`
   - 회원가입 시 “사용자 생성(INSERT)”이 취약해집니다.
   - 입력 지점: `/register` 폼의 `username` (및 내부적으로 `passwordHash` 등)
-
-- `adminUserUsernameLookup`
-  - 어드민에서 사용자 생성 전 “username 중복 체크(조회)”가 취약해집니다.
-  - 입력 지점: `/admin/users`의 Create account 폼 `username`
 
 - `adminUserCreate`
   - 어드민에서 “사용자 생성(INSERT)”이 취약해집니다.
@@ -110,7 +100,7 @@
   "sqlInjection": {
     "enabled": true,
     "targets": {
-      "loginUsername": true
+      "usernameLookup": true
     }
   }
 }
@@ -123,10 +113,8 @@
   "sqlInjection": {
     "enabled": true,
     "targets": {
-      "loginUsername": true,
-      "registerUsernameLookup": true,
+      "usernameLookup": true,
       "registerCreateUser": true,
-      "adminUserUsernameLookup": true,
       "adminUserCreate": true,
       "profileLookupByUsername": true,
       "profileUpdate": true,
