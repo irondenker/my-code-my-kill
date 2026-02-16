@@ -34,11 +34,11 @@ export async function createBoardPost(params: {
             WITH max_display AS (
                 SELECT COALESCE(MAX(display_id), 0) AS max_display_id
                 FROM posts
-                WHERE board_id = :boardId
+                WHERE board_id = ${boardId}
             ),
             upsert AS (
                 INSERT INTO board_post_counters (board_id, next_display_id)
-                SELECT :boardId, max_display_id + 2 FROM max_display
+                SELECT ${boardId}, max_display_id + 2 FROM max_display
                 ON CONFLICT (board_id) DO UPDATE
                 SET next_display_id = GREATEST(
                     board_post_counters.next_display_id,
@@ -48,7 +48,7 @@ export async function createBoardPost(params: {
             )
             SELECT next_display_id - 1 AS display_id FROM upsert
             `,
-            { type: QueryTypes.SELECT, replacements: { boardId }, transaction }
+            { type: QueryTypes.SELECT, transaction }
         );
 
         const displayId = Number(displayRows[0]?.display_id);
@@ -133,14 +133,14 @@ export async function softDeletePostBySlugDisplayIdAsAdmin(params: { slug: strin
                 updated_at = NOW()
             FROM boards b
             WHERE p.board_id = b.board_id
-              AND b.slug = :slug
-              AND p.display_id = :displayId
+              AND b.slug = '${slug}'
+              AND p.display_id = ${displayId}
               AND p.use_yn = true
             RETURNING p.post_id
         )
         SELECT post_id FROM updated
         `,
-        { type: QueryTypes.SELECT, replacements: { slug, displayId } }
+        { type: QueryTypes.SELECT }
     );
 
     return rows.length > 0;
@@ -163,16 +163,16 @@ export async function softDeletePostBySlugDisplayId(params: {
                 updated_at = NOW()
             FROM boards b, users u
             WHERE p.board_id = b.board_id
-              AND b.slug = :slug
-              AND p.display_id = :displayId
+              AND b.slug = '${slug}'
+              AND p.display_id = ${displayId}
               AND p.use_yn = true
-              AND u.user_id = :requestUserId
+              AND u.user_id = ${requestUserId}
               AND (u.user_role = 'admin' OR p.user_id = u.user_id)
             RETURNING p.post_id
         )
         SELECT post_id FROM updated
         `,
-        { type: QueryTypes.SELECT, replacements: { slug, displayId, requestUserId } }
+        { type: QueryTypes.SELECT }
     );
 
     return rows.length > 0;

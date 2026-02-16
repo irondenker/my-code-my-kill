@@ -26,5 +26,8 @@ export async function findNeighborPosts(params: {
     displayId: number;
     viewerUserId?: number;
 }): Promise<{ prevPost: NeighborPost; nextPost: NeighborPost }> {
+    if (isSqlInjectionTargetEnabled("postLookup")) {
+        return labImplementation.findNeighborPosts(params);
+    }
     return normalImplementation.findNeighborPosts(params);
 }

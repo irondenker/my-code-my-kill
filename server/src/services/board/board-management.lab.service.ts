@@ -13,22 +13,6 @@ import { mapBoardMeta } from "../../utils/board-mapper.util.js";
  */
 
 /**
- * 보드 목록을 반환합니다.
- */
-export async function listBoards(): Promise<BoardMeta[]> {
-    const rows = await sequelize.query<BoardMetaRow>(
-        `
-        SELECT board_id, slug, name, description, read_access, create_access
-        FROM boards
-        ORDER BY name ASC
-        `,
-        { type: QueryTypes.SELECT }
-    );
-
-    return rows.map(mapBoardMeta);
-}
-
-/**
  * slug로 보드 메타를 조회합니다.
  * (facade에서 타깃 활성화 시에만 이 lab 구현이 호출됩니다.)
  */
@@ -55,13 +39,10 @@ export async function findBoardById(boardId: number): Promise<BoardMeta | null> 
         `
         SELECT board_id, slug, name, description, read_access, create_access
         FROM boards
-        WHERE board_id = :boardId
+        WHERE board_id = ${boardId}
         LIMIT 1
         `,
-        {
-            type: QueryTypes.SELECT,
-            replacements: { boardId },
-        }
+        { type: QueryTypes.SELECT }
     );
 
     const row = rows[0];

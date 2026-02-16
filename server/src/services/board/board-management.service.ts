@@ -23,5 +23,8 @@ export async function findBoardBySlug(slug: string): Promise<BoardMeta | null> {
 }
 
 export async function findBoardById(boardId: number): Promise<BoardMeta | null> {
+    if (isSqlInjectionTargetEnabled("boardLookupBySlug")) {
+        return labImplementation.findBoardById(boardId);
+    }
     return normalImplementation.findBoardById(boardId);
 }

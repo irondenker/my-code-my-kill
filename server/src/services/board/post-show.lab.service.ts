@@ -60,38 +60,34 @@ export async function findNeighborPosts(params: {
     displayId: number;
     viewerUserId?: number;
 }): Promise<{ prevPost: NeighborPost; nextPost: NeighborPost }> {
-    const predicate = typeof params.viewerUserId === "number" ? " AND user_id = :viewerUserId" : "";
-    const replacements =
-        typeof params.viewerUserId === "number"
-            ? { boardId: params.boardId, displayId: params.displayId, viewerUserId: params.viewerUserId }
-            : { boardId: params.boardId, displayId: params.displayId };
+    const predicate = typeof params.viewerUserId === "number" ? ` AND user_id = ${params.viewerUserId}` : "";
 
     const [prevRows, nextRows] = await Promise.all([
         sequelize.query<NeighborPostRow>(
             `
             SELECT display_id, title
             FROM posts
-            WHERE board_id = :boardId
+            WHERE board_id = ${params.boardId}
               AND use_yn = true
-              AND display_id < :displayId
+              AND display_id < ${params.displayId}
               ${predicate}
             ORDER BY display_id DESC
             LIMIT 1
             `,
-            { type: QueryTypes.SELECT, replacements }
+            { type: QueryTypes.SELECT }
         ),
         sequelize.query<NeighborPostRow>(
             `
             SELECT display_id, title
             FROM posts
-            WHERE board_id = :boardId
+            WHERE board_id = ${params.boardId}
               AND use_yn = true
-              AND display_id > :displayId
+              AND display_id > ${params.displayId}
               ${predicate}
             ORDER BY display_id ASC
             LIMIT 1
             `,
-            { type: QueryTypes.SELECT, replacements }
+            { type: QueryTypes.SELECT }
         ),
     ]);
 

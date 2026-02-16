@@ -16,10 +16,16 @@ export async function countBoardPosts(): Promise<number> {
 }
 
 export async function countBoardPostsBySlug(slug: string): Promise<number> {
+    if (isSqlInjectionTargetEnabled("postLookup")) {
+        return labImplementation.countBoardPostsBySlug(slug);
+    }
     return normalImplementation.countBoardPostsBySlug(slug);
 }
 
 export async function listBoardPostOutlines(params: { offset: number; limit: number }): Promise<BoardPostOutline[]> {
+    if (isSqlInjectionTargetEnabled("postLookup")) {
+        return labImplementation.listBoardPostOutlines(params);
+    }
     return normalImplementation.listBoardPostOutlines(params);
 }
 
@@ -28,6 +34,9 @@ export async function listBoardPostOutlinesBySlug(params: {
     offset: number;
     limit: number;
 }): Promise<BoardPostOutline[]> {
+    if (isSqlInjectionTargetEnabled("postLookup")) {
+        return labImplementation.listBoardPostOutlinesBySlug(params);
+    }
     return normalImplementation.listBoardPostOutlinesBySlug(params);
 }
 
@@ -42,5 +51,8 @@ export async function findPostBySlugDisplayId(params: {
 }
 
 export async function doesPostExistBySlugDisplayId(params: { slug: string; displayId: number }): Promise<boolean> {
+    if (isSqlInjectionTargetEnabled("postLookup")) {
+        return labImplementation.doesPostExistBySlugDisplayId(params);
+    }
     return normalImplementation.doesPostExistBySlugDisplayId(params);
 }

@@ -45,7 +45,7 @@
 
 ## targets 상세(공격표면 매핑)
 
-아래 항목들은 모두 “사용자 입력이 들어간 SQL 문자열을 직접 이어붙이는 형태”로 바뀌는 지점입니다.
+아래 항목들은 모두 “요청 파라미터/사용자 입력이 SQL 문자열에 직접 이어붙는 형태”로 바뀌는 지점입니다.
 
 - `usernameLookup`
   - 로그인/회원가입/어드민 유저 생성에서 username 조회(중복 체크 포함)가 취약해집니다.
@@ -68,8 +68,10 @@
   - 입력 지점: `/settings/profile` 폼의 `displayName`, `email`, `phoneNumber`, `bio`
 
 - `boardLookupBySlug`
-  - 보드 slug 기반 조회가 취약해집니다.
-  - 입력 지점: `/board/:slug` 등 path param `slug`
+  - 보드 조회가 취약해집니다. (slug 조회 + boardId 조회 포함)
+  - 입력 지점:
+    - `/board/:slug` 등 path param `slug`
+    - `/admin/boards/:boardId/edit` 등 path param `boardId`
 
 - `boardCreate`
   - 어드민 보드 생성(INSERT)이 취약해집니다.
@@ -80,16 +82,20 @@
   - 입력 지점: `/admin/boards/:boardId/edit` 폼
 
 - `postLookup`
-  - 게시글 상세 조회가 취약해집니다.
-  - 입력 지점: `/board/:slug/:displayId`의 `slug`, `displayId`
+  - 게시글 조회 계열(목록/상세/존재확인/이웃글 조회)이 취약해집니다.
+  - 입력 지점:
+    - `/board/:slug`의 `slug`, `page`
+    - `/board/:slug/:displayId`의 `slug`, `displayId`
 
 - `postCreate`
   - 글쓰기(INSERT)가 취약해집니다.
   - 입력 지점: `/board/:slug/new`의 `title`, `content`
 
 - `postUpdate`
-  - 글수정(UPDATE)이 취약해집니다.
-  - 입력 지점: `/board/:slug/:displayId/edit`의 `title`, `content`
+  - 글수정 및 글삭제(soft delete) 쿼리가 취약해집니다.
+  - 입력 지점:
+    - `/board/:slug/:displayId/edit`의 `title`, `content`
+    - `/board/:slug/:displayId`의 `slug`, `displayId`
 
 ## 추천 설정 예시
 

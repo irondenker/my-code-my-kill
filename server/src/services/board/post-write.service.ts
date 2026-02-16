@@ -38,6 +38,9 @@ export async function updateBoardPost(params: {
 }
 
 export async function softDeletePostBySlugDisplayIdAsAdmin(params: { slug: string; displayId: number }): Promise<boolean> {
+    if (isSqlInjectionTargetEnabled("postUpdate")) {
+        return labImplementation.softDeletePostBySlugDisplayIdAsAdmin(params);
+    }
     return normalImplementation.softDeletePostBySlugDisplayIdAsAdmin(params);
 }
 
@@ -46,5 +49,8 @@ export async function softDeletePostBySlugDisplayId(params: {
     displayId: number;
     requestUserId: number;
 }): Promise<boolean> {
+    if (isSqlInjectionTargetEnabled("postUpdate")) {
+        return labImplementation.softDeletePostBySlugDisplayId(params);
+    }
     return normalImplementation.softDeletePostBySlugDisplayId(params);
 }

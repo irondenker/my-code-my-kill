@@ -13,22 +13,6 @@ import { mapBoardPostOutline, mapBoardPostRecord } from "../../utils/board-mappe
  */
 
 /**
- * 전체 활성 게시글 수를 반환합니다.
- */
-export async function countBoardPosts(): Promise<number> {
-    const rows = await sequelize.query<{ total_count: string }>(
-        `
-        SELECT COUNT(*) AS total_count
-        FROM posts
-        WHERE use_yn = true
-        `,
-        { type: QueryTypes.SELECT }
-    );
-
-    return Number(rows[0]?.total_count ?? 0);
-}
-
-/**
  * 특정 보드(slug)의 활성 게시글 수를 반환합니다.
  */
 export async function countBoardPostsBySlug(slug: string): Promise<number> {
@@ -38,12 +22,9 @@ export async function countBoardPostsBySlug(slug: string): Promise<number> {
         FROM posts p
         JOIN boards b ON p.board_id = b.board_id
         WHERE p.use_yn = true
-          AND b.slug = :slug
+          AND b.slug = '${slug}'
         `,
-        {
-            type: QueryTypes.SELECT,
-            replacements: { slug },
-        }
+        { type: QueryTypes.SELECT }
     );
 
     return Number(rows[0]?.total_count ?? 0);
@@ -69,10 +50,10 @@ export async function listBoardPostOutlines(params: { offset: number; limit: num
         JOIN users u ON p.user_id = u.user_id
         WHERE p.use_yn = true
         ORDER BY p.display_id DESC
-        LIMIT :limit
-        OFFSET :offset
+        LIMIT ${limit}
+        OFFSET ${offset}
         `,
-        { type: QueryTypes.SELECT, replacements: { limit, offset } }
+        { type: QueryTypes.SELECT }
     );
 
     return rows.map(mapBoardPostOutline);
@@ -101,12 +82,12 @@ export async function listBoardPostOutlinesBySlug(params: {
         JOIN boards b ON p.board_id = b.board_id
         JOIN users u ON p.user_id = u.user_id
         WHERE p.use_yn = true
-          AND b.slug = :slug
+          AND b.slug = '${slug}'
         ORDER BY p.created_at DESC
-        LIMIT :limit
-        OFFSET :offset
+        LIMIT ${limit}
+        OFFSET ${offset}
         `,
-        { type: QueryTypes.SELECT, replacements: { slug, limit, offset } }
+        { type: QueryTypes.SELECT }
     );
 
     return rows.map(mapBoardPostOutline);
@@ -157,12 +138,12 @@ export async function doesPostExistBySlugDisplayId(params: { slug: string; displ
             SELECT 1
             FROM posts p
             JOIN boards b ON p.board_id = b.board_id
-            WHERE b.slug = :slug
-              AND p.display_id = :displayId
+            WHERE b.slug = '${slug}'
+              AND p.display_id = ${displayId}
               AND p.use_yn = true
         ) AS exists
         `,
-        { type: QueryTypes.SELECT, replacements: { slug, displayId } }
+        { type: QueryTypes.SELECT }
     );
 
     return Boolean(rows[0]?.exists);
