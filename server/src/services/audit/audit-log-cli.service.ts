@@ -1,5 +1,8 @@
-import { buildAdminAuditCliPayload, formatAdminAuditCliErrorLine } from "../../utils/audit-cli-log.util.js";
-import type { EmitAdminAuditCliLogParams } from "../../types/audit-log-cli.types.js";
+import { summarizeErrorMessage } from "../../utils/error-summary.util.js";
+import { formatKvLine } from "../../utils/log-format.util.js";
+import type { NormalizedAdminAuditLogWriteInput } from "../../types/admin-audit-write.types.js";
+import type { AdminAuditAction } from "../../types/audit-log.types.js";
+import type { AdminAuditCliPayload, EmitAdminAuditCliLogParams } from "../../types/audit-log-cli.types.js";
 
 /**
  * 감사로그 CLI 출력 전용 서비스입니다.
@@ -28,6 +31,82 @@ function getAuditCliLogLevel(): AuditCliLogLevel {
  * 현재 프로세스에서 사용할 감사로그 콘솔 출력 레벨(서버 시작 시 1회 결정)입니다.
  */
 const auditCliLogLevel = getAuditCliLogLevel();
+
+/**
+ * writeAdminAuditLogSafely 실패 시 콘솔에 남길 1줄 요약을 생성합니다.
+ */
+export function formatAdminAuditSafeWriteErrorLine(params: {
+    action: AdminAuditAction;
+    error: unknown;
+}): string {
+    return formatKvLine(
+        "[AUDIT_LOG_ERROR]",
+        {
+            action: params.action,
+            reason: summarizeErrorMessage(params.error),
+        },
+        { quoteStrings: "auto" }
+    );
+}
+
+/**
+ * DB 저장 결과를 감사로그 콘솔 출력 함수로 전달합니다.
+ */
+export function emitAdminAuditWriteOutcomeToCli(
+    outcome: "success" | "failure",
+    input: NormalizedAdminAuditLogWriteInput,
+    error?: unknown
+): void {
+    emitAdminAuditCliLog({
+        outcome,
+        action: input.action,
+        actorUserId: input.actorUserId,
+        actorUsername: input.actorUsername,
+        targetUserId: input.targetUserId,
+        targetUsername: input.targetUsername,
+        details: input.details,
+        ipAddress: input.ipAddress,
+        userAgent: input.userAgent,
+        error,
+    });
+}
+
+/**
+ * 감사로그 CLI 출력용 JSON payload를 구성합니다.
+ */
+function buildAdminAuditCliPayload(params: EmitAdminAuditCliLogParams): AdminAuditCliPayload {
+    return {
+        timestamp: new Date().toISOString(),
+        source: "admin_audit",
+        outcome: params.outcome,
+        action: params.action,
+        actorUserId: params.actorUserId,
+        actorUsername: params.actorUsername,
+        targetUserId: params.targetUserId,
+        targetUsername: params.targetUsername,
+        details: params.details,
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+    };
+}
+
+/**
+ * 감사로그 실패 이벤트를 key=value 1줄 형식으로 포맷합니다.
+ */
+function formatAdminAuditCliErrorLine(params: EmitAdminAuditCliLogParams): string {
+    const reason = params.error ? summarizeErrorMessage(params.error) : "-";
+    return formatKvLine(
+        "[AUDIT][ERROR]",
+        {
+            action: params.action,
+            actor: params.actorUserId,
+            target: params.targetUserId,
+            ip: params.ipAddress,
+            reason,
+        },
+        { nullValue: "-", quoteStrings: "auto" }
+    );
+}
 
 /**
  * 감사 로그를 Node 콘솔에 출력합니다.

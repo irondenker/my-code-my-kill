@@ -1,10 +1,11 @@
-import { emitAdminAuditCliLog } from "./audit-log-cli.service.js";
-import { createAdminAuditLog } from "./audit-log-db.service.js";
 import {
+    emitAdminAuditWriteOutcomeToCli,
     formatAdminAuditSafeWriteErrorLine,
-    normalizeAdminAuditLogWriteInput,
-} from "../../utils/admin-audit-log.util.js";
+} from "./audit-log-cli.service.js";
+import { createAdminAuditLog } from "./audit-log-db.service.js";
 import { ADMIN_AUDIT_ACTIONS } from "../../types/audit-log.types.js";
+import { sanitizeRecord } from "../../utils/record.util.js";
+import { normalizeNullableString, truncateNullableString } from "../../utils/string.util.js";
 import type {
     AdminAuditLogWriteParams,
     NormalizedAdminAuditLogWriteInput,
@@ -26,29 +27,31 @@ export { listAdminAuditLogs } from "./audit-log-db.service.js";
  */
 
 /**
- * DB 저장 결과를 감사로그 콘솔 출력 함수로 전달합니다.
- *
- * @param outcome 성공/실패
- * @param input 정규화된 입력
- * @param error 실패 시 에러(선택)
+ * 감사로그 저장 입력을 DB 저장/CLI 출력에 적합한 형태로 정규화합니다.
  */
-function emitAdminAuditWriteOutcomeToCli(
-    outcome: "success" | "failure",
-    input: NormalizedAdminAuditLogWriteInput,
-    error?: unknown
-): void {
-    emitAdminAuditCliLog({
-        outcome,
-        action: input.action,
-        actorUserId: input.actorUserId,
-        actorUsername: input.actorUsername,
-        targetUserId: input.targetUserId,
-        targetUsername: input.targetUsername,
-        details: input.details,
-        ipAddress: input.ipAddress,
-        userAgent: input.userAgent,
-        error,
-    });
+function normalizeAdminAuditLogWriteInput(
+    params: AdminAuditLogWriteParams
+): NormalizedAdminAuditLogWriteInput {
+    const actorUserId = params.actorUserId ?? null;
+    const targetUserId = params.targetUserId ?? null;
+    const actorUsername = truncateNullableString(normalizeNullableString(params.actorUsername), 50);
+    const targetUsername = truncateNullableString(normalizeNullableString(params.targetUsername), 50);
+    const ipAddress = truncateNullableString(normalizeNullableString(params.ipAddress), 64);
+    const userAgent = truncateNullableString(normalizeNullableString(params.userAgent), 255);
+    const details = sanitizeRecord(params.details);
+    const detailsJson = JSON.stringify(details);
+
+    return {
+        action: params.action,
+        actorUserId,
+        actorUsername,
+        targetUserId,
+        targetUsername,
+        details,
+        detailsJson,
+        ipAddress,
+        userAgent,
+    };
 }
 
 /**
