@@ -9,9 +9,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 빌드/테스트/스펙 드리프트 검증을 위해 리포지토리 소스를 체크아웃한다.
       - name: Checkout
         uses: actions/checkout@v6
 
+      # 재현 가능한 서버 빌드/테스트를 위해 Node 메이저 버전을 고정한다.
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -19,18 +21,23 @@ jobs:
           cache: npm
           cache-dependency-path: server/package-lock.json
 
+      # package-lock.json 기준으로 의존성을 정확히 설치한다.
       - name: Install dependencies
         run: npm ci
         working-directory: server
 
+      # TypeScript를 컴파일하고 타입/빌드 오류를 즉시 실패 처리한다.
       - name: Build
         run: npm run build
         working-directory: server
 
+      # package.json에 정의된 서버 테스트를 실행한다.
       - name: Test
         run: npm run test
         working-directory: server
 
+      # 라우트 선언과 OpenAPI 문서 간 드리프트를 검증한다.
+      # 한계: 런타임 동작 자체를 실행 검증하지는 않는다.
       - name: Check OpenAPI drift
         run: npm run check:openapi-drift
         working-directory: server
