@@ -7,10 +7,13 @@ import { listAuditLogs } from "../services/audit.service.js";
  */
 export async function getAuditLogsPage(req: Request, res: Response) {
     const queryLimit = Number(req.query?.limit);
+    // 잘못된 입력은 기본값(200)으로 복구하고, 최종 clamp는 서비스 계층에서 한 번 더 수행합니다.
     const limit = Number.isFinite(queryLimit) && queryLimit > 0 ? queryLimit : 200;
     const logs = await listAuditLogs(limit);
+    // 뷰에서 선택값을 안정적으로 유지하도록 1~500 범위의 정수로 표시합니다.
+    const selectedLimit = Math.min(Math.max(Math.trunc(limit), 1), 500);
     return res.render("admin/audit-logs/index", {
         logs,
-        selectedLimit: Math.min(Math.max(Math.trunc(limit), 1), 500),
+        selectedLimit,
     });
 }

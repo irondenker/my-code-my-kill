@@ -100,6 +100,7 @@ export async function postArticleCreate(req: Request, res: Response) {
             attachmentFile,
         });
     } catch (err) {
+        // 업로드 검증 실패는 도메인 예외를 422 폼 에러로 변환해 사용자 입력을 보존합니다.
         if (!(err instanceof ArticleUploadError)) {
             throw err;
         }
@@ -167,6 +168,7 @@ export async function postArticleEdit(req: Request, res: Response) {
             attachmentFile,
         });
     } catch (err) {
+        // 수정 흐름도 생성과 동일하게 업로드 관련 오류만 422로 노출합니다.
         if (!(err instanceof ArticleUploadError)) {
             throw err;
         }
@@ -190,6 +192,7 @@ export async function postArticleEdit(req: Request, res: Response) {
 export async function deleteArticle(req: Request, res: Response) {
     const slug = getStringParamOrThrow(req, "slug");
     const displayId = getPositiveIntParamOrThrow(req, "displayId");
+    // 보드 정책에 따라 "관리자 전용 삭제"와 "작성자/관리자 삭제" 경로를 분리합니다.
     const deletePlan = resolveArticleDeletePlan(req, slug);
     let deleted = false;
 
@@ -204,6 +207,8 @@ export async function deleteArticle(req: Request, res: Response) {
     }
 
     if (deleted) {
+        // HTML 폼(POST) 요청은 UX를 위해 보드 목록으로 리다이렉트하고,
+        // API 스타일 요청(DELETE)은 본문 없이 204로 종료합니다.
         if (req.method === "POST") {
             req.session.boardFlashMessage = "Article has been deleted.";
             return res.redirect(`/board/${encodeURIComponent(slug)}`);
@@ -211,6 +216,7 @@ export async function deleteArticle(req: Request, res: Response) {
         return res.status(204).send();
     }
 
+    // 삭제 실패 시 존재 여부를 재확인해 404(대상 없음)와 403(권한 부족)을 구분합니다.
     const exists = await doesArticleExistBySlugDisplayId({ slug, displayId });
     if (!exists) {
         throw new HttpError(404, "Not Found");
@@ -222,8 +228,11 @@ export async function getArticleShow(req: Request, res: Response) {
     const slug = getStringParamOrThrow(req, "slug");
     const displayId = getPositiveIntParamOrThrow(req, "displayId");
 
+    // 1) 보드 자체 접근권한을 먼저 확인합니다.
     const board = await requireBoardBySlug(slug);
     const viewerContext = ensureBoardReadAccess(req, board);
+
+    // 2) 게시글을 조회한 뒤, owner_or_admin 정책은 게시글 작성자 기준으로 추가 판정합니다.
     const post = await findArticleForShowBySlugDisplayId({ slug, displayId });
     if (!post) {
         throw new HttpError(404, "Not Found");
@@ -239,6 +248,8 @@ export async function getArticleShow(req: Request, res: Response) {
         viewerContext,
         postUserId: post.user_id,
     });
+
+    // 3) 이전/다음 글 조회는 동일 접근정책을 공유하도록 helper가 쿼리 파라미터를 조립합니다.
     const neighborParams = buildNeighborArticleQueryParams({
         boardId: post.board_id,
         displayId,
