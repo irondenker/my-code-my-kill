@@ -1,4 +1,4 @@
-import type { UserRole } from "./user-role.types.js";
+import type { UserRole } from "../user/user-role.types.js";
 
 /**
  * 로그인 실패 사유 코드입니다.

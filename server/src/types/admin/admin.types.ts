@@ -1,4 +1,4 @@
-import type { BoardCreateAccess, BoardReadAccess } from "./board.types.js";
+import type { BoardCreateAccess, BoardReadAccess } from "../board/board.types.js";
 
 /**
  * 어드민 UI에서 사용하는 사용자 상태 타입입니다.
