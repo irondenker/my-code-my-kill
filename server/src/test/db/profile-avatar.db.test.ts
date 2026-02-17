@@ -6,8 +6,13 @@ import "dotenv/config";
 import sharp from "sharp";
 import { sequelize } from "../../db/index.js";
 import { createUserForRegister } from "../../services/auth.service.js";
-import { findUserProfileById, updateUserProfile } from "../../services/profile.service.js";
-import { AVATAR_IMAGE_UPLOAD_DIR } from "../../constants/upload-avatar.constants.js";
+import { findUserProfileById, updateUserProfile, updateUserProfileImage } from "../../services/profile.service.js";
+import {
+    AVATAR_IMAGE_MAX_BYTES,
+    AVATAR_IMAGE_MAX_DIMENSION,
+    AVATAR_IMAGE_MIN_DIMENSION,
+    AVATAR_IMAGE_UPLOAD_DIR,
+} from "../../constants/upload-avatar.constants.js";
 import { hashPassword } from "../../utils/password.util.js";
 import {
     cleanupUserById,
@@ -41,6 +46,12 @@ if (runDbTests) {
     after(async () => {
         await sequelize.close();
     });
+}
+
+function addPngSignaturePrefix(bytes: Uint8Array): Uint8Array {
+    const signature = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    bytes.set(signature, 0);
+    return bytes;
 }
 
 test("avatar controller rejects unsupported mime and supports upload/delete flow", { skip: skipReason }, async () => {
@@ -154,6 +165,144 @@ test("avatar controller rejects unsupported mime and supports upload/delete flow
     }
 });
 
+test("avatar controller validates missing file, magic number, file size, and image dimensions", { skip: skipReason }, async () => {
+    const username = makeId("avatar-valid").slice(0, 32);
+    const password = "avatar-valid-pass-123";
+    let userId: number | null = null;
+
+    try {
+        const created = await createUserForRegister({
+            username,
+            passwordHash: hashPassword(password),
+        });
+        userId = created.userId;
+
+        await withTestServer(async (baseUrl) => {
+            const authCookie = await loginAs({ baseUrl, username, password, nextPath: "/settings/profile" });
+
+            const missingFilePage = await fetchFormPage({
+                baseUrl,
+                path: "/settings/profile",
+                cookie: authCookie,
+            });
+            const missingFileForm = new FormData();
+            missingFileForm.set("_csrf", missingFilePage.csrfToken);
+            const missingFileResponse = await fetch(`${baseUrl}/users/avatar`, {
+                method: "POST",
+                headers: { cookie: missingFilePage.cookie },
+                body: missingFileForm,
+                redirect: "manual",
+            });
+            const missingFileBody = await missingFileResponse.text();
+            assert.equal(missingFileResponse.status, 400);
+            assert.match(missingFileBody, /Avatar file is required\./);
+
+            const invalidMagicPage = await fetchFormPage({
+                baseUrl,
+                path: "/settings/profile",
+                cookie: authCookie,
+            });
+            const invalidMagicForm = new FormData();
+            invalidMagicForm.set("_csrf", invalidMagicPage.csrfToken);
+            invalidMagicForm.set(
+                "avatar",
+                new Blob([Uint8Array.from(Buffer.from("plain-text-not-image", "utf8"))], { type: "image/png" }),
+                "avatar.png"
+            );
+            const invalidMagicResponse = await fetch(`${baseUrl}/users/avatar`, {
+                method: "POST",
+                headers: { cookie: invalidMagicPage.cookie },
+                body: invalidMagicForm,
+                redirect: "manual",
+            });
+            const invalidMagicBody = await invalidMagicResponse.text();
+            assert.equal(invalidMagicResponse.status, 422);
+            assert.match(invalidMagicBody, /Invalid image data\./);
+
+            const tooLargePage = await fetchFormPage({
+                baseUrl,
+                path: "/settings/profile",
+                cookie: authCookie,
+            });
+            const tooLargeBytes = addPngSignaturePrefix(Uint8Array.from(Buffer.alloc(AVATAR_IMAGE_MAX_BYTES + 1, 0)));
+            const tooLargeForm = new FormData();
+            tooLargeForm.set("_csrf", tooLargePage.csrfToken);
+            tooLargeForm.set("avatar", new Blob([Buffer.from(tooLargeBytes)], { type: "image/png" }), "avatar.png");
+            const tooLargeResponse = await fetch(`${baseUrl}/users/avatar`, {
+                method: "POST",
+                headers: { cookie: tooLargePage.cookie },
+                body: tooLargeForm,
+                redirect: "manual",
+            });
+            const tooLargeBody = await tooLargeResponse.text();
+            assert.equal(tooLargeResponse.status, 413);
+            assert.match(tooLargeBody, /Avatar file is too large\./);
+
+            const tooWidePage = await fetchFormPage({
+                baseUrl,
+                path: "/settings/profile",
+                cookie: authCookie,
+            });
+            const tooWideBuffer = await sharp({
+                create: {
+                    width: AVATAR_IMAGE_MAX_DIMENSION + 1,
+                    height: AVATAR_IMAGE_MIN_DIMENSION,
+                    channels: 3,
+                    background: { r: 120, g: 100, b: 80 },
+                },
+            })
+                .png()
+                .toBuffer();
+            const tooWideForm = new FormData();
+            tooWideForm.set("_csrf", tooWidePage.csrfToken);
+            tooWideForm.set("avatar", new Blob([Uint8Array.from(tooWideBuffer)], { type: "image/png" }), "avatar.png");
+            const tooWideResponse = await fetch(`${baseUrl}/users/avatar`, {
+                method: "POST",
+                headers: { cookie: tooWidePage.cookie },
+                body: tooWideForm,
+                redirect: "manual",
+            });
+            const tooWideBody = await tooWideResponse.text();
+            assert.equal(tooWideResponse.status, 422);
+            assert.match(tooWideBody, /Image dimensions exceed the limit\./);
+
+            const tooSmallPage = await fetchFormPage({
+                baseUrl,
+                path: "/settings/profile",
+                cookie: authCookie,
+            });
+            const tooSmallBuffer = await sharp({
+                create: {
+                    width: AVATAR_IMAGE_MIN_DIMENSION - 1,
+                    height: AVATAR_IMAGE_MIN_DIMENSION - 1,
+                    channels: 3,
+                    background: { r: 50, g: 90, b: 140 },
+                },
+            })
+                .png()
+                .toBuffer();
+            const tooSmallForm = new FormData();
+            tooSmallForm.set("_csrf", tooSmallPage.csrfToken);
+            tooSmallForm.set("avatar", new Blob([Uint8Array.from(tooSmallBuffer)], { type: "image/png" }), "avatar.png");
+            const tooSmallResponse = await fetch(`${baseUrl}/users/avatar`, {
+                method: "POST",
+                headers: { cookie: tooSmallPage.cookie },
+                body: tooSmallForm,
+                redirect: "manual",
+            });
+            const tooSmallBody = await tooSmallResponse.text();
+            assert.equal(tooSmallResponse.status, 422);
+            assert.match(tooSmallBody, /Image dimensions are too small\./);
+        });
+    } finally {
+        if (userId !== null) {
+            await cleanupUserById(userId);
+        } else {
+            await cleanupUserByUsername(username);
+        }
+    }
+});
+
 test("user profile page exposes private fields only to owner or admin", { skip: skipReason }, async () => {
     const ownerUsername = makeId("ownerp1").slice(0, 32);
     const ownerPassword = "owner-pass-123";
@@ -219,6 +368,60 @@ test("user profile page exposes private fields only to owner or admin", { skip: 
             await cleanupUserById(ownerUserId);
         } else {
             await cleanupUserByUsername(ownerUsername);
+        }
+    }
+});
+
+test("public profile route returns 404 when username does not exist", { skip: skipReason }, async () => {
+    await withTestServer(async (baseUrl) => {
+        const missingUsername = makeId("missing-profile").slice(0, 32);
+        const response = await fetch(`${baseUrl}/@${missingUsername}`);
+        const body = await response.text();
+
+        assert.equal(response.status, 404);
+        assert.match(body, /data-error-code="404"/);
+    });
+});
+
+test("user profile image url is normalized for stored filename and preserved for absolute upload path", { skip: skipReason }, async () => {
+    const username = makeId("profile-image").slice(0, 32);
+    const password = "profile-image-pass-123";
+    let userId: number | null = null;
+
+    try {
+        const created = await createUserForRegister({
+            username,
+            passwordHash: hashPassword(password),
+        });
+        userId = created.userId;
+
+        await updateUserProfileImage({
+            userId: created.userId,
+            profileImageUrl: "avatar-file.webp",
+        });
+
+        await withTestServer(async (baseUrl) => {
+            const filenameResponse = await fetch(`${baseUrl}/@${username}`);
+            const filenameBody = await filenameResponse.text();
+            assert.equal(filenameResponse.status, 200);
+            assert.match(filenameBody, /\/uploads\/avatars\/avatar-file\.webp/);
+
+            await updateUserProfileImage({
+                userId: created.userId,
+                profileImageUrl: "/uploads/avatars/already-prefixed.webp",
+            });
+
+            const prefixedResponse = await fetch(`${baseUrl}/@${username}`);
+            const prefixedBody = await prefixedResponse.text();
+            assert.equal(prefixedResponse.status, 200);
+            assert.match(prefixedBody, /\/uploads\/avatars\/already-prefixed\.webp/);
+            assert.equal(prefixedBody.includes("/uploads/avatars//uploads/avatars/already-prefixed.webp"), false);
+        });
+    } finally {
+        if (userId !== null) {
+            await cleanupUserById(userId);
+        } else {
+            await cleanupUserByUsername(username);
         }
     }
 });
@@ -405,6 +608,47 @@ test("profile edit returns 404 when DB update affects no rows", { skip: skipReas
                     phoneNumber: "010-1234-5678",
                     bio: "valid-bio",
                 }),
+                redirect: "manual",
+            });
+
+            assert.equal(response.status, 404);
+        });
+    } finally {
+        if (userId !== null) {
+            await cleanupUserById(userId);
+        } else {
+            await cleanupUserByUsername(username);
+        }
+    }
+});
+
+test("settings profile page returns 404 when authenticated session user row is missing", { skip: skipReason }, async () => {
+    const username = makeId("settings404").slice(0, 32);
+    const password = "settings-404-pass-123";
+    let userId: number | null = null;
+
+    try {
+        const created = await createUserForRegister({
+            username,
+            passwordHash: hashPassword(password),
+        });
+        userId = created.userId;
+
+        await withTestServer(async (baseUrl) => {
+            const authCookie = await loginAs({
+                baseUrl,
+                username,
+                password,
+                nextPath: "/settings/profile",
+            });
+
+            await cleanupUserById(created.userId);
+            userId = null;
+
+            const response = await fetch(`${baseUrl}/settings/profile`, {
+                headers: {
+                    cookie: authCookie,
+                },
                 redirect: "manual",
             });
 

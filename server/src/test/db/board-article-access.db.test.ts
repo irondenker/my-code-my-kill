@@ -317,3 +317,69 @@ test("owner_or_admin board masks list and enforces show access by ownership/admi
         }
     }
 });
+
+test("board controller returns 404 for unknown board slug", { skip: skipReason }, async () => {
+    await withTestServer(async (baseUrl) => {
+        const missingSlug = makeId("missing-board").replace(/[^a-z0-9-]/g, "").toLowerCase().slice(0, 24);
+        const response = await fetch(`${baseUrl}/board/${missingSlug}`, { redirect: "manual" });
+        const body = await response.text();
+
+        assert.equal(response.status, 404);
+        assert.match(body, /data-error-code="404"/);
+    });
+});
+
+test("owner_or_admin board is hidden from anon board directory but visible to authenticated users", { skip: skipReason }, async () => {
+    const username = makeId("owner-dir-user").slice(0, 32);
+    const password = "owner-dir-user-pass-123";
+    const boardSlug = makeId("owner-dir").replace(/[^a-z0-9-]/g, "").toLowerCase().slice(0, 24);
+
+    let userId: number | null = null;
+    let boardId: number | null = null;
+
+    try {
+        const user = await createUserForRegister({
+            username,
+            passwordHash: hashPassword(password),
+        });
+        userId = user.userId;
+
+        const board = await createBoard({
+            slug: boardSlug,
+            name: "Owner Directory Board",
+            description: "owner-directory-visibility",
+            readAccess: "owner_or_admin",
+            createAccess: "auth",
+        });
+        boardId = board.boardId;
+
+        await withTestServer(async (baseUrl) => {
+            const anonIndex = await fetch(`${baseUrl}/board`);
+            const anonIndexBody = await anonIndex.text();
+            assert.equal(anonIndex.status, 200);
+            assert.equal(anonIndexBody.includes(`/board/${boardSlug}`), false);
+
+            const authCookie = await loginAs({
+                baseUrl,
+                username,
+                password,
+                nextPath: "/board",
+            });
+            const authIndex = await fetch(`${baseUrl}/board`, {
+                headers: { cookie: authCookie },
+            });
+            const authIndexBody = await authIndex.text();
+            assert.equal(authIndex.status, 200);
+            assert.equal(authIndexBody.includes(`/board/${boardSlug}`), true);
+        });
+    } finally {
+        if (boardId !== null) {
+            await cleanupBoard(boardId);
+        }
+        if (userId !== null) {
+            await cleanupUserById(userId);
+        } else {
+            await cleanupUserByUsername(username);
+        }
+    }
+});

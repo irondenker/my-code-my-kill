@@ -88,6 +88,16 @@ test("board list pagination normalizes invalid page and renders page slices", { 
                 /<li class="page-item active">\s*<a class="page-link" href="\?page=1">1<\/a>/
             );
 
+            const floatPage = await fetch(`${baseUrl}/board/${boardSlug}?page=1.9`, {
+                headers: { cookie: authCookie },
+            });
+            const floatPageBody = await floatPage.text();
+            assert.equal(floatPage.status, 200);
+            assert.match(
+                floatPageBody,
+                /<li class="page-item active">\s*<a class="page-link" href="\?page=1">1<\/a>/
+            );
+
             const secondPage = await fetch(`${baseUrl}/board/${boardSlug}?page=2`, {
                 headers: { cookie: authCookie },
             });
@@ -97,6 +107,13 @@ test("board list pagination normalizes invalid page and renders page slices", { 
                 secondPageBody,
                 /<li class="page-item active">\s*<a class="page-link" href="\?page=2">2<\/a>/
             );
+
+            const hugePage = await fetch(`${baseUrl}/board/${boardSlug}?page=999999`, {
+                headers: { cookie: authCookie },
+            });
+            const hugePageBody = await hugePage.text();
+            assert.equal(hugePage.status, 200);
+            assert.match(hugePageBody, /Showing /);
         });
     } finally {
         if (boardId !== null) {

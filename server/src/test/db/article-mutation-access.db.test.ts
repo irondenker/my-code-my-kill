@@ -267,6 +267,166 @@ test("article edit/delete routes enforce ownership and status branches", { skip:
     }
 });
 
+test("article controller returns 404 for missing board or missing post edit target", { skip: skipReason }, async () => {
+    const username = makeId("missing-article").slice(0, 32);
+    const password = "missing-article-pass-123";
+    const existingBoardSlug = makeId("exists-board").replace(/[^a-z0-9-]/g, "").toLowerCase().slice(0, 24);
+    const missingBoardSlug = makeId("missing-board").replace(/[^a-z0-9-]/g, "").toLowerCase().slice(0, 24);
+
+    let userId: number | null = null;
+    let boardId: number | null = null;
+
+    try {
+        const user = await createUserForRegister({
+            username,
+            passwordHash: hashPassword(password),
+        });
+        userId = user.userId;
+
+        const board = await createBoard({
+            slug: existingBoardSlug,
+            name: "Existing Board",
+            description: "article-missing-targets",
+            readAccess: "public",
+            createAccess: "auth",
+        });
+        boardId = board.boardId;
+
+        await withTestServer(async (baseUrl) => {
+            const authCookie = await loginAs({
+                baseUrl,
+                username,
+                password,
+                nextPath: `/board/${existingBoardSlug}/new`,
+            });
+
+            const missingBoardResponse = await fetch(`${baseUrl}/board/${missingBoardSlug}/new`, {
+                headers: { cookie: authCookie },
+                redirect: "manual",
+            });
+            assert.equal(missingBoardResponse.status, 404);
+
+            const missingPostResponse = await fetch(`${baseUrl}/board/${existingBoardSlug}/999999/edit`, {
+                headers: { cookie: authCookie },
+                redirect: "manual",
+            });
+            assert.equal(missingPostResponse.status, 404);
+        });
+    } finally {
+        if (boardId !== null) {
+            await cleanupBoard(boardId);
+        }
+        if (userId !== null) {
+            await cleanupUserById(userId);
+        } else {
+            await cleanupUserByUsername(username);
+        }
+    }
+});
+
+test("article create/edit return 422 when upload validation throws ArticleUploadError", { skip: skipReason }, async () => {
+    const username = makeId("article-upload-err").slice(0, 32);
+    const password = "article-upload-err-pass-123";
+    const boardSlug = makeId("upload-err-board").replace(/[^a-z0-9-]/g, "").toLowerCase().slice(0, 24);
+
+    let userId: number | null = null;
+    let boardId: number | null = null;
+    let displayId: number | null = null;
+
+    try {
+        const user = await createUserForRegister({
+            username,
+            passwordHash: hashPassword(password),
+        });
+        userId = user.userId;
+
+        const board = await createBoard({
+            slug: boardSlug,
+            name: "Upload Error Board",
+            description: "article-upload-error-branch",
+            readAccess: "public",
+            createAccess: "auth",
+        });
+        boardId = board.boardId;
+
+        const created = await createArticle({
+            boardId: board.boardId,
+            userId: user.userId,
+            title: "UPLOAD_ERROR_BASE_POST",
+            content: "UPLOAD_ERROR_BASE_CONTENT",
+        });
+        displayId = created.displayId;
+
+        await withTestServer(async (baseUrl) => {
+            const authCookie = await loginAs({
+                baseUrl,
+                username,
+                password,
+                nextPath: `/board/${boardSlug}`,
+            });
+            const badAttachmentBytes = Uint8Array.from(Buffer.from("not-a-supported-attachment", "utf8"));
+
+            const createForm = await fetchFormPage({
+                baseUrl,
+                path: `/board/${boardSlug}/new`,
+                cookie: authCookie,
+            });
+            const createPayload = new FormData();
+            createPayload.set("_csrf", createForm.csrfToken);
+            createPayload.set("title", "UPLOAD_ERR_CREATE_TITLE");
+            createPayload.set("content", "UPLOAD_ERR_CREATE_CONTENT");
+            createPayload.set("attachment", new Blob([badAttachmentBytes], { type: "application/octet-stream" }), "malware.bin");
+
+            const createResponse = await fetch(`${baseUrl}/board/${boardSlug}`, {
+                method: "POST",
+                headers: {
+                    cookie: createForm.cookie,
+                },
+                body: createPayload,
+                redirect: "manual",
+            });
+            const createBody = await createResponse.text();
+            assert.equal(createResponse.status, 422);
+            assert.match(createBody, /Unsupported attachment type\./);
+
+            const editForm = await fetchFormPage({
+                baseUrl,
+                path: `/board/${boardSlug}/${created.displayId}/edit`,
+                cookie: authCookie,
+            });
+            const editPayload = new FormData();
+            editPayload.set("_csrf", editForm.csrfToken);
+            editPayload.set("title", "UPLOAD_ERR_EDIT_TITLE");
+            editPayload.set("content", "UPLOAD_ERR_EDIT_CONTENT");
+            editPayload.set("attachment", new Blob([badAttachmentBytes], { type: "application/octet-stream" }), "malware.bin");
+
+            const editResponse = await fetch(`${baseUrl}/board/${boardSlug}/${created.displayId}/edit`, {
+                method: "POST",
+                headers: {
+                    cookie: editForm.cookie,
+                },
+                body: editPayload,
+                redirect: "manual",
+            });
+            const editBody = await editResponse.text();
+            assert.equal(editResponse.status, 422);
+            assert.match(editBody, /Unsupported attachment type\./);
+        });
+    } finally {
+        if (displayId !== null) {
+            await softDeleteArticleBySlugDisplayIdAsAdmin({ slug: boardSlug, displayId });
+        }
+        if (boardId !== null) {
+            await cleanupBoard(boardId);
+        }
+        if (userId !== null) {
+            await cleanupUserById(userId);
+        } else {
+            await cleanupUserByUsername(username);
+        }
+    }
+});
+
 test("announcement board delete is admin-only at route level", { skip: skipReason }, async () => {
     const ownerUsername = makeId("ann-owner").slice(0, 32);
     const ownerPassword = "ann-owner-pass-123";
