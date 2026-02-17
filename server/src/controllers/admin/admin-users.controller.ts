@@ -7,16 +7,16 @@ import {
     listUsersForAdmin,
 } from "../../services/admin.service.js";
 import type { AdminAuditContext } from "../../services/admin.service.js";
-import { HttpError } from "../../utils/http-error.js";
+import { HttpError } from "../../utils/http/http-error.js";
 import {
     validateAdminUserRolePolicy,
     validateAdminUserStatusPolicy,
-} from "../../utils/admin-user.policy.util.js";
-import { getRequestIp, getRequestUserAgent } from "../../utils/request-meta.util.js";
-import { getPositiveIntParamOrThrow } from "../../utils/route-param.util.js";
+} from "../../utils/admin/admin-user.policy.util.js";
+import { getRequestIp, getRequestUserAgent } from "../../utils/http/request-meta.util.js";
+import { getPositiveIntParamOrThrow } from "../../utils/http/route-param.util.js";
 import { normalizeString } from "../../utils/string.util.js";
-import { consumeSessionFlashMessage, setSessionFlashMessage } from "../../utils/session-flash.util.js";
-import { requireSessionActor } from "../../utils/session-actor.util.js";
+import { consumeSessionFlashMessage, setSessionFlashMessage } from "../../utils/session/session-flash.util.js";
+import { requireSessionActor } from "../../utils/session/session-actor.util.js";
 import {
     parseAdminUserRoleForm,
     parseAdminUserStatusForm,

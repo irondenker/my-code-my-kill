@@ -2,7 +2,7 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
 import type { AuthUser, AuthUserPublic } from "../../types/auth.types.js";
 import type { UserPublicRow, UserRow } from "../../types/auth-data.types.js";
-import { mapAuthUser, mapAuthUserPublic } from "../../utils/auth-user-mapper.util.js";
+import { mapAuthUser, mapAuthUserPublic } from "../../utils/auth/auth-user-mapper.util.js";
 
 /**
  * 인증(로그인/회원가입) 정상 모드 서비스입니다.

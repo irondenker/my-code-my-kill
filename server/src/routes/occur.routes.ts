@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getLabOptions } from "../config/lab-options.js";
-import { HttpError } from "../utils/http-error.js";
+import { HttpError } from "../utils/http/http-error.js";
 
 const router = Router();
 

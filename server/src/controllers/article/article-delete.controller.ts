@@ -1,13 +1,13 @@
 import type { Request, Response } from "express";
-import { HttpError } from "../../utils/http-error.js";
-import { getPositiveIntParamOrThrow, getStringParamOrThrow } from "../../utils/route-param.util.js";
+import { HttpError } from "../../utils/http/http-error.js";
+import { getPositiveIntParamOrThrow, getStringParamOrThrow } from "../../utils/http/route-param.util.js";
 import { resolveArticleDeletePlan } from "./article.controller.helpers.js";
 import {
     doesArticleExistBySlugDisplayId,
     softDeleteArticleBySlugDisplayId,
     softDeleteArticleBySlugDisplayIdAsAdmin,
 } from "../../services/article.service.js";
-import { setSessionFlashMessage } from "../../utils/session-flash.util.js";
+import { setSessionFlashMessage } from "../../utils/session/session-flash.util.js";
 
 export async function deleteArticle(req: Request, res: Response) {
     const slug = getStringParamOrThrow(req, "slug");

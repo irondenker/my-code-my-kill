@@ -1,9 +1,9 @@
 import type { Request, Response } from "express";
-import { HttpError } from "../utils/http-error.js";
+import { HttpError } from "../utils/http/http-error.js";
 import {
     buildViewerContext,
     getBoardReadAccessResult,
-} from "../utils/board.policy.util.js";
+} from "../utils/board/board.policy.util.js";
 import {
     findBoardBySlug,
     listBoards,
@@ -14,8 +14,8 @@ import {
 } from "../services/article.service.js";
 import { computeTotalPages } from "../utils/pagination.util.js";
 import { PAGINATION_DEFAULT_LIMIT } from "../constants/board.constants.js";
-import { getStringParamOrThrow } from "../utils/route-param.util.js";
-import { consumeSessionFlashMessage } from "../utils/session-flash.util.js";
+import { getStringParamOrThrow } from "../utils/http/route-param.util.js";
+import { consumeSessionFlashMessage } from "../utils/session/session-flash.util.js";
 
 /**
  * 보드 컨트롤러입니다.

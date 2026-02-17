@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import { logCsrfInvalidSafely } from "../services/audit.service.js";
-import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
-import { HttpError } from "../utils/http-error.js";
-import { getSessionActor } from "../utils/session-actor.util.js";
+import { getRequestIp, getRequestUserAgent } from "../utils/http/request-meta.util.js";
+import { HttpError } from "../utils/http/http-error.js";
+import { getSessionActor } from "../utils/session/session-actor.util.js";
 
 /**
  * `csurf`가 던지는 EBADCSRFTOKEN을 403 HttpError로 변환하고,

@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { HttpError } from "../../utils/http-error.js";
-import { getPositiveIntParamOrThrow, getStringParamOrThrow } from "../../utils/route-param.util.js";
-import { validateArticleFormInput } from "../../utils/article-form.util.js";
+import { HttpError } from "../../utils/http/http-error.js";
+import { getPositiveIntParamOrThrow, getStringParamOrThrow } from "../../utils/http/route-param.util.js";
+import { validateArticleFormInput } from "../../utils/article/article-form.util.js";
 import {
     ensurePostEditAccess,
     getUploadedFile,

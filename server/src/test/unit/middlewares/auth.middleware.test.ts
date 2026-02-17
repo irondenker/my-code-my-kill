@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { HttpError } from "../../../utils/http-error.js";
+import { HttpError } from "../../../utils/http/http-error.js";
 
 process.env.NODE_ENV ??= "test";
 process.env.SESSION_SECRET ??= "test-session-secret";

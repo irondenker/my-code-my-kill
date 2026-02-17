@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { getSafeRedirectPath } from "../../utils/redirect.util.js";
+import { getSafeRedirectPath } from "../../utils/http/redirect.util.js";
 
 type AuthRenderOptions = {
     formError?: string | null;

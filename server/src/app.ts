@@ -16,7 +16,7 @@ import { createGlobalCsrfMiddlewares } from "./middlewares/csrf.middleware.js";
 import { createViewLocalsMiddleware } from "./middlewares/view-locals.middleware.js";
 import { csrfErrorMiddleware } from "./middlewares/csrf-error.middleware.js";
 import { createErrorCommonStaticMiddleware, createPublicStaticMiddleware } from "./middlewares/static.middleware.js";
-import { HttpError } from "./utils/http-error.js";
+import { HttpError } from "./utils/http/http-error.js";
 import { getLabOptions } from "./config/lab-options.js";
 import { createXssEscaper } from "./utils/xss-escape.util.js";
 

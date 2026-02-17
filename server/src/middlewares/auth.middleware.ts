@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
-import { getSafeRedirectPath } from "../utils/redirect.util.js";
-import { HttpError } from "../utils/http-error.js";
+import { getSafeRedirectPath } from "../utils/http/redirect.util.js";
+import { HttpError } from "../utils/http/http-error.js";
 import { logAdminPageAccessAttemptSafely } from "../services/audit.service.js";
-import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
-import { getSessionActor } from "../utils/session-actor.util.js";
+import { getRequestIp, getRequestUserAgent } from "../utils/http/request-meta.util.js";
+import { getSessionActor } from "../utils/session/session-actor.util.js";
 
 /**
  * 관리자 페이지 접근 시도 이벤트를 감사 로그에 안전하게 기록합니다.

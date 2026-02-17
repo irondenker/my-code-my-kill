@@ -14,7 +14,7 @@ import {
     resolveArticleShowMutationFlags,
     requireAuthenticatedViewerId,
 } from "../../../controllers/article/article.controller.helpers.js";
-import { HttpError } from "../../../utils/http-error.js";
+import { HttpError } from "../../../utils/http/http-error.js";
 
 function makeReq(params?: {
     session?: { userId?: unknown; userRole?: unknown };

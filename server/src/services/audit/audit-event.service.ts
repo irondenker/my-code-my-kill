@@ -1,4 +1,4 @@
-import { summarizeErrorMessage } from "../../utils/error-summary.util.js";
+import { summarizeErrorMessage } from "../../utils/http/error-summary.util.js";
 import {
     buildAccountStatusChangedAuditLogWriteParams,
     buildAdminPageAccessAttemptAuditLogWriteParams,
@@ -8,7 +8,7 @@ import {
     buildLoginFailedAuditLogWriteParams,
     buildLoginSuccessAuditLogWriteParams,
     buildLogoutSuccessAuditLogWriteParams,
-} from "../../utils/audit-event-mapper.util.js";
+} from "../../utils/audit/audit-event-mapper.util.js";
 import { writeAuditLog, writeAuditLogSafely } from "./audit-write.service.js";
 
 /**

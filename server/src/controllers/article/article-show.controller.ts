@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { HttpError } from "../../utils/http-error.js";
-import { getPositiveIntParamOrThrow, getStringParamOrThrow } from "../../utils/route-param.util.js";
+import { HttpError } from "../../utils/http/http-error.js";
+import { getPositiveIntParamOrThrow, getStringParamOrThrow } from "../../utils/http/route-param.util.js";
 import {
     buildNeighborArticleQueryParams,
     ensureArticleReadAccessForViewer,

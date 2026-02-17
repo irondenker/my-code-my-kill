@@ -1,10 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import fs from "node:fs";
 import path from "node:path";
-import { getSafeRedirectPath } from "../utils/redirect.util.js";
+import { getSafeRedirectPath } from "../utils/http/redirect.util.js";
 import { logAuthzDeniedSafely } from "../services/audit.service.js";
-import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
-import { getSessionActor } from "../utils/session-actor.util.js";
+import { getRequestIp, getRequestUserAgent } from "../utils/http/request-meta.util.js";
+import { getSessionActor } from "../utils/session/session-actor.util.js";
 
 const staticErrorStatuses = new Set([403, 404, 500, 503, 504]);
 const sharedErrorPage = path.join(process.cwd(), "views", "errors", "common", "index.html");

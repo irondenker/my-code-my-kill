@@ -1,7 +1,7 @@
 ﻿import type { Request, Response } from "express";
 import { findUserProfileById, findPrivateProfileByUsername, updateUserProfile } from "../services/profile.service.js";
 import { isPublicProfileHandle } from "../utils/username.util.js";
-import { HttpError } from "../utils/http-error.js";
+import { HttpError } from "../utils/http/http-error.js";
 import { normalizeString } from "../utils/string.util.js";
 import { parseProfileEditForm } from "../schemas/user.schema.js";
 

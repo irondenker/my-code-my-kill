@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { ensureDir, safeUnlink } from "../../utils/fs.util.js";
+import { ensureDir, safeUnlink } from "../../utils/upload/fs.util.js";
 import {
     isExtensionCheckEnabled,
     isMagicNumberCheckEnabled,
@@ -10,7 +10,7 @@ import {
     validateAllowedExtension,
     validateMagicNumberForAttachment,
     validateMagicNumberForImage,
-} from "../../utils/upload-validation.util.js";
+} from "../../utils/upload/upload-validation.util.js";
 import {
     ARTICLE_ATTACHMENT_EXTENSIONS,
     ARTICLE_ATTACHMENT_MAX_BYTES,

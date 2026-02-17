@@ -2,7 +2,7 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
 import type { BoardMeta } from "../../types/board.types.js";
 import type { BoardMetaRow } from "../../types/board-data.types.js";
-import { mapBoardMeta } from "../../utils/board-mapper.util.js";
+import { mapBoardMeta } from "../../utils/board/board-mapper.util.js";
 
 /**
  * 보드 메타(boards) 정상 모드 서비스입니다.

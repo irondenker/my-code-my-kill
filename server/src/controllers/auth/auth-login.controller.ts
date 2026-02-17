@@ -7,10 +7,10 @@ import {
 } from "../../services/audit.service.js";
 import { parseLoginForm } from "../../schemas/auth.schema.js";
 import { verifyPassword } from "../../utils/password.util.js";
-import { getSafeRedirectPath } from "../../utils/redirect.util.js";
+import { getSafeRedirectPath } from "../../utils/http/redirect.util.js";
 import { normalizeString } from "../../utils/string.util.js";
-import { getRequestIp, getRequestUserAgent } from "../../utils/request-meta.util.js";
-import { establishAuthSession } from "../../utils/auth-session.util.js";
+import { getRequestIp, getRequestUserAgent } from "../../utils/http/request-meta.util.js";
+import { establishAuthSession } from "../../utils/session/auth-session.util.js";
 
 /**
  * 로그인 요청을 처리합니다.

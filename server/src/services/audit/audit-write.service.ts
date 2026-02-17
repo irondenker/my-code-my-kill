@@ -4,8 +4,8 @@ import { AUDIT_ACTIONS } from "../../types/audit-action.types.js";
 import type { EmitAuditCliLogParams } from "../../types/audit-cli.types.js";
 import { sanitizeRecord } from "../../utils/record.util.js";
 import { truncateString } from "../../utils/string.util.js";
-import { summarizeErrorMessage } from "../../utils/error-summary.util.js";
-import { formatKvLine } from "../../utils/log-format.util.js";
+import { summarizeErrorMessage } from "../../utils/http/error-summary.util.js";
+import { formatKvLine } from "../../utils/http/log-format.util.js";
 import type {
     AuditLogWriteParams,
     NormalizedAuditLogWriteInput,

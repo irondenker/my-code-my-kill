@@ -11,9 +11,9 @@ import {
     AVATAR_IMAGE_OUTPUT_SIZE,
     AVATAR_IMAGE_UPLOAD_DIR,
 } from "../constants/upload-avatar.constants.js";
-import { HttpError } from "../utils/http-error.js";
-import { ensureDir, safeUnlink } from "../utils/fs.util.js";
-import { isMagicNumberCheckEnabled, validateMagicNumberForImage } from "../utils/upload-validation.util.js";
+import { HttpError } from "../utils/http/http-error.js";
+import { ensureDir, safeUnlink } from "../utils/upload/fs.util.js";
+import { isMagicNumberCheckEnabled, validateMagicNumberForImage } from "../utils/upload/upload-validation.util.js";
 
 /**
  * 아바타(프로필 이미지) 업로드/삭제 컨트롤러입니다.

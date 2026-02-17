@@ -1,7 +1,7 @@
 import { Router } from "express";
 import * as ejs from "ejs";
 import { getLabOptions } from "../config/lab-options.js";
-import { HttpError } from "../utils/http-error.js";
+import { HttpError } from "../utils/http/http-error.js";
 import { parseSstiRenderForm } from "../schemas/lab.schema.js";
 
 const router = Router();

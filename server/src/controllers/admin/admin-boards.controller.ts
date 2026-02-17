@@ -6,11 +6,11 @@ import {
     listBoards,
     updateBoard,
 } from "../../services/board.service.js";
-import { HttpError } from "../../utils/http-error.js";
-import { isBoardCreateAccess, isBoardReadAccess, isValidBoardSlug } from "../../utils/board-validation.util.js";
-import { getPositiveIntParamOrThrow } from "../../utils/route-param.util.js";
+import { HttpError } from "../../utils/http/http-error.js";
+import { isBoardCreateAccess, isBoardReadAccess, isValidBoardSlug } from "../../utils/board/board-validation.util.js";
+import { getPositiveIntParamOrThrow } from "../../utils/http/route-param.util.js";
 import { normalizeString } from "../../utils/string.util.js";
-import { consumeSessionFlashMessage, setSessionFlashMessage } from "../../utils/session-flash.util.js";
+import { consumeSessionFlashMessage, setSessionFlashMessage } from "../../utils/session/session-flash.util.js";
 import { parseAdminBoardForm } from "../../schemas/admin.schema.js";
 import type { BoardFormValue } from "../../types/admin.types.js";
 

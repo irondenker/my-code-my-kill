@@ -7,7 +7,7 @@ import { parseRegisterForm } from "../../schemas/auth.schema.js";
 import { hashPassword, isValidPassword } from "../../utils/password.util.js";
 import { isValidUsername } from "../../utils/username.util.js";
 import { normalizeString } from "../../utils/string.util.js";
-import { establishAuthSession } from "../../utils/auth-session.util.js";
+import { establishAuthSession } from "../../utils/session/auth-session.util.js";
 
 /**
  * 회원가입 요청을 처리합니다.

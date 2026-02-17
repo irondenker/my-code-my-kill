@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
 import { logLogoutSuccessSafely } from "../../services/audit.service.js";
-import { getRequestIp, getRequestUserAgent } from "../../utils/request-meta.util.js";
-import { clearAuthSession } from "../../utils/auth-session.util.js";
-import { getSessionActor } from "../../utils/session-actor.util.js";
+import { getRequestIp, getRequestUserAgent } from "../../utils/http/request-meta.util.js";
+import { clearAuthSession } from "../../utils/session/auth-session.util.js";
+import { getSessionActor } from "../../utils/session/session-actor.util.js";
 import { SESSION_COOKIE_NAME } from "../../constants/session.constants.js";
 
 /**

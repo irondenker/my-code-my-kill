@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
+import { getRequestIp, getRequestUserAgent } from "../utils/http/request-meta.util.js";
 
 type RequestLoggerOptions = {
     /**
