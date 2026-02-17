@@ -21,7 +21,7 @@ import {
     parseAdminUserRoleForm,
     parseAdminUserStatusForm,
 } from "../../schemas/admin.schema.js";
-import type { UserRole } from "../../types/user-role.types.js";
+import type { UserRole } from "../../types/user/user-role.types.js";
 
 /**
  * 어드민 작업 감사로그에 필요한 공통 컨텍스트를 구성합니다.

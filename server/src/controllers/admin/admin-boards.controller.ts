@@ -12,7 +12,7 @@ import { getPositiveIntParamOrThrow } from "../../utils/http/route-param.util.js
 import { normalizeString } from "../../utils/string.util.js";
 import { consumeSessionFlashMessage, setSessionFlashMessage } from "../../utils/session/session-flash.util.js";
 import { parseAdminBoardForm } from "../../schemas/admin.schema.js";
-import type { BoardFormValue } from "../../types/admin.types.js";
+import type { BoardFormValue } from "../../types/admin/admin.types.js";
 
 /**
  * 어드민 보드 관리 인덱스 화면을 렌더링합니다.

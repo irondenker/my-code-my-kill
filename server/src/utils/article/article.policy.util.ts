@@ -1,5 +1,5 @@
-import type { BoardReadAccess, ViewerContext } from "../../types/board.types.js";
-import type { ArticleMutationPolicy } from "../../types/article.types.js";
+import type { BoardReadAccess, ViewerContext } from "../../types/board/board.types.js";
+import type { ArticleMutationPolicy } from "../../types/article/article.types.js";
 
 /**
  * 게시글(Article) 접근 정책 유틸입니다.
@@ -9,7 +9,7 @@ import type { ArticleMutationPolicy } from "../../types/article.types.js";
  * - 컨트롤러는 세션/요청 값을 읽어와 여기로 전달합니다.
  */
 
-export type { ArticleMutationPolicy } from "../../types/article.types.js";
+export type { ArticleMutationPolicy } from "../../types/article/article.types.js";
 
 /**
  * 보드 slug에 따른 "게시글 변경 정책(수정/삭제)"을 결정합니다.

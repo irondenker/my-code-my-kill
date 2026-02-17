@@ -1,7 +1,7 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import type { AuthUser, AuthUserPublic } from "../../types/auth.types.js";
-import type { UserPublicRow, UserRow } from "../../types/auth-data.types.js";
+import type { AuthUser, AuthUserPublic } from "../../types/auth/auth.types.js";
+import type { UserPublicRow, UserRow } from "../../types/auth/auth-data.types.js";
 import { mapAuthUser, mapAuthUserPublic } from "../../utils/auth/auth-user-mapper.util.js";
 
 /**

@@ -1,4 +1,4 @@
-import type { BoardCreateAccess, BoardReadAccess } from "../../types/board.types.js";
+import type { BoardCreateAccess, BoardReadAccess } from "../../types/board/board.types.js";
 
 /**
  * 보드(메타) 입력 검증 유틸입니다.

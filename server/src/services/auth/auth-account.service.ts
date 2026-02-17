@@ -1,7 +1,7 @@
 import { isSqlInjectionTargetEnabled } from "../lab/sql-injection-control.service.js";
 import * as labImplementation from "./auth-account.lab.service.js";
 import * as normalImplementation from "./auth-account.normal.service.js";
-import type { AuthUser, AuthUserPublic } from "../../types/auth.types.js";
+import type { AuthUser, AuthUserPublic } from "../../types/auth/auth.types.js";
 
 /**
  * 인증 계정 서비스 facade입니다.

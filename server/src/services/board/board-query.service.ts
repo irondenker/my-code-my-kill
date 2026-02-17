@@ -1,7 +1,7 @@
 import { isSqlInjectionTargetEnabled } from "../lab/sql-injection-control.service.js";
 import * as labImplementation from "./board-query.lab.service.js";
 import * as normalImplementation from "./board-query.normal.service.js";
-import type { BoardMeta } from "../../types/board.types.js";
+import type { BoardMeta } from "../../types/board/board.types.js";
 
 /**
  * 보드 메타 서비스 facade입니다.

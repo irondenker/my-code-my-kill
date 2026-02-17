@@ -1,7 +1,7 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import type { ArticleForShow, ArticleOutline, ArticleRecord, NeighborPost } from "../../types/article.types.js";
-import type { ArticleOutlineRow, ArticleRecordRow, ArticleShowRow, NeighborPostRow } from "../../types/article-data.types.js";
+import type { ArticleForShow, ArticleOutline, ArticleRecord, NeighborPost } from "../../types/article/article.types.js";
+import type { ArticleOutlineRow, ArticleRecordRow, ArticleShowRow, NeighborPostRow } from "../../types/article/article-data.types.js";
 import { mapArticleForShow, mapArticleOutline, mapArticleRecord, mapNeighborArticle } from "../../utils/article/article-mapper.util.js";
 
 /**

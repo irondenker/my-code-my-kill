@@ -1,5 +1,5 @@
-import type { AuthUser, AuthUserPublic } from "../../types/auth.types.js";
-import type { UserPublicRow, UserRow } from "../../types/auth-data.types.js";
+import type { AuthUser, AuthUserPublic } from "../../types/auth/auth.types.js";
+import type { UserPublicRow, UserRow } from "../../types/auth/auth-data.types.js";
 
 /**
  * DB 조회 결과(UserRow)를 애플리케이션 타입(AuthUser)으로 매핑합니다.

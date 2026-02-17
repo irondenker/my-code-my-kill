@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { ArticleRecord } from "../../types/article.types.js";
+import type { ArticleRecord } from "../../types/article/article.types.js";
 import { ARTICLE_ATTACHMENT_PUBLIC_BASE_PATH, ARTICLE_IMAGE_PUBLIC_BASE_PATH } from "../../constants/upload-article.constants.js";
 import { isValidArticleContent, isValidArticleTitle } from "./article-validation.util.js";
 import { buildMediaUrl } from "../upload/media-url.util.js";

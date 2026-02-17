@@ -1,7 +1,7 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import type { BoardMeta } from "../../types/board.types.js";
-import type { BoardMetaRow } from "../../types/board-data.types.js";
+import type { BoardMeta } from "../../types/board/board.types.js";
+import type { BoardMetaRow } from "../../types/board/board-data.types.js";
 import { mapBoardMeta } from "../../utils/board/board-mapper.util.js";
 
 /**

@@ -1,7 +1,7 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import { AUDIT_ACTIONS } from "../../types/audit-action.types.js";
-import type { EmitAuditCliLogParams } from "../../types/audit-cli.types.js";
+import { AUDIT_ACTIONS } from "../../types/audit/audit-action.types.js";
+import type { EmitAuditCliLogParams } from "../../types/audit/audit-cli.types.js";
 import { sanitizeRecord } from "../../utils/record.util.js";
 import { truncateString } from "../../utils/string.util.js";
 import { summarizeErrorMessage } from "../../utils/http/error-summary.util.js";
@@ -9,9 +9,9 @@ import { formatKvLine } from "../../utils/http/log-format.util.js";
 import type {
     AuditLogWriteParams,
     NormalizedAuditLogWriteInput,
-} from "../../types/audit-log-write.types.js";
+} from "../../types/audit/audit-log-write.types.js";
 
-export type { AuditAction } from "../../types/audit-action.types.js";
+export type { AuditAction } from "../../types/audit/audit-action.types.js";
 
 const AUDIT_LOGS_TABLE = "audit_logs";
 

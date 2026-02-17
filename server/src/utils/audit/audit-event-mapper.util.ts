@@ -1,11 +1,11 @@
-import type { LoginFailedReason } from "../../types/auth.types.js";
+import type { LoginFailedReason } from "../../types/auth/auth.types.js";
 import type {
     AuditActorFields,
     AuditHttpRequestMetaFields,
     AuditRequestMetaFields,
-} from "../../types/audit-common.types.js";
-import type { AuditLogWriteParams } from "../../types/audit-log-write.types.js";
-import type { UserRole } from "../../types/user-role.types.js";
+} from "../../types/audit/audit-common.types.js";
+import type { AuditLogWriteParams } from "../../types/audit/audit-log-write.types.js";
+import type { UserRole } from "../../types/user/user-role.types.js";
 
 /**
  * 로그인 실패 이벤트 입력을 감사로그 쓰기 파라미터로 변환합니다.

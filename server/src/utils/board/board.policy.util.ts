@@ -1,4 +1,4 @@
-import type { BoardCreateAccess, BoardReadAccess, BoardMeta, ViewerContext } from "../../types/board.types.js";
+import type { BoardCreateAccess, BoardReadAccess, BoardMeta, ViewerContext } from "../../types/board/board.types.js";
 
 /**
  * 보드 접근 정책 유틸입니다.
@@ -8,7 +8,7 @@ import type { BoardCreateAccess, BoardReadAccess, BoardMeta, ViewerContext } fro
  * - 컨트롤러는 세션 등 I/O 값을 읽어와 여기로 전달합니다.
  */
 
-export type { ViewerContext } from "../../types/board.types.js";
+export type { ViewerContext } from "../../types/board/board.types.js";
 
 /**
  * 세션 값(유저 ID/역할)을 기반으로 viewer 컨텍스트를 구성합니다.

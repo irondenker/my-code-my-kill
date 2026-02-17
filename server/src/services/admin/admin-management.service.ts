@@ -1,7 +1,7 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import type { AdminUserMeta, AdminUserSummary } from "../../types/auth.types.js";
-import type { UserRole } from "../../types/user-role.types.js";
+import type { AdminUserMeta, AdminUserSummary } from "../../types/auth/auth.types.js";
+import type { UserRole } from "../../types/user/user-role.types.js";
 import {
     logAccountStatusChangedSafely,
     logAdminRoleChangedSafely,

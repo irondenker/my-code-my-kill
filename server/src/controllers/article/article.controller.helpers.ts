@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import type { ArticleRecord } from "../../types/article.types.js";
-import type { BoardMeta, BoardReadAccess, ViewerContext } from "../../types/board.types.js";
+import type { ArticleRecord } from "../../types/article/article.types.js";
+import type { BoardMeta, BoardReadAccess, ViewerContext } from "../../types/board/board.types.js";
 import { HttpError } from "../../utils/http/http-error.js";
 import {
     buildViewerContext,

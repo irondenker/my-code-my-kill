@@ -1,5 +1,5 @@
 import type { Request } from "express";
-import type { UserRole } from "../../types/user-role.types.js";
+import type { UserRole } from "../../types/user/user-role.types.js";
 import { destroySession, regenerateSession, saveSession } from "./session.util.js";
 
 /**

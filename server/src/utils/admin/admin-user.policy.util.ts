@@ -1,9 +1,9 @@
 import type {
     AdminPolicyResult,
     AdminUserStatus,
-} from "../../types/admin.types.js";
-import type { AdminUserMeta } from "../../types/auth.types.js";
-import type { UserRole } from "../../types/user-role.types.js";
+} from "../../types/admin/admin.types.js";
+import type { AdminUserMeta } from "../../types/auth/auth.types.js";
+import type { UserRole } from "../../types/user/user-role.types.js";
 
 export type {
     AdminPolicyResult,

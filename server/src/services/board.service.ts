@@ -11,7 +11,7 @@ export type {
     BoardReadAccess,
     BoardCreateAccess,
     BoardMeta,
-} from "../types/board.types.js";
+} from "../types/board/board.types.js";
 
 // Board queries (boards)
 export {

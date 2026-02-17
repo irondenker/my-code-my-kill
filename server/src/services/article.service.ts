@@ -12,7 +12,7 @@ export type {
     ArticleOutline,
     ArticleForShow,
     NeighborPost,
-} from "../types/article.types.js";
+} from "../types/article/article.types.js";
 
 // Article query (articles: count/list/find/exists)
 export {

@@ -1,7 +1,7 @@
 import { isSqlInjectionTargetEnabled } from "../lab/sql-injection-control.service.js";
 import * as labImplementation from "./article-query.lab.service.js";
 import * as normalImplementation from "./article-query.normal.service.js";
-import type { ArticleForShow, ArticleOutline, ArticleRecord, NeighborPost } from "../../types/article.types.js";
+import type { ArticleForShow, ArticleOutline, ArticleRecord, NeighborPost } from "../../types/article/article.types.js";
 
 /**
  * 게시글 조회/존재확인 서비스 facade입니다.

@@ -1,7 +1,7 @@
 import { isSqlInjectionTargetEnabled } from "../lab/sql-injection-control.service.js";
 import * as labImplementation from "./board-admin-mutation.lab.service.js";
 import * as normalImplementation from "./board-admin-mutation.normal.service.js";
-import type { BoardCreateAccess, BoardMeta, BoardReadAccess } from "../../types/board.types.js";
+import type { BoardCreateAccess, BoardMeta, BoardReadAccess } from "../../types/board/board.types.js";
 
 /**
  * 보드 생성/수정(어드민 mutation) 전용 facade입니다.

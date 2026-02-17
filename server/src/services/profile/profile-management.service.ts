@@ -1,7 +1,7 @@
 import { isSqlInjectionTargetEnabled } from "../lab/sql-injection-control.service.js";
 import * as labImplementation from "./profile-management.lab.service.js";
 import * as normalImplementation from "./profile-management.normal.service.js";
-import type { PublicUserProfile, UserProfile } from "../../types/auth.types.js";
+import type { PublicUserProfile, UserProfile } from "../../types/auth/auth.types.js";
 
 /**
  * 프로필 관리 서비스 facade입니다.

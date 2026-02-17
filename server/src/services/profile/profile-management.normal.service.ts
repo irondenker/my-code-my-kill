@@ -1,7 +1,7 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import type { PublicUserProfile, UserProfile } from "../../types/auth.types.js";
-import type { PublicProfileRow, UserProfileRow } from "../../types/profile-data.types.js";
+import type { PublicUserProfile, UserProfile } from "../../types/auth/auth.types.js";
+import type { PublicProfileRow, UserProfileRow } from "../../types/profile/profile-data.types.js";
 
 /**
  * 프로필 관리 정상 모드 서비스입니다.
