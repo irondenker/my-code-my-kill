@@ -9,21 +9,29 @@ import { HttpError } from "../utils/http-error.js";
  *
  * 이 미들웨어는 `errorHandler`보다 먼저 등록되어야 합니다.
  */
-export function csrfErrorMiddleware(err: any, req: Request, res: Response, next: NextFunction) {
-    if (err?.code !== "EBADCSRFTOKEN") {
-        return next(err);
-    }
+type LogCsrfInvalid = (params: Parameters<typeof logCsrfInvalidSafely>[0]) => void;
 
-    logCsrfInvalidSafely({
-        actorUserId: typeof req.session.userId === "number" ? req.session.userId : null,
-        actorUsername: typeof req.session.username === "string" ? req.session.username : null,
-        method: req.method,
-        path: req.originalUrl,
-        ipAddress: getRequestIp(req),
-        userAgent: getRequestUserAgent(req),
-    });
+export function createCsrfErrorMiddleware(params?: { logCsrfInvalid?: LogCsrfInvalid }) {
+    const logCsrfInvalid = params?.logCsrfInvalid ?? logCsrfInvalidSafely;
 
-    // error-handler.ts에서 중복 감사 로그를 남기지 않도록 플래그 처리
-    res.locals.securityEventLogged = true;
-    return next(new HttpError(403, "Invalid CSRF token"));
+    return (err: any, req: Request, res: Response, next: NextFunction) => {
+        if (err?.code !== "EBADCSRFTOKEN") {
+            return next(err);
+        }
+
+        logCsrfInvalid({
+            actorUserId: typeof req.session.userId === "number" ? req.session.userId : null,
+            actorUsername: typeof req.session.username === "string" ? req.session.username : null,
+            method: req.method,
+            path: req.originalUrl,
+            ipAddress: getRequestIp(req),
+            userAgent: getRequestUserAgent(req),
+        });
+
+        // error-handler.ts에서 중복 감사 로그를 남기지 않도록 플래그 처리
+        res.locals.securityEventLogged = true;
+        return next(new HttpError(403, "Invalid CSRF token"));
+    };
 }
+
+export const csrfErrorMiddleware = createCsrfErrorMiddleware();

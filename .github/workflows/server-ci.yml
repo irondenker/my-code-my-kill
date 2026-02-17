@@ -3,6 +3,13 @@ name: Server CI
 'on':
   pull_request:
   push:
+  workflow_dispatch:
+    inputs:
+      run_db_tests:
+        description: Run DB integration tests (npm run test:db)
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -79,4 +86,54 @@ jobs:
           git add src/docs/openapi.ts
           git commit -m "📚 Docs: auto-sync OpenAPI endpoints [skip ci]"
           git push
+        working-directory: server
+
+  server-db:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_db_tests }}
+    env:
+      NODE_ENV: test
+      SESSION_SECRET: ci-session-secret
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_NAME: mcmk
+      DB_USER: mcmk_app
+      DB_PASSWORD: 1234
+      AUDIT_CLI_LOG_LEVEL: none
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: mcmk
+          POSTGRES_USER: mcmk_app
+          POSTGRES_PASSWORD: 1234
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mcmk_app -d mcmk"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: server
+
+      - name: Run DB migrations
+        run: npm run db:migrate
+        working-directory: server
+
+      - name: Run DB tests
+        run: npm run test:db
         working-directory: server

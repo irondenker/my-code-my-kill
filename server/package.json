@@ -1,4 +1,5 @@
 {
+  "name": "server",
   "dependencies": {
     "csurf": "^1.11.0",
     "dotenv": "^17.2.3",
@@ -28,7 +29,8 @@
     "dev": "nodemon",
     "dev:tsx": "tsx watch src/server.ts",
     "build": "tsc",
-    "test": "tsx --test src/**/*.test.ts",
+    "test": "find src/test -name '*.test.ts' ! -name '*.db.test.ts' -print0 | xargs -0 tsx --test",
+    "test:db": "RUN_DB_TESTS=1 find src/test -name '*.db.test.ts' -print0 | xargs -0 tsx --test",
     "fix:openapi-drift": "node --import tsx src/scripts/sync-openapi-endpoints.ts",
     "check:openapi-drift": "node --import tsx src/scripts/check-openapi-drift.ts",
     "start": "node dist/server.js",

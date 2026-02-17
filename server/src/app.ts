@@ -69,7 +69,10 @@ export function createApp() {
     app.use(createRequestLogger());
 
     // CSRF 보호는 일반 요청 + 특정 multipart 요청(선행 multer 파싱 포함)을 함께 처리합니다.
-    app.use(...createGlobalCsrfMiddlewares({ csrfLabEnabled }));
+    const globalCsrfMiddlewares = createGlobalCsrfMiddlewares({ csrfLabEnabled });
+    if (globalCsrfMiddlewares.length > 0) {
+        app.use(...globalCsrfMiddlewares);
+    }
 
     // EJS 템플릿에서 공통으로 사용할 locals를 주입합니다.
     app.use(

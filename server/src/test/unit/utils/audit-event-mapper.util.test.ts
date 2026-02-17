@@ -9,7 +9,7 @@ import {
     buildLoginFailedAuditLogWriteParams,
     buildLoginSuccessAuditLogWriteParams,
     buildLogoutSuccessAuditLogWriteParams,
-} from "./audit-event-mapper.util.js";
+} from "../../../utils/audit-event-mapper.util.js";
 
 test("buildLoginFailedAuditLogWriteParams maps action/details", () => {
     const payload = buildLoginFailedAuditLogWriteParams({

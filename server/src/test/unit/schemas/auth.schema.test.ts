@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseLoginForm, parseRegisterForm } from "./auth.schema.js";
+import { parseLoginForm, parseRegisterForm } from "../../../schemas/auth.schema.js";
 
 test("parseLoginForm trims username and keeps password", () => {
     const result = parseLoginForm({

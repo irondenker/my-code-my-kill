@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseAdminBoardForm, parseAdminUserRoleForm, parseAdminUserStatusForm } from "./admin.schema.js";
-import { parseProfileEditForm } from "./user.schema.js";
-import { parseArticleForm } from "./article.schema.js";
-import { parseSstiRenderForm } from "./lab.schema.js";
+import { parseAdminBoardForm, parseAdminUserRoleForm, parseAdminUserStatusForm } from "../../../schemas/admin.schema.js";
+import { parseProfileEditForm } from "../../../schemas/user.schema.js";
+import { parseArticleForm } from "../../../schemas/article.schema.js";
+import { parseSstiRenderForm } from "../../../schemas/lab.schema.js";
 
 test("admin form schemas normalize lower-case control fields", () => {
     const board = parseAdminBoardForm({
