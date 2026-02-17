@@ -92,7 +92,7 @@ docker compose -f docker-compose.yml exec -T server npm run test:db
 
 1. **예시:** `♻️ Refactor: Move 'article-helper' file into 'controller.article' folder`
 
-2. **작성 요령:** `[emoji][commit message]: (변경 사항, 영문으로 작성 & 첫 글자는 대문자)`
+2. **작성 요령:** `[emoji][commit message]: (변경 사항, 영문으로 작성 & 첫 글자는 대문자고 나머지는 소문자 위주로 평이하게 작성)`
 
 | emoji | commit message | when to use it              |
 | :---: | :------------: | :-------------------------: |
