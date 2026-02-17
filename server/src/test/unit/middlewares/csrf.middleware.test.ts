@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createGlobalCsrfMiddlewares } from "../../../middlewares/csrf.middleware.js";
 
-test("createGlobalCsrfMiddlewares returns empty array when csrf lab is enabled", () => {
+test("createGlobalCsrfMiddlewares keeps multipart pre-parser when csrf lab is enabled", () => {
     const middlewares = createGlobalCsrfMiddlewares({ csrfLabEnabled: true });
     assert.equal(Array.isArray(middlewares), true);
-    assert.equal(middlewares.length, 0);
+    assert.equal(middlewares.length, 1);
+    assert.equal(typeof middlewares[0], "function");
 });
 
 test("createGlobalCsrfMiddlewares returns pre-parser and csrf middleware when disabled", () => {

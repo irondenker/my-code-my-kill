@@ -17,12 +17,6 @@ import { AVATAR_IMAGE_MAX_BYTES } from "../constants/upload-avatar.constants.js"
  *   라우트 경로/필드명이 바뀌면 여기 패턴도 함께 업데이트해야 합니다.
  */
 export function createGlobalCsrfMiddlewares(options: { csrfLabEnabled: boolean }): RequestHandler[] {
-    if (options.csrfLabEnabled) {
-        return [];
-    }
-
-    const csrfProtection = csrf();
-
     // multer의 fileSize 제한은 "파싱 단계" 보호용입니다.
     // 각 도메인(아바타/게시글)은 컨트롤러/서비스에서 별도의 정책 검증을 추가로 수행할 수 있습니다.
     const MULTIPART_MAX_FILE_SIZE_BYTES = Math.max(ARTICLE_IMAGE_MAX_BYTES, AVATAR_IMAGE_MAX_BYTES);
@@ -71,5 +65,12 @@ export function createGlobalCsrfMiddlewares(options: { csrfLabEnabled: boolean }
         return next();
     };
 
+    if (options.csrfLabEnabled) {
+        // CSRF 실습 모드에서도 multipart 폼 파싱은 유지해야
+        // 업로드 유효성 검증(타입/시그니처/크기/치수)이 정상 동작합니다.
+        return [multipartPreParser];
+    }
+
+    const csrfProtection = csrf();
     return [multipartPreParser, csrfProtection];
 }
