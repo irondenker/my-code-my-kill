@@ -28,6 +28,7 @@
     "dev:tsx": "tsx watch src/server.ts",
     "build": "tsc",
     "test": "tsx --test src/**/*.test.ts",
+    "check:openapi-drift": "node dist/scripts/check-openapi-drift.js",
     "start": "node dist/server.js",
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",

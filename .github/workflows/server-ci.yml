@@ -1,0 +1,36 @@
+name: Server CI
+
+'on':
+  pull_request:
+  push:
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: server
+
+      - name: Build
+        run: npm run build
+        working-directory: server
+
+      - name: Test
+        run: npm run test
+        working-directory: server
+
+      - name: Check OpenAPI drift
+        run: npm run check:openapi-drift
+        working-directory: server
