@@ -20,9 +20,9 @@ git config core.hooksPath .githooks
 
 - `pre-commit`: `(cd server && npm run test)`
 - `pre-push`: `(cd server && npm run test && npm run build && npm run check:openapi-drift)`
-  - 현재 브랜치가 `main`/`master`면 `npm run test:db`를 자동 실행합니다.
-  - `RUN_DB_TESTS=1`: 브랜치와 무관하게 DB 테스트 강제 실행
-  - `RUN_DB_TESTS=0`: 브랜치와 무관하게 DB 테스트 강제 생략
+  - 기본값(`RUN_DB_TESTS` 미지정)은 DB 테스트 생략(`0`)입니다.
+  - `RUN_DB_TESTS=1`: DB 테스트 강제 실행
+  - `RUN_DB_TESTS=0`: DB 테스트 강제 생략
 
 > 필수: 커밋/푸시 전에는 Docker DB를 반드시 먼저 켜두세요.
 >

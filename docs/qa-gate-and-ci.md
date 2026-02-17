@@ -10,7 +10,7 @@ git config core.hooksPath .githooks
 
 - `pre-commit`: `npm run test`
 - `pre-push`: `npm run test && npm run build && npm run check:openapi-drift`
-- 현재 브랜치가 `main`/`master`면 `pre-push`에서 `npm run test:db`까지 실행
+- `RUN_DB_TESTS=1`일 때만 `pre-push`에서 `npm run test:db`를 실행
 
 필수:
 
@@ -26,7 +26,7 @@ docker compose -f docker-compose.yml up -d db
 
 - `RUN_DB_TESTS=1`: 브랜치와 무관하게 DB 테스트 강제 실행
 - `RUN_DB_TESTS=0`: 브랜치와 무관하게 DB 테스트 강제 생략
-- 미지정: `main`/`master`에서만 자동 실행
+- 미지정: 기본값 `0`으로 동작(자동 생략)
 
 예시:
 

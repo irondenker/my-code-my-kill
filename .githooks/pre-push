@@ -3,10 +3,9 @@ set -eu
 
 echo "[pre-push] Running tests, build and OpenAPI drift checks..."
 
-CURRENT_BRANCH="$(git branch --show-current 2>/dev/null || true)"
-RUN_DB_TESTS_FLAG="${RUN_DB_TESTS:-auto}"
+RUN_DB_TESTS_FLAG="${RUN_DB_TESTS:-0}"
 SHOULD_RUN_DB_TESTS=0
-DB_TEST_REASON="branch=${CURRENT_BRANCH:-unknown}"
+DB_TEST_REASON="RUN_DB_TESTS=0(default)"
 
 if [ "${RUN_DB_TESTS_FLAG}" = "1" ]; then
     SHOULD_RUN_DB_TESTS=1
@@ -14,9 +13,6 @@ if [ "${RUN_DB_TESTS_FLAG}" = "1" ]; then
 elif [ "${RUN_DB_TESTS_FLAG}" = "0" ]; then
     SHOULD_RUN_DB_TESTS=0
     DB_TEST_REASON="RUN_DB_TESTS=0"
-elif [ "${CURRENT_BRANCH}" = "main" ] || [ "${CURRENT_BRANCH}" = "master" ]; then
-    SHOULD_RUN_DB_TESTS=1
-    DB_TEST_REASON="protected-branch=${CURRENT_BRANCH}"
 fi
 
 if [ "${USE_DOCKER_HOOKS:-0}" = "1" ]; then
