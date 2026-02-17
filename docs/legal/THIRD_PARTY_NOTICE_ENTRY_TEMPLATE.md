@@ -25,4 +25,3 @@ Use one entry per third-party dependency, template, font, or asset.
 - Attribution text is preserved where required.
 - Distribution obligations (NOTICE, license text, trademarks) are met.
 - Entry reviewer/date are filled.
-
