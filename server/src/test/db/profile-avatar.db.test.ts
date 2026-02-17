@@ -23,6 +23,16 @@ import {
     withTestServer,
 } from "../helpers/http-test.helpers.js";
 
+function makeProfileEditBody(params: {
+    csrfToken: string;
+    displayName?: string;
+    email?: string;
+    phoneNumber?: string;
+    bio?: string;
+}): string {
+    return `_csrf=${encodeURIComponent(params.csrfToken)}&displayName=${encodeURIComponent(params.displayName ?? "")}&email=${encodeURIComponent(params.email ?? "")}&phoneNumber=${encodeURIComponent(params.phoneNumber ?? "")}&bio=${encodeURIComponent(params.bio ?? "")}`;
+}
+
 if (runDbTests) {
     before(async () => {
         await sequelize.authenticate();
@@ -209,6 +219,202 @@ test("user profile page exposes private fields only to owner or admin", { skip: 
             await cleanupUserById(ownerUserId);
         } else {
             await cleanupUserByUsername(ownerUsername);
+        }
+    }
+});
+
+test("profile edit validates display name/email/phone/bio and returns 422", { skip: skipReason }, async () => {
+    const username = makeId("profileval").slice(0, 32);
+    const password = "profile-val-pass-123";
+    let userId: number | null = null;
+
+    const invalidCases = [
+        {
+            body: {
+                displayName: "x".repeat(51),
+                email: "valid@example.com",
+                phoneNumber: "010-1234-5678",
+                bio: "ok",
+            },
+            expectedError: /Display name must be 50 characters or less\./,
+        },
+        {
+            body: {
+                displayName: "ok",
+                email: "invalid-email",
+                phoneNumber: "010-1234-5678",
+                bio: "ok",
+            },
+            expectedError: /Email format is invalid\./,
+        },
+        {
+            body: {
+                displayName: "ok",
+                email: "valid@example.com",
+                phoneNumber: "invalid@phone",
+                bio: "ok",
+            },
+            expectedError: /Phone number format is invalid\./,
+        },
+        {
+            body: {
+                displayName: "ok",
+                email: "valid@example.com",
+                phoneNumber: "010-1234-5678",
+                bio: "b".repeat(501),
+            },
+            expectedError: /Bio must be 500 characters or less\./,
+        },
+    ];
+
+    try {
+        const created = await createUserForRegister({
+            username,
+            passwordHash: hashPassword(password),
+        });
+        userId = created.userId;
+
+        await withTestServer(async (baseUrl) => {
+            const authCookie = await loginAs({ baseUrl, username, password, nextPath: "/settings/profile" });
+
+            for (const invalidCase of invalidCases) {
+                const page = await fetchFormPage({
+                    baseUrl,
+                    path: "/settings/profile",
+                    cookie: authCookie,
+                });
+
+                const response = await fetch(`${baseUrl}/settings/profile`, {
+                    method: "POST",
+                    headers: {
+                        "content-type": "application/x-www-form-urlencoded",
+                        cookie: page.cookie,
+                    },
+                    body: makeProfileEditBody({
+                        csrfToken: page.csrfToken,
+                        displayName: invalidCase.body.displayName,
+                        email: invalidCase.body.email,
+                        phoneNumber: invalidCase.body.phoneNumber,
+                        bio: invalidCase.body.bio,
+                    }),
+                    redirect: "manual",
+                });
+                const responseBody = await response.text();
+
+                assert.equal(response.status, 422);
+                assert.match(responseBody, invalidCase.expectedError);
+            }
+        });
+    } finally {
+        if (userId !== null) {
+            await cleanupUserById(userId);
+        } else {
+            await cleanupUserByUsername(username);
+        }
+    }
+});
+
+test("profile edit updates profile and redirects to public profile page", { skip: skipReason }, async () => {
+    const username = makeId("profile-ok").slice(0, 32);
+    const password = "profile-ok-pass-123";
+    let userId: number | null = null;
+
+    try {
+        const created = await createUserForRegister({
+            username,
+            passwordHash: hashPassword(password),
+        });
+        userId = created.userId;
+
+        await withTestServer(async (baseUrl) => {
+            const authCookie = await loginAs({ baseUrl, username, password, nextPath: "/settings/profile" });
+            const page = await fetchFormPage({
+                baseUrl,
+                path: "/settings/profile",
+                cookie: authCookie,
+            });
+
+            const response = await fetch(`${baseUrl}/settings/profile`, {
+                method: "POST",
+                headers: {
+                    "content-type": "application/x-www-form-urlencoded",
+                    cookie: page.cookie,
+                },
+                body: makeProfileEditBody({
+                    csrfToken: page.csrfToken,
+                    displayName: "Profile Success",
+                    email: "profile-success@example.com",
+                    phoneNumber: "010-2222-3333",
+                    bio: "updated-bio-success",
+                }),
+                redirect: "manual",
+            });
+
+            assert.equal(response.status, 302);
+            assert.equal(response.headers.get("location"), `/@${username}`);
+        });
+
+        const profile = await findUserProfileById(created.userId);
+        assert.equal(profile?.displayName, "Profile Success");
+        assert.equal(profile?.email, "profile-success@example.com");
+        assert.equal(profile?.phoneNumber, "010-2222-3333");
+        assert.equal(profile?.bio, "updated-bio-success");
+    } finally {
+        if (userId !== null) {
+            await cleanupUserById(userId);
+        } else {
+            await cleanupUserByUsername(username);
+        }
+    }
+});
+
+test("profile edit returns 404 when DB update affects no rows", { skip: skipReason }, async () => {
+    const username = makeId("profile404").slice(0, 32);
+    const password = "profile-404-pass-123";
+    let userId: number | null = null;
+
+    try {
+        const created = await createUserForRegister({
+            username,
+            passwordHash: hashPassword(password),
+        });
+        userId = created.userId;
+
+        await withTestServer(async (baseUrl) => {
+            const authCookie = await loginAs({ baseUrl, username, password, nextPath: "/settings/profile" });
+            const page = await fetchFormPage({
+                baseUrl,
+                path: "/settings/profile",
+                cookie: authCookie,
+            });
+
+            // Keep the authenticated session but remove the row so update affects zero rows.
+            await cleanupUserById(created.userId);
+            userId = null;
+
+            const response = await fetch(`${baseUrl}/settings/profile`, {
+                method: "POST",
+                headers: {
+                    "content-type": "application/x-www-form-urlencoded",
+                    cookie: page.cookie,
+                },
+                body: makeProfileEditBody({
+                    csrfToken: page.csrfToken,
+                    displayName: "Valid Name",
+                    email: "valid@example.com",
+                    phoneNumber: "010-1234-5678",
+                    bio: "valid-bio",
+                }),
+                redirect: "manual",
+            });
+
+            assert.equal(response.status, 404);
+        });
+    } finally {
+        if (userId !== null) {
+            await cleanupUserById(userId);
+        } else {
+            await cleanupUserByUsername(username);
         }
     }
 });
