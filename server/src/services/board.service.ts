@@ -13,9 +13,9 @@ export type {
     BoardMeta,
 } from "../types/board.types.js";
 
-// Board management (boards)
+// Board queries (boards)
 export {
     listBoards,
     findBoardBySlug,
     findBoardById,
-} from "./board/board-management.service.js";
+} from "./board/board-query.service.js";

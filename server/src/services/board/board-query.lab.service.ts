@@ -9,7 +9,7 @@ import { mapBoardMeta } from "../../utils/board-mapper.util.js";
  *
  * 책임:
  * - facade가 lab 경로로 라우팅한 기능을 취약 쿼리로 실행합니다.
- * - 타깃 활성 여부 판정은 facade(`board-management.service.ts`)에서 담당합니다.
+ * - 타깃 활성 여부 판정은 facade(`board-query.service.ts`)에서 담당합니다.
  */
 
 /**
