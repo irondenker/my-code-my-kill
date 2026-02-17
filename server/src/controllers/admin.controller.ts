@@ -3,13 +3,13 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "../db/index.js";
 import { HttpError } from "../utils/http-error.js";
 import {
+    createBoard,
     findBoardById,
     findBoardBySlug,
     listBoards,
+    updateBoard,
 } from "../services/board.service.js";
 import {
-    adminCreateBoard,
-    adminUpdateBoard,
     adminUpdateUserRole,
     adminUpdateUserStatus,
     countAdminUsers,
@@ -405,7 +405,7 @@ export async function postAdminBoardCreate(req: Request, res: Response) {
     }
 
     // 5) 생성 성공 시 리다이렉트 후 한 번만 보이는 플래시 메시지를 세팅합니다.
-    await adminCreateBoard({
+    await createBoard({
         slug,
         name,
         description,
@@ -508,7 +508,7 @@ export async function postAdminBoardEdit(req: Request, res: Response) {
     }
 
     // 5) 업데이트 성공 시 목록으로 이동하고 플래시 메시지를 남깁니다.
-    const updated = await adminUpdateBoard({
+    const updated = await updateBoard({
         boardId,
         slug,
         name,

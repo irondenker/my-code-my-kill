@@ -3,7 +3,7 @@
  *
  * 목적:
  * - 컨트롤러 import 경로를 단순화(`../services/admin.service.js`)합니다.
- * - 데이터 접근(`*.data.service`)과 유즈케이스(`*.usecases.service`) 계층을 한 곳에서 노출합니다.
+ * - 어드민 관리 기능을 한 곳에서 노출합니다.
  */
 
 export {
@@ -12,15 +12,11 @@ export {
     findUserMetaForAdminById,
     countAdminUsers,
     updateUserRole,
-} from "./admin/user-management.data.service.js";
+} from "./admin/admin-management.service.js";
 
 export {
     adminUpdateUserRole,
     adminUpdateUserStatus,
-} from "./admin/user-management.usecases.service.js";
-export {
-    adminCreateBoard,
-    adminUpdateBoard,
-} from "./admin/board-management.usecases.service.js";
+} from "./admin/admin-management.service.js";
 
-export type { AdminAuditContext } from "./admin/user-management.usecases.service.js";
+export type { AdminAuditContext } from "./admin/admin-management.service.js";

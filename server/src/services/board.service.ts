@@ -19,3 +19,9 @@ export {
     findBoardBySlug,
     findBoardById,
 } from "./board/board-query.service.js";
+
+// Board mutations (admin)
+export {
+    createBoard,
+    updateBoard,
+} from "./board/board-admin-mutation.service.js";
