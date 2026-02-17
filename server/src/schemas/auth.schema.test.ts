@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseLoginForm } from "./auth.schema.js";
+import { parseLoginForm, parseRegisterForm } from "./auth.schema.js";
 
 test("parseLoginForm trims username and keeps password", () => {
     const result = parseLoginForm({
@@ -24,4 +24,17 @@ test("parseLoginForm fails when required credentials are missing", () => {
     });
 
     assert.equal(result.success, false);
+});
+
+test("parseRegisterForm normalizes username and password", () => {
+    const result = parseRegisterForm({
+        username: "  new-user ",
+        password: "1234",
+    });
+
+    assert.equal(result.success, true);
+    if (!result.success) return;
+
+    assert.equal(result.data.username, "new-user");
+    assert.equal(result.data.password, "1234");
 });

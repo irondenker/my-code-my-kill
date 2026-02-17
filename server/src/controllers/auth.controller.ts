@@ -9,7 +9,7 @@ import {
     logLoginSuccessSafely,
     logLogoutSuccessSafely,
 } from "../services/audit.service.js";
-import { parseLoginForm } from "../schemas/auth.schema.js";
+import { parseLoginForm, parseRegisterForm } from "../schemas/auth.schema.js";
 import { hashPassword, isValidPassword, verifyPassword } from "../utils/password.util.js";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
 import { isValidUsername } from "../utils/username.util.js";
@@ -106,9 +106,10 @@ export async function getRegisterPage(_req: Request, res: Response) {
  * - 세션 재생성(regenerate) 및 로그인 상태로 전환
  */
 export async function postRegister(req: Request, res: Response) {
-    // 1) 폼 입력을 문자열로 안전하게 정규화합니다.
-    const username = normalizeString(req.body?.username);
-    const password = String(req.body?.password ?? "");
+    // 1) zod 스키마 기반으로 폼 입력을 정규화합니다.
+    const parsedRegisterForm = parseRegisterForm(req.body ?? {});
+    const username = parsedRegisterForm.success ? parsedRegisterForm.data.username : normalizeString(req.body?.username);
+    const password = parsedRegisterForm.success ? parsedRegisterForm.data.password : String(req.body?.password ?? "");
 
     // 2) 필수값/형식 검증 실패는 즉시 폼으로 되돌려 사용자 입력을 바로 교정하도록 합니다.
     if (!username) {

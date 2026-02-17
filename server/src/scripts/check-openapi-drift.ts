@@ -1,8 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { openApiDocument as openApiBase } from "../docs/openapi.js";
-import { openApiDocument as openApiOverrides } from "../docs/openapi.overrides.js";
+import { openApiDocument } from "../docs/openapi.js";
 
 /**
  * 다음과 같은 router 메서드 호출을 탐지한다.
@@ -121,26 +120,18 @@ function printDiff(documentName: string, diff: EndpointDiff): void {
  * CI/로컬 드리프트 체크 진입점.
  *
  * 동작 순서:
- * 1) 라우트와 base OpenAPI 문서를 비교
- * 2) 라우트와 override OpenAPI 문서를 비교
- * 3) 하나라도 불일치가 있으면 종료 코드를 1로 설정
+ * 1) 라우트와 OpenAPI 문서를 비교
+ * 2) 하나라도 불일치가 있으면 종료 코드를 1로 설정
  */
 async function main() {
     const routeEndpoints = await collectRouteEndpoints();
-    const baseOpenApiEndpoints = collectOpenApiEndpoints(openApiBase);
-    const overrideOpenApiEndpoints = collectOpenApiEndpoints(openApiOverrides);
+    const openApiEndpoints = collectOpenApiEndpoints(openApiDocument);
 
-    const baseDiff = getDiff({ expected: routeEndpoints, actual: baseOpenApiEndpoints });
-    const overrideDiff = getDiff({ expected: routeEndpoints, actual: overrideOpenApiEndpoints });
+    const diff = getDiff({ expected: routeEndpoints, actual: openApiEndpoints });
 
-    printDiff("openapi.ts", baseDiff);
-    printDiff("openapi.overrides.ts", overrideDiff);
+    printDiff("openapi.ts", diff);
 
-    const hasDiff =
-        baseDiff.missing.length > 0 ||
-        baseDiff.extras.length > 0 ||
-        overrideDiff.missing.length > 0 ||
-        overrideDiff.extras.length > 0;
+    const hasDiff = diff.missing.length > 0 || diff.extras.length > 0;
 
     if (hasDiff) {
         process.exitCode = 1;

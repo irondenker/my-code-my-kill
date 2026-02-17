@@ -3,6 +3,7 @@ import { findUserProfileById, findPrivateProfileByUsername, updateUserProfile } 
 import { isPublicProfileHandle } from "../utils/username.util.js";
 import { HttpError } from "../utils/http-error.js";
 import { normalizeString } from "../utils/string.util.js";
+import { parseProfileEditForm } from "../schemas/user.schema.js";
 
 /**
  * 사용자 프로필(공개 페이지 + 설정 페이지) 컨트롤러입니다.
@@ -122,10 +123,15 @@ export async function postProfileEdit(req: Request, res: Response) {
     }
 
     // 3) 입력값을 trim/nullable로 정규화합니다.
-    const displayName = normalizeString(req.body?.displayName, null);
-    const email = normalizeString(req.body?.email, null);
-    const phoneNumber = normalizeString(req.body?.phoneNumber, null);
-    const bio = normalizeString(req.body?.bio, null);
+    const parsedProfileForm = parseProfileEditForm(req.body ?? {});
+    const displayName = parsedProfileForm.success
+        ? parsedProfileForm.data.displayName
+        : normalizeString(req.body?.displayName, null);
+    const email = parsedProfileForm.success ? parsedProfileForm.data.email : normalizeString(req.body?.email, null);
+    const phoneNumber = parsedProfileForm.success
+        ? parsedProfileForm.data.phoneNumber
+        : normalizeString(req.body?.phoneNumber, null);
+    const bio = parsedProfileForm.success ? parsedProfileForm.data.bio : normalizeString(req.body?.bio, null);
 
     // 4) 필드 단위 검증 후 실패 시 기존 값 + 입력값을 그대로 폼에 바인딩하여 재표시합니다.
     if (displayName && displayName.length > 50) {

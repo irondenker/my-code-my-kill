@@ -13,6 +13,7 @@ import {
     buildArticleCreateFormViewModel,
     buildArticleEditFormViewModel,
 } from "../utils/article-form.util.js";
+import { parseArticleForm } from "../schemas/article.schema.js";
 
 export function getUploadedFile(req: Request, fieldName: string): Express.Multer.File | null {
     const files = req.files;
@@ -67,6 +68,13 @@ export function requireAuthenticatedViewerId(viewerContext: ViewerContext): numb
 }
 
 export function readArticleFormInput(req: Request): ArticleFormInput {
+    const parsed = parseArticleForm(req.body ?? {});
+    if (parsed.success) {
+        return {
+            title: parsed.data.title,
+            content: parsed.data.content,
+        };
+    }
     return {
         title: String(req.body?.title ?? "").trim(),
         content: String(req.body?.content ?? "").trim(),

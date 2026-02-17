@@ -43,8 +43,44 @@ export const loginRequestBodyOpenApiSchema: OpenApiObjectSchema = {
 };
 
 /**
+ * 회원가입 폼 입력 정규화 스키마입니다.
+ * (필수 여부 검증은 기존 컨트롤러 메시지 흐름을 유지하기 위해 컨트롤러에서 처리)
+ */
+export const registerFormSchema = z.object({
+    username: z.preprocess((value) => normalizeString(value), z.string()),
+    password: z.preprocess((value) => (typeof value === "string" ? value : ""), z.string()),
+    _csrf: z.preprocess((value) => normalizeString(value, null) ?? undefined, z.string().optional()),
+});
+
+export const registerRequestBodyOpenApiSchema: OpenApiObjectSchema = {
+    type: "object",
+    required: ["username", "password"],
+    properties: {
+        username: { type: "string" },
+        password: { type: "string" },
+        _csrf: { type: "string" },
+    },
+};
+
+export const optionalCsrfFormRequestBodyOpenApiSchema: Omit<OpenApiObjectSchema, "required"> & {
+    required?: string[];
+} = {
+    type: "object",
+    properties: {
+        _csrf: { type: "string" },
+    },
+};
+
+/**
  * 로그인 폼을 안전하게 파싱/정규화합니다.
  */
 export function parseLoginForm(input: unknown) {
     return loginFormSchema.safeParse(input);
+}
+
+/**
+ * 회원가입 폼을 안전하게 파싱/정규화합니다.
+ */
+export function parseRegisterForm(input: unknown) {
+    return registerFormSchema.safeParse(input);
 }

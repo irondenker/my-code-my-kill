@@ -166,24 +166,15 @@ async function syncFile(params: { filePath: string; document: OpenApiLike; route
 async function main() {
     const serverRoot = process.cwd();
     const docsDir = path.resolve(serverRoot, "src/docs");
-    const baseDocPath = path.join(docsDir, "openapi.ts");
-    const overrideDocPath = path.join(docsDir, "openapi.overrides.ts");
+    const docPath = path.join(docsDir, "openapi.ts");
 
-    const [{ openApiDocument: baseDocument }, { openApiDocument: overrideDocument }] = await Promise.all([
-        import("../docs/openapi.js"),
-        import("../docs/openapi.overrides.js"),
-    ]);
+    const { openApiDocument } = await import("../docs/openapi.js");
 
     const routeMap = await collectRouteEndpointMap(serverRoot);
 
-    const baseResult = await syncFile({
-        filePath: baseDocPath,
-        document: baseDocument as unknown as OpenApiLike,
-        routeMap,
-    });
-    const overrideResult = await syncFile({
-        filePath: overrideDocPath,
-        document: overrideDocument as unknown as OpenApiLike,
+    const result = await syncFile({
+        filePath: docPath,
+        document: openApiDocument as unknown as OpenApiLike,
         routeMap,
     });
 
@@ -202,8 +193,7 @@ async function main() {
         }
     };
 
-    printSummary("openapi.ts", baseResult);
-    printSummary("openapi.overrides.ts", overrideResult);
+    printSummary("openapi.ts", result);
 }
 
 await main();

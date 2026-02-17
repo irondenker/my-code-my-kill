@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as ejs from "ejs";
 import { getLabOptions } from "../config/lab-options.js";
 import { HttpError } from "../utils/http-error.js";
+import { parseSstiRenderForm } from "../schemas/lab.schema.js";
 
 const router = Router();
 
@@ -48,8 +49,9 @@ router.post("/labs/ssti", (req, res, next) => {
         });
     }
 
-    const titleInput = typeof req.body?.title === "string" ? req.body.title : "";
-    const templateInput = typeof req.body?.template === "string" ? req.body.template : "";
+    const parsedSstiForm = parseSstiRenderForm(req.body ?? {});
+    const titleInput = parsedSstiForm.success ? parsedSstiForm.data.title : "";
+    const templateInput = parsedSstiForm.success ? parsedSstiForm.data.template : "";
     let renderedOutput = "";
     let renderError: string | null = null;
 

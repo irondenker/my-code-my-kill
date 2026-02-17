@@ -24,6 +24,11 @@ import {
 import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
 import { getPositiveIntParamOrThrow } from "../utils/route-param.util.js";
 import { normalizeString } from "../utils/string.util.js";
+import {
+    parseAdminBoardForm,
+    parseAdminUserRoleForm,
+    parseAdminUserStatusForm,
+} from "../schemas/admin.schema.js";
 import type { AdminAuditContext } from "../services/admin.service.js";
 import type { BoardFormValue } from "../types/admin.types.js";
 import type { UserRole } from "../types/user-role.types.js";
@@ -214,7 +219,8 @@ export async function postAdminUserStatus(req: Request, res: Response) {
     // 1) 대상 userId/요청 status를 읽고 기본 형식을 검증합니다.
     const userId = getPositiveIntParamOrThrow(req, "userId");
 
-    const status = normalizeString(req.body?.status);
+    const parsedStatusForm = parseAdminUserStatusForm(req.body ?? {});
+    const status = parsedStatusForm.success ? parsedStatusForm.data.status : normalizeString(req.body?.status);
     if (status !== "active" && status !== "inactive") {
         return renderAdminUsersIndexError(req, res, {
             status: 422,
@@ -269,7 +275,8 @@ export async function postAdminUserRole(req: Request, res: Response) {
     // 1) 대상 userId/요청 role을 읽고 기본 형식을 검증합니다.
     const userId = getPositiveIntParamOrThrow(req, "userId");
 
-    const role = normalizeString(req.body?.role);
+    const parsedRoleForm = parseAdminUserRoleForm(req.body ?? {});
+    const role = parsedRoleForm.success ? parsedRoleForm.data.role : normalizeString(req.body?.role);
     if (role !== "admin" && role !== "user") {
         return renderAdminUsersIndexError(req, res, {
             status: 422,
@@ -324,11 +331,18 @@ export async function postAdminUserRole(req: Request, res: Response) {
  */
 export async function postAdminBoardCreate(req: Request, res: Response) {
     // 1) 입력값을 정규화하고, 실패 시 폼 유지에 사용할 기본 formValue를 구성합니다.
-    const slug = normalizeString(req.body?.slug).toLowerCase();
-    const name = normalizeString(req.body?.name);
-    const description = normalizeString(req.body?.description, null);
-    const readAccess = normalizeString(req.body?.readAccess).toLowerCase();
-    const createAccess = normalizeString(req.body?.createAccess).toLowerCase();
+    const parsedBoardForm = parseAdminBoardForm(req.body ?? {});
+    const slug = parsedBoardForm.success ? parsedBoardForm.data.slug : normalizeString(req.body?.slug).toLowerCase();
+    const name = parsedBoardForm.success ? parsedBoardForm.data.name : normalizeString(req.body?.name);
+    const description = parsedBoardForm.success
+        ? parsedBoardForm.data.description
+        : normalizeString(req.body?.description, null);
+    const readAccess = parsedBoardForm.success
+        ? parsedBoardForm.data.readAccess
+        : normalizeString(req.body?.readAccess).toLowerCase();
+    const createAccess = parsedBoardForm.success
+        ? parsedBoardForm.data.createAccess
+        : normalizeString(req.body?.createAccess).toLowerCase();
     const formValue: BoardFormValue = {
         slug,
         name,
@@ -454,11 +468,18 @@ export async function postAdminBoardEdit(req: Request, res: Response) {
         throw new HttpError(404, "Not Found");
     }
 
-    const slug = normalizeString(req.body?.slug).toLowerCase();
-    const name = normalizeString(req.body?.name);
-    const description = normalizeString(req.body?.description, null);
-    const readAccess = normalizeString(req.body?.readAccess).toLowerCase();
-    const createAccess = normalizeString(req.body?.createAccess).toLowerCase();
+    const parsedBoardForm = parseAdminBoardForm(req.body ?? {});
+    const slug = parsedBoardForm.success ? parsedBoardForm.data.slug : normalizeString(req.body?.slug).toLowerCase();
+    const name = parsedBoardForm.success ? parsedBoardForm.data.name : normalizeString(req.body?.name);
+    const description = parsedBoardForm.success
+        ? parsedBoardForm.data.description
+        : normalizeString(req.body?.description, null);
+    const readAccess = parsedBoardForm.success
+        ? parsedBoardForm.data.readAccess
+        : normalizeString(req.body?.readAccess).toLowerCase();
+    const createAccess = parsedBoardForm.success
+        ? parsedBoardForm.data.createAccess
+        : normalizeString(req.body?.createAccess).toLowerCase();
 
     // 검증 실패 시 입력값을 유지한 채 동일 편집 폼으로 재렌더링합니다.
     const renderInvalid = (message: string, status = 422) => {

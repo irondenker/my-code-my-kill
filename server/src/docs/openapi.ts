@@ -1,4 +1,15 @@
-import { loginRequestBodyOpenApiSchema } from "../schemas/auth.schema.js";
+import {
+    loginRequestBodyOpenApiSchema,
+    optionalCsrfFormRequestBodyOpenApiSchema,
+    registerRequestBodyOpenApiSchema,
+} from "../schemas/auth.schema.js";
+import {
+    adminBoardRequestBodyOpenApiSchema,
+    adminUserRoleRequestBodyOpenApiSchema,
+    adminUserStatusRequestBodyOpenApiSchema,
+} from "../schemas/admin.schema.js";
+import { profileEditRequestBodyOpenApiSchema } from "../schemas/user.schema.js";
+import { sstiRenderRequestBodyOpenApiSchema } from "../schemas/lab.schema.js";
 
 export const openApiDocument = {
     openapi: "3.0.3",
@@ -143,15 +154,7 @@ export const openApiDocument = {
                     required: true,
                     content: {
                         "application/x-www-form-urlencoded": {
-                            schema: {
-                                type: "object",
-                                required: ["username", "password"],
-                                properties: {
-                                    username: { type: "string" },
-                                    password: { type: "string" },
-                                    _csrf: { type: "string" },
-                                },
-                            },
+                            schema: registerRequestBodyOpenApiSchema,
                         },
                     },
                 },
@@ -172,12 +175,7 @@ export const openApiDocument = {
                     required: false,
                     content: {
                         "application/x-www-form-urlencoded": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    _csrf: { type: "string" },
-                                },
-                            },
+                            schema: optionalCsrfFormRequestBodyOpenApiSchema,
                         },
                     },
                 },
@@ -354,12 +352,7 @@ export const openApiDocument = {
                     required: false,
                     content: {
                         "application/x-www-form-urlencoded": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    _csrf: { type: "string" },
-                                },
-                            },
+                            schema: optionalCsrfFormRequestBodyOpenApiSchema,
                         },
                     },
                 },
@@ -408,16 +401,7 @@ export const openApiDocument = {
                     required: true,
                     content: {
                         "application/x-www-form-urlencoded": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    displayName: { type: "string" },
-                                    email: { type: "string" },
-                                    phoneNumber: { type: "string" },
-                                    bio: { type: "string" },
-                                    _csrf: { type: "string" },
-                                },
-                            },
+                            schema: profileEditRequestBodyOpenApiSchema,
                         },
                     },
                 },
@@ -446,16 +430,7 @@ export const openApiDocument = {
                     required: true,
                     content: {
                         "application/x-www-form-urlencoded": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    displayName: { type: "string" },
-                                    email: { type: "string" },
-                                    phoneNumber: { type: "string" },
-                                    bio: { type: "string" },
-                                    _csrf: { type: "string" },
-                                },
-                            },
+                            schema: profileEditRequestBodyOpenApiSchema,
                         },
                     },
                 },
@@ -504,7 +479,7 @@ export const openApiDocument = {
                     required: false,
                     content: {
                         "application/x-www-form-urlencoded": {
-                            schema: { type: "object", properties: { _csrf: { type: "string" } } },
+                            schema: optionalCsrfFormRequestBodyOpenApiSchema,
                         },
                     },
                 },
@@ -551,24 +526,7 @@ export const openApiDocument = {
                     required: true,
                     content: {
                         "application/x-www-form-urlencoded": {
-                            schema: {
-                                type: "object",
-                                required: ["slug", "name", "readAccess", "createAccess"],
-                                properties: {
-                                    slug: { type: "string" },
-                                    name: { type: "string" },
-                                    description: { type: "string" },
-                                    readAccess: {
-                                        type: "string",
-                                        enum: ["public", "auth", "admin", "owner_or_admin"],
-                                    },
-                                    createAccess: {
-                                        type: "string",
-                                        enum: ["auth", "admin"],
-                                    },
-                                    _csrf: { type: "string" },
-                                },
-                            },
+                            schema: adminBoardRequestBodyOpenApiSchema,
                         },
                     },
                 },
@@ -606,14 +564,7 @@ export const openApiDocument = {
                     required: true,
                     content: {
                         "application/x-www-form-urlencoded": {
-                            schema: {
-                                type: "object",
-                                required: ["status"],
-                                properties: {
-                                    status: { type: "string", enum: ["active", "inactive"] },
-                                    _csrf: { type: "string" },
-                                },
-                            },
+                            schema: adminUserStatusRequestBodyOpenApiSchema,
                         },
                     },
                 },
@@ -630,14 +581,7 @@ export const openApiDocument = {
                     required: true,
                     content: {
                         "application/x-www-form-urlencoded": {
-                            schema: {
-                                type: "object",
-                                required: ["role"],
-                                properties: {
-                                    role: { type: "string", enum: ["user", "admin"] },
-                                    _csrf: { type: "string" },
-                                },
-                            },
+                            schema: adminUserRoleRequestBodyOpenApiSchema,
                         },
                     },
                 },
@@ -661,24 +605,7 @@ export const openApiDocument = {
                     required: true,
                     content: {
                         "application/x-www-form-urlencoded": {
-                            schema: {
-                                type: "object",
-                                required: ["slug", "name", "readAccess", "createAccess"],
-                                properties: {
-                                    slug: { type: "string" },
-                                    name: { type: "string" },
-                                    description: { type: "string" },
-                                    readAccess: {
-                                        type: "string",
-                                        enum: ["public", "auth", "admin", "owner_or_admin"],
-                                    },
-                                    createAccess: {
-                                        type: "string",
-                                        enum: ["auth", "admin"],
-                                    },
-                                    _csrf: { type: "string" },
-                                },
-                            },
+                            schema: adminBoardRequestBodyOpenApiSchema,
                         },
                     },
                 },
@@ -708,14 +635,7 @@ export const openApiDocument = {
                     required: true,
                     content: {
                         "application/x-www-form-urlencoded": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    title: { type: "string" },
-                                    template: { type: "string" },
-                                    _csrf: { type: "string" },
-                                },
-                            },
+                            schema: sstiRenderRequestBodyOpenApiSchema,
                         },
                     },
                 },

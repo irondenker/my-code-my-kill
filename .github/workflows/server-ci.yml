@@ -54,7 +54,7 @@ jobs:
       - name: Detect OpenAPI doc changes
         id: openapi_changes
         run: |
-          if git diff --quiet -- src/docs/openapi.ts src/docs/openapi.overrides.ts; then
+          if git diff --quiet -- src/docs/openapi.ts; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -66,7 +66,7 @@ jobs:
         run: |
           echo "OpenAPI 문서가 라우트 기준으로 자동 보정되었습니다."
           echo "로컬에서 npm run fix:openapi-drift 실행 후 변경사항을 커밋하세요."
-          git diff -- src/docs/openapi.ts src/docs/openapi.overrides.ts
+          git diff -- src/docs/openapi.ts
           exit 1
         working-directory: server
 
@@ -76,7 +76,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/docs/openapi.ts src/docs/openapi.overrides.ts
+          git add src/docs/openapi.ts
           git commit -m "📚 Docs: auto-sync OpenAPI endpoints [skip ci]"
           git push
         working-directory: server
