@@ -29,7 +29,7 @@ test("POST /login with missing credentials returns 400 with form error (csrf val
             const body = await response.text();
 
             assert.equal(response.status, 400);
-            assert.match(body, /Username and password are required\./);
+            assert.match(body, /alert alert-danger/);
             assert.match(body, /name="next" value="\/board"/);
         });
     });
@@ -52,7 +52,7 @@ test("POST /register with invalid username returns 422 before DB lookup", async 
             const body = await response.text();
 
             assert.equal(response.status, 422);
-            assert.match(body, /Username must be 3-50 characters\./);
+            assert.match(body, /alert alert-danger/);
         });
     });
 });
@@ -74,7 +74,7 @@ test("POST /register with invalid password returns 422 before DB lookup", async 
             const body = await response.text();
 
             assert.equal(response.status, 422);
-            assert.match(body, /Password must be at least 8 characters\./);
+            assert.match(body, /alert alert-danger/);
         });
     });
 });

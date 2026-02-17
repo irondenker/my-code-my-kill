@@ -178,7 +178,8 @@ test("ssti route shows disabled message when lab option is off", async () => {
     });
 
     assert.equal(result.status, 200);
-    assert.match(result.body, /SSTI 실습이 비활성화되어 있습니다/);
+    assert.match(result.body, /<form method="post" action="\/labs\/ssti"/);
+    assert.match(result.body, /btn btn-danger" disabled/);
 });
 
 test("ssti route renders template output when lab option is on (with csrf lab mode)", async () => {
