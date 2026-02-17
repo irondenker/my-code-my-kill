@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { regenerateSession, saveSession } from "../../../utils/session.util.js";
+import { destroySession, regenerateSession, saveSession } from "../../../utils/session.util.js";
 
 test("regenerateSession resolves when callback succeeds", async () => {
     const req = {
@@ -65,5 +65,44 @@ test("saveSession rejects when callback returns an error", async () => {
     await assert.rejects(
         async () => saveSession(req),
         /save failed/
+    );
+});
+
+test("destroySession resolves when callback succeeds", async () => {
+    const req = {
+        session: {
+            regenerate(_callback: (err?: unknown) => void) {
+                return;
+            },
+            save(_callback: (err?: unknown) => void) {
+                return;
+            },
+            destroy(callback: (err?: unknown) => void) {
+                callback();
+            },
+        },
+    } as any;
+
+    await destroySession(req);
+});
+
+test("destroySession rejects when callback returns an error", async () => {
+    const req = {
+        session: {
+            regenerate(_callback: (err?: unknown) => void) {
+                return;
+            },
+            save(_callback: (err?: unknown) => void) {
+                return;
+            },
+            destroy(callback: (err?: unknown) => void) {
+                callback(new Error("destroy failed"));
+            },
+        },
+    } as any;
+
+    await assert.rejects(
+        async () => destroySession(req),
+        /destroy failed/
     );
 });

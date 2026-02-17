@@ -10,21 +10,9 @@ import { HttpError } from "../../utils/http-error.js";
 import { isBoardCreateAccess, isBoardReadAccess, isValidBoardSlug } from "../../utils/board-validation.util.js";
 import { getPositiveIntParamOrThrow } from "../../utils/route-param.util.js";
 import { normalizeString } from "../../utils/string.util.js";
+import { consumeSessionFlashMessage, setSessionFlashMessage } from "../../utils/session-flash.util.js";
 import { parseAdminBoardForm } from "../../schemas/admin.schema.js";
 import type { BoardFormValue } from "../../types/admin.types.js";
-
-/**
- * 보드 관리 페이지 플래시 메시지를 소비합니다.
- * 한 번 읽으면 세션에서 삭제하여 중복 노출을 방지합니다.
- */
-function consumeAdminBoardsFlashMessage(req: Request): string | null {
-    const value = req.session.adminBoardsFlashMessage;
-    if (typeof value !== "string" || value.length === 0) {
-        return null;
-    }
-    delete req.session.adminBoardsFlashMessage;
-    return value;
-}
 
 /**
  * 어드민 보드 관리 인덱스 화면을 렌더링합니다.
@@ -43,7 +31,7 @@ async function renderAdminBoardsIndex(
     return res.render("admin/boards/index", {
         boards,
         formError: options?.formError ?? null,
-        formSuccess: options?.formSuccess ?? consumeAdminBoardsFlashMessage(req),
+        formSuccess: options?.formSuccess ?? consumeSessionFlashMessage(req, "adminBoardsFlashMessage"),
         formValue: options?.formValue ?? {
             slug: "",
             name: "",
@@ -164,7 +152,7 @@ export async function postAdminBoardCreate(req: Request, res: Response) {
         createAccess,
     });
 
-    req.session.adminBoardsFlashMessage = "Board has been created.";
+    setSessionFlashMessage(req, "adminBoardsFlashMessage", "Board has been created.");
     return res.redirect("/admin/boards");
 }
 
@@ -279,6 +267,6 @@ export async function postAdminBoardEdit(req: Request, res: Response) {
         throw new HttpError(404, "Not Found");
     }
 
-    req.session.adminBoardsFlashMessage = "Board has been updated.";
+    setSessionFlashMessage(req, "adminBoardsFlashMessage", "Board has been updated.");
     return res.redirect("/admin/boards");
 }

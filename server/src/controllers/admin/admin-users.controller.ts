@@ -15,6 +15,8 @@ import {
 import { getRequestIp, getRequestUserAgent } from "../../utils/request-meta.util.js";
 import { getPositiveIntParamOrThrow } from "../../utils/route-param.util.js";
 import { normalizeString } from "../../utils/string.util.js";
+import { consumeSessionFlashMessage, setSessionFlashMessage } from "../../utils/session-flash.util.js";
+import { requireSessionActor } from "../../utils/session-actor.util.js";
 import {
     parseAdminUserRoleForm,
     parseAdminUserStatusForm,
@@ -22,38 +24,10 @@ import {
 import type { UserRole } from "../../types/user-role.types.js";
 
 /**
- * 현재 세션에서 감사로그 actor 정보를 구성합니다.
- * 세션이 유효하지 않으면 401 에러를 던집니다.
- */
-function getSessionActor(req: Request): { userId: number; username: string | null } {
-    const userId = Number(req.session.userId);
-    if (!Number.isFinite(userId) || userId <= 0) {
-        throw new HttpError(401, "Unauthorized");
-    }
-    return {
-        userId,
-        username: normalizeString(req.session.username, null),
-    };
-}
-
-/**
- * 유저 관리 페이지 플래시 메시지를 소비합니다.
- * 한 번 읽으면 세션에서 삭제하여 중복 노출을 방지합니다.
- */
-function consumeAdminUsersFlashMessage(req: Request): string | null {
-    const value = req.session.adminUsersFlashMessage;
-    if (typeof value !== "string" || value.length === 0) {
-        return null;
-    }
-    delete req.session.adminUsersFlashMessage;
-    return value;
-}
-
-/**
  * 어드민 작업 감사로그에 필요한 공통 컨텍스트를 구성합니다.
  */
 function buildAdminAuditContext(req: Request): AdminAuditContext {
-    const actor = getSessionActor(req);
+    const actor = requireSessionActor(req);
     return {
         actorUserId: actor.userId,
         actorUsername: actor.username,
@@ -81,7 +55,7 @@ async function renderAdminUsersIndex(
         users,
         adminCount,
         formError: options?.formError ?? null,
-        formSuccess: options?.formSuccess ?? consumeAdminUsersFlashMessage(req),
+        formSuccess: options?.formSuccess ?? consumeSessionFlashMessage(req, "adminUsersFlashMessage"),
     });
 }
 
@@ -116,6 +90,7 @@ export function getAdminUsersPage(req: Request, res: Response) {
 export async function postAdminUserStatus(req: Request, res: Response) {
     // 1) 대상 userId/요청 status를 읽고 기본 형식을 검증합니다.
     const userId = getPositiveIntParamOrThrow(req, "userId");
+    const actor = requireSessionActor(req);
 
     const parsedStatusForm = parseAdminUserStatusForm(req.body ?? {});
     const status = parsedStatusForm.success ? parsedStatusForm.data.status : normalizeString(req.body?.status);
@@ -135,7 +110,7 @@ export async function postAdminUserStatus(req: Request, res: Response) {
     // 3) 자기 자신/관리자 보호 등 상태 변경 정책을 검증합니다.
     const isActive = status === "active";
     const statusPolicy = validateAdminUserStatusPolicy({
-        actorUserId: Number(req.session.userId),
+        actorUserId: actor.userId,
         target,
         nextStatus: status,
     });
@@ -148,7 +123,7 @@ export async function postAdminUserStatus(req: Request, res: Response) {
 
     // 4) 변경 사항이 없다면 서비스 호출 없이 성공 플래시만 노출합니다.
     if ("noChange" in statusPolicy && statusPolicy.noChange) {
-        req.session.adminUsersFlashMessage = "User status has been updated.";
+        setSessionFlashMessage(req, "adminUsersFlashMessage", "User status has been updated.");
         return res.redirect("/admin/users");
     }
 
@@ -161,7 +136,7 @@ export async function postAdminUserStatus(req: Request, res: Response) {
         throw new HttpError(404, "Not Found");
     }
 
-    req.session.adminUsersFlashMessage = "User status has been updated.";
+    setSessionFlashMessage(req, "adminUsersFlashMessage", "User status has been updated.");
     return res.redirect("/admin/users");
 }
 
@@ -172,6 +147,7 @@ export async function postAdminUserStatus(req: Request, res: Response) {
 export async function postAdminUserRole(req: Request, res: Response) {
     // 1) 대상 userId/요청 role을 읽고 기본 형식을 검증합니다.
     const userId = getPositiveIntParamOrThrow(req, "userId");
+    const actor = requireSessionActor(req);
 
     const parsedRoleForm = parseAdminUserRoleForm(req.body ?? {});
     const role = parsedRoleForm.success ? parsedRoleForm.data.role : normalizeString(req.body?.role);
@@ -192,7 +168,7 @@ export async function postAdminUserRole(req: Request, res: Response) {
     const requestedRole = role as UserRole;
     const adminCount = target.userRole === "admin" && requestedRole === "user" ? await countAdminUsers() : null;
     const rolePolicy = validateAdminUserRolePolicy({
-        actorUserId: Number(req.session.userId),
+        actorUserId: actor.userId,
         target,
         requestedRole,
         ...(adminCount === null ? {} : { adminCount }),
@@ -206,7 +182,7 @@ export async function postAdminUserRole(req: Request, res: Response) {
 
     // 4) 변경 사항이 없다면 서비스 호출 없이 성공 플래시만 노출합니다.
     if ("noChange" in rolePolicy && rolePolicy.noChange) {
-        req.session.adminUsersFlashMessage = "User role has been updated.";
+        setSessionFlashMessage(req, "adminUsersFlashMessage", "User role has been updated.");
         return res.redirect("/admin/users");
     }
 
@@ -219,6 +195,6 @@ export async function postAdminUserRole(req: Request, res: Response) {
         throw new HttpError(404, "Not Found");
     }
 
-    req.session.adminUsersFlashMessage = "User role has been updated.";
+    setSessionFlashMessage(req, "adminUsersFlashMessage", "User role has been updated.");
     return res.redirect("/admin/users");
 }

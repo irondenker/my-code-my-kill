@@ -1,4 +1,5 @@
 import session from "express-session";
+import { SESSION_COOKIE_NAME } from "../constants/session.constants.js";
 
 const isProd = process.env.NODE_ENV === "production";
 const sessionSecret = process.env.SESSION_SECRET ?? "dev-only-change-me";
@@ -10,7 +11,7 @@ if (isProd && sessionSecret === "dev-only-change-me") {
 
 export function createSessionMiddleware() {
     return session({
-        name: "mcmk.sid",
+        name: SESSION_COOKIE_NAME,
         secret: sessionSecret,
         resave: false,
         saveUninitialized: false,

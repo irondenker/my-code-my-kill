@@ -28,6 +28,7 @@ import {
     softDeleteArticleBySlugDisplayIdAsAdmin,
     updateArticleWithUploads,
 } from "../services/article.service.js";
+import { setSessionFlashMessage } from "../utils/session-flash.util.js";
 
 /**
  * 게시글 컨트롤러입니다.
@@ -210,7 +211,7 @@ export async function deleteArticle(req: Request, res: Response) {
         // HTML 폼(POST) 요청은 UX를 위해 보드 목록으로 리다이렉트하고,
         // API 스타일 요청(DELETE)은 본문 없이 204로 종료합니다.
         if (req.method === "POST") {
-            req.session.boardFlashMessage = "Article has been deleted.";
+            setSessionFlashMessage(req, "boardFlashMessage", "Article has been deleted.");
             return res.redirect(`/board/${encodeURIComponent(slug)}`);
         }
         return res.status(204).send();

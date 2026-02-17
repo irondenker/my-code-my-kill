@@ -15,6 +15,7 @@ import {
 import { computeTotalPages } from "../utils/pagination.util.js";
 import { PAGINATION_DEFAULT_LIMIT } from "../constants/board.constants.js";
 import { getStringParamOrThrow } from "../utils/route-param.util.js";
+import { consumeSessionFlashMessage } from "../utils/session-flash.util.js";
 
 /**
  * 보드 컨트롤러입니다.
@@ -31,19 +32,6 @@ import { getStringParamOrThrow } from "../utils/route-param.util.js";
 function parsePositiveInt(rawValue: unknown, fallback: number): number {
     const value = Number(rawValue);
     return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
-}
-
-/**
- * 보드 목록 화면에서 사용하는 플래시 메시지를 소비합니다.
- * 한 번 읽으면 세션에서 삭제합니다.
- */
-function consumeBoardFlashMessage(req: Request): string | null {
-    const value = req.session.boardFlashMessage;
-    if (typeof value !== "string" || value.length === 0) {
-        return null;
-    }
-    delete req.session.boardFlashMessage;
-    return value;
 }
 
 /**
@@ -146,7 +134,7 @@ export async function getBoardBySlug(req: Request, res: Response) {
 
     // 2) 페이지네이션 파라미터를 정규화하고, 목록 상단에 노출할 플래시 메시지를 소비합니다.
     const page = parsePositiveInt(req.query.page, 1);
-    const formSuccess = consumeBoardFlashMessage(req);
+    const formSuccess = consumeSessionFlashMessage(req, "boardFlashMessage");
 
     // 3) 전체 개수 -> 페이지 메타 계산 -> 현재 페이지 오프셋 계산 순서로 목록을 조회합니다.
     const totalCount = await countArticlesBySlug(slug);

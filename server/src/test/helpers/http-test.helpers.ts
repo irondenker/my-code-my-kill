@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import type { AddressInfo } from "node:net";
+import { SESSION_COOKIE_NAME } from "../../constants/session.constants.js";
+
+const escapedSessionCookieName = SESSION_COOKIE_NAME.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const sessionCookiePairRegex = new RegExp(`${escapedSessionCookieName}=[^;]+`);
 
 export async function withTestServer(run: (baseUrl: string) => Promise<void>): Promise<void> {
     const { createApp } = await import("../../app.js");
@@ -45,7 +49,7 @@ export function extractSessionCookie(response: Response): string | null {
         const all = headerBag.getSetCookie();
         for (const rawCookie of all) {
             const pair = rawCookie.split(";")[0];
-            if (pair?.startsWith("mcmk.sid=")) {
+            if (pair?.startsWith(`${SESSION_COOKIE_NAME}=`)) {
                 return pair;
             }
         }
@@ -55,7 +59,7 @@ export function extractSessionCookie(response: Response): string | null {
     if (!raw) {
         return null;
     }
-    const match = raw.match(/mcmk\.sid=[^;]+/);
+    const match = raw.match(sessionCookiePairRegex);
     return match?.[0] ?? null;
 }
 

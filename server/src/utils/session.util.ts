@@ -38,3 +38,20 @@ export function saveSession(req: Request): Promise<void> {
         });
     });
 }
+
+/**
+ * 세션을 파기합니다.
+ * (콜백 기반 `req.session.destroy`를 Promise로 래핑)
+ *
+ * @param req Express 요청 객체
+ */
+export function destroySession(req: Request): Promise<void> {
+    return new Promise((resolve, reject) => {
+        req.session.destroy((err) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve();
+        });
+    });
+}

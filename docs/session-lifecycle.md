@@ -6,7 +6,7 @@
 
 코드 위치: `server/src/middlewares/session.middleware.ts`
 
-- 쿠키 이름: `mcmk.sid`
+- 쿠키 이름: `SESSION_COOKIE_NAME` (`server/src/constants/session.constants.ts`)
 - 저장소: `express-session` 기본 `MemoryStore`
 - 주요 옵션
   - `resave: false`
@@ -29,14 +29,14 @@
 
 코드 위치:
 
-- `server/src/controllers/auth.controller.ts`
+- `server/src/utils/auth-session.util.ts`
 - `server/src/types/express-session.d.ts`
 
 ## 3) 생성/재생성/저장/파기 흐름
 
 ### 회원가입 성공
 
-코드 위치: `server/src/controllers/auth.controller.ts` (`postRegister`)
+코드 위치: `server/src/controllers/auth/auth-register.controller.ts` (`postRegister`)
 
 1. 계정 생성
 2. `regenerateSession(req)`로 세션 ID 재발급
@@ -46,7 +46,7 @@
 
 ### 로그인 성공
 
-코드 위치: `server/src/controllers/auth.controller.ts` (`postLogin`)
+코드 위치: `server/src/controllers/auth/auth-login.controller.ts` (`postLogin`)
 
 1. 사용자 검증(비밀번호/활성 상태 포함)
 2. `regenerateSession(req)`로 세션 ID 재발급
@@ -56,21 +56,30 @@
 
 ### 로그아웃
 
-코드 위치: `server/src/controllers/auth.controller.ts` (`postLogout`)
+코드 위치: `server/src/controllers/auth/auth-logout.controller.ts` (`postLogout`)
 
 1. 필요 메타를 캡처해 감사로그 기록
-2. `req.session.destroy(...)`로 서버 세션 파기
-3. `res.clearCookie("mcmk.sid")`로 쿠키 제거
+2. `clearAuthSession(req)`로 서버 세션 파기
+3. `res.clearCookie(SESSION_COOKIE_NAME)`로 쿠키 제거
 4. `/`로 리다이렉트
 
 ## 4) 세션 유틸
 
-코드 위치: `server/src/utils/session.util.ts`
+코드 위치:
+
+- `server/src/utils/session.util.ts`
+- `server/src/utils/auth-session.util.ts`
 
 - `regenerateSession(req)`
   - 콜백 API(`req.session.regenerate`)를 Promise 래핑
 - `saveSession(req)`
   - 콜백 API(`req.session.save`)를 Promise 래핑
+- `destroySession(req)`
+  - 콜백 API(`req.session.destroy`)를 Promise 래핑
+- `establishAuthSession(req, payload)`
+  - 인증 세션 재발급 + 필드 저장을 일괄 처리
+- `clearAuthSession(req)`
+  - 로그아웃 세션 파기를 일괄 처리
 
 목적은 컨트롤러에서 `async/await`로 세션 처리 순서를 명확히 보장하는 것입니다.
 

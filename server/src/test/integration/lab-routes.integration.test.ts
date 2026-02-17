@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { runTsxInlineScript } from "../helpers/subprocess-test.helpers.js";
+import { SESSION_COOKIE_NAME } from "../../constants/session.constants.js";
 
 const LAB_ROUTE_PROBE_SCRIPT = `
 import fs from "node:fs";
@@ -9,6 +10,9 @@ import { once } from "node:events";
 const mode = process.env.LAB_OPTIONS_MODE ?? "payload";
 const payload = process.env.LAB_OPTIONS_PAYLOAD ?? "{}";
 const originalReadFileSync = fs.readFileSync;
+const SESSION_COOKIE_NAME = ${JSON.stringify(SESSION_COOKIE_NAME)};
+const escapedCookieName = SESSION_COOKIE_NAME.split(".").join("\\\\.");
+const sessionCookiePairRegex = new RegExp(escapedCookieName + "=[^;]+");
 
 fs.readFileSync = function(targetPath, ...rest) {
     const pathname = String(targetPath);
@@ -63,7 +67,7 @@ if (method === "POST") {
         const all = headerBag.getSetCookie();
         for (const rawCookie of all) {
             const pair = rawCookie.split(";")[0];
-            if (pair?.startsWith("mcmk.sid=")) {
+            if (pair?.startsWith(SESSION_COOKIE_NAME + "=")) {
                 cookie = pair;
                 break;
             }
@@ -71,7 +75,7 @@ if (method === "POST") {
     }
     if (!cookie) {
         const raw = formPageResponse.headers.get("set-cookie");
-        const match = raw ? raw.match(/mcmk\\.sid=[^;]+/) : null;
+        const match = raw ? raw.match(sessionCookiePairRegex) : null;
         cookie = match?.[0] ?? "";
     }
     if (cookie) {

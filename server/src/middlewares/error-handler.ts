@@ -4,6 +4,7 @@ import path from "node:path";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
 import { logAuthzDeniedSafely } from "../services/audit.service.js";
 import { getRequestIp, getRequestUserAgent } from "../utils/request-meta.util.js";
+import { getSessionActor } from "../utils/session-actor.util.js";
 
 const staticErrorStatuses = new Set([403, 404, 500, 503, 504]);
 const sharedErrorPage = path.join(process.cwd(), "views", "errors", "common", "index.html");
@@ -17,6 +18,7 @@ const sharedTemplate = fs.readFileSync(sharedErrorPage, "utf8");
  * @param err 에러 객체
  */
 function writeAuthzDeniedAuditLogSafely(req: Request, err: unknown) {
+    const actor = getSessionActor(req);
     const reason =
         err instanceof Error
             ? err.message
@@ -25,8 +27,8 @@ function writeAuthzDeniedAuditLogSafely(req: Request, err: unknown) {
                 : "forbidden";
 
     logAuthzDeniedSafely({
-        actorUserId: typeof req.session.userId === "number" ? req.session.userId : null,
-        actorUsername: typeof req.session.username === "string" ? req.session.username : null,
+        actorUserId: actor.userId,
+        actorUsername: actor.username,
         reason,
         method: req.method,
         path: req.originalUrl,

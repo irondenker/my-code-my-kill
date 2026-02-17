@@ -10,6 +10,7 @@ import {
 } from "../schemas/admin.schema.js";
 import { profileEditRequestBodyOpenApiSchema } from "../schemas/user.schema.js";
 import { sstiRenderRequestBodyOpenApiSchema } from "../schemas/lab.schema.js";
+import { SESSION_COOKIE_NAME } from "../constants/session.constants.js";
 
 export const openApiDocument = {
     openapi: "3.0.3",
@@ -36,7 +37,7 @@ export const openApiDocument = {
             sessionCookie: {
                 type: "apiKey",
                 in: "cookie",
-                name: "mcmk.sid",
+                name: SESSION_COOKIE_NAME,
             },
         },
         parameters: {
