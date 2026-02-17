@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+
+echo "[pre-commit] Running server tests..."
+
+if [ "${USE_DOCKER_HOOKS:-0}" = "1" ]; then
+    COMPOSE_FILE="${DOCKER_COMPOSE_FILE:-docker-compose.yml}"
+    echo "[pre-commit] Docker hook mode enabled (compose: ${COMPOSE_FILE})"
+    if ! docker compose -f "${COMPOSE_FILE}" ps -q server >/dev/null 2>&1; then
+        echo "[pre-commit] Docker daemon is not available."
+        exit 1
+    fi
+    if [ -z "$(docker compose -f "${COMPOSE_FILE}" ps -q server)" ]; then
+        echo "[pre-commit] server container is not running. Start it first:"
+        echo "docker compose -f ${COMPOSE_FILE} up -d server"
+        exit 1
+    fi
+    docker compose -f "${COMPOSE_FILE}" exec -T server npm run test
+    exit 0
+fi
+
+cd server
+npm run test

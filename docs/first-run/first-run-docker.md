@@ -104,6 +104,15 @@ docker compose -f docker-compose.yml logs -f server
 docker compose -f docker-compose.yml logs -f nginx
 ```
 
+## 6) 테스트 실행 (dev)
+
+```bash
+docker compose -f docker-compose.yml exec -T server npm run test
+docker compose -f docker-compose.yml exec -T server npm run test:db
+```
+
+`test:db`는 실제 DB 쓰기/읽기/삭제를 수행하므로 dev 스택이 기동된 상태에서만 실행하세요.
+
 ## 참고
 
 - 기본 마이그레이션 경로는 `server/migrations`입니다.

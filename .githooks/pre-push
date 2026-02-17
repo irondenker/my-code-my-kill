@@ -1,0 +1,57 @@
+#!/bin/sh
+set -eu
+
+echo "[pre-push] Running tests, build and OpenAPI drift checks..."
+
+CURRENT_BRANCH="$(git branch --show-current 2>/dev/null || true)"
+RUN_DB_TESTS_FLAG="${RUN_DB_TESTS:-auto}"
+SHOULD_RUN_DB_TESTS=0
+DB_TEST_REASON="branch=${CURRENT_BRANCH:-unknown}"
+
+if [ "${RUN_DB_TESTS_FLAG}" = "1" ]; then
+    SHOULD_RUN_DB_TESTS=1
+    DB_TEST_REASON="RUN_DB_TESTS=1"
+elif [ "${RUN_DB_TESTS_FLAG}" = "0" ]; then
+    SHOULD_RUN_DB_TESTS=0
+    DB_TEST_REASON="RUN_DB_TESTS=0"
+elif [ "${CURRENT_BRANCH}" = "main" ] || [ "${CURRENT_BRANCH}" = "master" ]; then
+    SHOULD_RUN_DB_TESTS=1
+    DB_TEST_REASON="protected-branch=${CURRENT_BRANCH}"
+fi
+
+if [ "${USE_DOCKER_HOOKS:-0}" = "1" ]; then
+    COMPOSE_FILE="${DOCKER_COMPOSE_FILE:-docker-compose.yml}"
+    echo "[pre-push] Docker hook mode enabled (compose: ${COMPOSE_FILE})"
+    if ! docker compose -f "${COMPOSE_FILE}" ps -q server >/dev/null 2>&1; then
+        echo "[pre-push] Docker daemon is not available."
+        exit 1
+    fi
+    if [ -z "$(docker compose -f "${COMPOSE_FILE}" ps -q server)" ]; then
+        echo "[pre-push] server container is not running. Start it first:"
+        echo "docker compose -f ${COMPOSE_FILE} up -d server"
+        exit 1
+    fi
+    docker compose -f "${COMPOSE_FILE}" exec -T server npm run test
+    docker compose -f "${COMPOSE_FILE}" exec -T server npm run build
+    docker compose -f "${COMPOSE_FILE}" exec -T server npm run check:openapi-drift
+
+    if [ "${SHOULD_RUN_DB_TESTS}" = "1" ]; then
+        echo "[pre-push] Running DB integration tests in Docker (${DB_TEST_REASON})..."
+        docker compose -f "${COMPOSE_FILE}" exec -T server npm run test:db
+    else
+        echo "[pre-push] Skipping DB integration tests (${DB_TEST_REASON})."
+    fi
+    exit 0
+fi
+
+cd server
+npm run test
+npm run build
+npm run check:openapi-drift
+
+if [ "${SHOULD_RUN_DB_TESTS}" = "1" ]; then
+    echo "[pre-push] Running DB integration tests (${DB_TEST_REASON})..."
+    npm run test:db
+else
+    echo "[pre-push] Skipping DB integration tests (${DB_TEST_REASON})."
+fi

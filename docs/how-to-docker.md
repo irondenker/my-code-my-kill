@@ -67,9 +67,20 @@ docker compose up -d --build
 docker compose restart server
 ```
 
+`docker-compose.yml`의 dev server는 시작 시 `npm install`을 먼저 실행해 의존성을 동기화합니다.
+
 ### db는 유지한 채 server만 내려서 다시 올리기
 
 ```bash
 docker compose stop server
 docker compose up -d --build server
+```
+
+### 테스트 실행 (dev server 컨테이너 내부)
+
+```bash
+docker compose exec -T server npm run test
+docker compose exec -T server npm run build
+docker compose exec -T server npm run check:openapi-drift
+docker compose exec -T server npm run test:db
 ```
