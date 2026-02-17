@@ -16,7 +16,7 @@ import type { AuthUser, AuthUserPublic } from "../../types/auth.types.js";
  * SQLi username 조회 타깃이 하나라도 활성화된 경우 lab 경로를 사용합니다.
  */
 export async function findUserByUsername(username: string): Promise<AuthUser | null> {
-    if (isSqlInjectionTargetEnabled("usernameLookup")) {
+    if (isSqlInjectionTargetEnabled("authLookup")) {
         return labImplementation.findUserByUsername(username);
     }
     return normalImplementation.findUserByUsername(username);
@@ -29,7 +29,7 @@ export async function createUserForRegister(params: {
     username: string;
     passwordHash: string;
 }): Promise<AuthUserPublic> {
-    if (isSqlInjectionTargetEnabled("registerCreateUser")) {
+    if (isSqlInjectionTargetEnabled("authCreate")) {
         return labImplementation.createUserForRegister(params);
     }
     return normalImplementation.createUserForRegister(params);

@@ -8,16 +8,17 @@ function makeLabOptions(): LabOptions {
         sqlInjection: {
             enabled: false,
             targets: {
-                usernameLookup: false,
-                registerCreateUser: false,
-                profileLookupByUsername: false,
+                authLookup: false,
+                authCreate: false,
+                profileLookup: false,
                 profileUpdate: false,
-                boardLookupBySlug: false,
+                boardLookup: false,
                 boardCreate: false,
                 boardUpdate: false,
-                postLookup: false,
-                postCreate: false,
-                postUpdate: false,
+                articleLookup: false,
+                articleCreate: false,
+                articleUpdate: false,
+                articleDelete: false,
             },
         },
         ssti: false,
@@ -114,4 +115,3 @@ test("createViewLocalsMiddleware handles missing csrf and absolute profile url",
     assert.equal(res.locals.sessionUserRole, null);
     assert.equal(res.locals.sessionProfileImageUrl, "/uploads/avatars/keep-me.png");
 });
-

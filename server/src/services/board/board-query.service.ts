@@ -16,14 +16,14 @@ export async function listBoards(): Promise<BoardMeta[]> {
 }
 
 export async function findBoardBySlug(slug: string): Promise<BoardMeta | null> {
-    if (isSqlInjectionTargetEnabled("boardLookupBySlug")) {
+    if (isSqlInjectionTargetEnabled("boardLookup")) {
         return labImplementation.findBoardBySlug(slug);
     }
     return normalImplementation.findBoardBySlug(slug);
 }
 
 export async function findBoardById(boardId: number): Promise<BoardMeta | null> {
-    if (isSqlInjectionTargetEnabled("boardLookupBySlug")) {
+    if (isSqlInjectionTargetEnabled("boardLookup")) {
         return labImplementation.findBoardById(boardId);
     }
     return normalImplementation.findBoardById(boardId);

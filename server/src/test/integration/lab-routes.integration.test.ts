@@ -176,7 +176,7 @@ test("ssti route shows disabled message when lab option is off", async () => {
     const result = await probeLabRoute({
         nodeEnv: "test",
         options: {
-            SSTI: { enabled: false },
+            ssti: { enabled: false },
         },
         path: "/labs/ssti",
     });
@@ -192,7 +192,7 @@ test("ssti route renders template output when lab option is on (with csrf lab mo
         nodeEnv: "test",
         options: {
             csrf: { enabled: true },
-            SSTI: { enabled: true },
+            ssti: { enabled: true },
         },
         path: "/labs/ssti",
         method: "POST",

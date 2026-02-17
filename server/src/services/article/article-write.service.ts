@@ -78,7 +78,7 @@ export async function createArticle(params: {
     imageUrl?: string | null;
     fileUrl?: string | null;
 }): Promise<{ displayId: number }> {
-    if (isSqlInjectionTargetEnabled("postCreate")) {
+    if (isSqlInjectionTargetEnabled("articleCreate")) {
         return labImplementation.createArticle(params);
     }
     return normalImplementation.createArticle(params);
@@ -94,7 +94,7 @@ export async function updateArticle(params: {
     imageUrl?: string | null;
     fileUrl?: string | null;
 }): Promise<boolean> {
-    if (isSqlInjectionTargetEnabled("postUpdate")) {
+    if (isSqlInjectionTargetEnabled("articleUpdate")) {
         return labImplementation.updateArticle(params);
     }
     return normalImplementation.updateArticle(params);
@@ -104,7 +104,7 @@ export async function updateArticle(params: {
  * 관리자 권한으로 게시글을 soft delete 합니다.
  */
 export async function softDeleteArticleBySlugDisplayIdAsAdmin(params: { slug: string; displayId: number }): Promise<boolean> {
-    if (isSqlInjectionTargetEnabled("postUpdate")) {
+    if (isSqlInjectionTargetEnabled("articleDelete")) {
         return labImplementation.softDeleteArticleBySlugDisplayIdAsAdmin(params);
     }
     return normalImplementation.softDeleteArticleBySlugDisplayIdAsAdmin(params);
@@ -118,7 +118,7 @@ export async function softDeleteArticleBySlugDisplayId(params: {
     displayId: number;
     requestUserId: number;
 }): Promise<boolean> {
-    if (isSqlInjectionTargetEnabled("postUpdate")) {
+    if (isSqlInjectionTargetEnabled("articleDelete")) {
         return labImplementation.softDeleteArticleBySlugDisplayId(params);
     }
     return normalImplementation.softDeleteArticleBySlugDisplayId(params);

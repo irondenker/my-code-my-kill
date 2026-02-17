@@ -18,7 +18,7 @@ fs.readFileSync = function(targetPath, ...rest) {
 };
 
 const { isSqlInjectionTargetEnabled } = await import("./src/services/lab/sql-injection-control.service.ts");
-const target = process.env.SQLI_TARGET ?? "usernameLookup";
+const target = process.env.SQLI_TARGET ?? "authLookup";
 const enabled = isSqlInjectionTargetEnabled(target);
 console.log(JSON.stringify({ enabled }));
 `;
@@ -27,7 +27,7 @@ async function probeSqliTargetEnabled(payload: Record<string, unknown>): Promise
     const { stdout } = await runTsxInlineScript({
         script: SQLI_CONTROL_PROBE_SCRIPT,
         env: {
-            SQLI_TARGET: "usernameLookup",
+            SQLI_TARGET: "authLookup",
             LAB_OPTIONS_PAYLOAD: JSON.stringify(payload),
         },
     });
@@ -40,7 +40,7 @@ test("isSqlInjectionTargetEnabled returns false when global sqlInjection is disa
         sqlInjection: {
             enabled: false,
             targets: {
-                usernameLookup: true,
+                authLookup: true,
             },
         },
     });
@@ -53,7 +53,7 @@ test("isSqlInjectionTargetEnabled returns true when global and target toggles ar
         sqlInjection: {
             enabled: true,
             targets: {
-                usernameLookup: true,
+                authLookup: true,
             },
         },
     });
@@ -66,7 +66,7 @@ test("isSqlInjectionTargetEnabled returns false when target toggle is disabled",
         sqlInjection: {
             enabled: true,
             targets: {
-                usernameLookup: false,
+                authLookup: false,
             },
         },
     });

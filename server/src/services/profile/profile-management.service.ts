@@ -12,21 +12,21 @@ import type { PublicUserProfile, UserProfile } from "../../types/auth.types.js";
  */
 
 export async function findUserProfileById(userId: number): Promise<UserProfile | null> {
-    if (isSqlInjectionTargetEnabled("profileLookupByUsername")) {
+    if (isSqlInjectionTargetEnabled("profileLookup")) {
         return labImplementation.findUserProfileById(userId);
     }
     return normalImplementation.findUserProfileById(userId);
 }
 
 export async function findPrivateProfileByUsername(username: string): Promise<UserProfile | null> {
-    if (isSqlInjectionTargetEnabled("profileLookupByUsername")) {
+    if (isSqlInjectionTargetEnabled("profileLookup")) {
         return labImplementation.findPrivateProfileByUsername(username);
     }
     return normalImplementation.findPrivateProfileByUsername(username);
 }
 
 export async function findPublicProfileByUsername(username: string): Promise<PublicUserProfile | null> {
-    if (isSqlInjectionTargetEnabled("profileLookupByUsername")) {
+    if (isSqlInjectionTargetEnabled("profileLookup")) {
         return labImplementation.findPublicProfileByUsername(username);
     }
     return normalImplementation.findPublicProfileByUsername(username);

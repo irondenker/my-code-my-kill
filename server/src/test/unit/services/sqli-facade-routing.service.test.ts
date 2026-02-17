@@ -21,16 +21,17 @@ const { default: fs } = await import("node:fs");
 const originalReadFileSync = fs.readFileSync;
 
 const targets = {
-    usernameLookup: false,
-    registerCreateUser: false,
-    profileLookupByUsername: false,
+    authLookup: false,
+    authCreate: false,
+    profileLookup: false,
     profileUpdate: false,
-    boardLookupBySlug: false,
+    boardLookup: false,
     boardCreate: false,
     boardUpdate: false,
-    postLookup: false,
-    postCreate: false,
-    postUpdate: false,
+    articleLookup: false,
+    articleCreate: false,
+    articleUpdate: false,
+    articleDelete: false,
 };
 
 if (mode === "lab") {
@@ -112,11 +113,11 @@ function nextRows() {
         return [{ board_id: 1 }];
     }
 
-    if (operation === "postLookup") {
+    if (operation === "articleLookup") {
         return [{ total_count: "1" }];
     }
 
-    if (operation === "postCreate") {
+    if (operation === "articleCreate") {
         // createArticle issues two write queries: display id allocation, then insert.
         if (queryCallCount === 1) {
             return [{ display_id: 1 }];
@@ -124,7 +125,11 @@ function nextRows() {
         return [];
     }
 
-    if (operation === "postUpdate") {
+    if (operation === "articleUpdate") {
+        return [{ post_id: 1 }];
+    }
+
+    if (operation === "articleDeleteAsAdmin" || operation === "articleDelete") {
         return [{ post_id: 1 }];
     }
 
@@ -180,10 +185,10 @@ if (operation === "authLookup") {
         readAccess: "public",
         createAccess: "auth",
     });
-} else if (operation === "postLookup") {
+} else if (operation === "articleLookup") {
     const { countArticlesBySlug } = await import("./src/services/article.service.ts");
     await countArticlesBySlug("board-slug");
-} else if (operation === "postCreate") {
+} else if (operation === "articleCreate") {
     const { createArticle } = await import("./src/services/article.service.ts");
     await createArticle({
         boardId: 1,
@@ -193,7 +198,7 @@ if (operation === "authLookup") {
         imageUrl: null,
         fileUrl: null,
     });
-} else if (operation === "postUpdate") {
+} else if (operation === "articleUpdate") {
     const { updateArticle } = await import("./src/services/article.service.ts");
     await updateArticle({
         postId: 1,
@@ -201,6 +206,19 @@ if (operation === "authLookup") {
         content: "content",
         imageUrl: null,
         fileUrl: null,
+    });
+} else if (operation === "articleDeleteAsAdmin") {
+    const { softDeleteArticleBySlugDisplayIdAsAdmin } = await import("./src/services/article.service.ts");
+    await softDeleteArticleBySlugDisplayIdAsAdmin({
+        slug: "board-slug",
+        displayId: 1,
+    });
+} else if (operation === "articleDelete") {
+    const { softDeleteArticleBySlugDisplayId } = await import("./src/services/article.service.ts");
+    await softDeleteArticleBySlugDisplayId({
+        slug: "board-slug",
+        displayId: 1,
+        requestUserId: 1,
     });
 } else {
     throw new Error("Unknown operation: " + operation);
@@ -238,16 +256,18 @@ async function runRoutingProbe(params: {
 }
 
 const ROUTING_CASES = [
-    { operation: "authLookup", target: "usernameLookup" },
-    { operation: "authCreate", target: "registerCreateUser" },
-    { operation: "profileLookup", target: "profileLookupByUsername" },
+    { operation: "authLookup", target: "authLookup" },
+    { operation: "authCreate", target: "authCreate" },
+    { operation: "profileLookup", target: "profileLookup" },
     { operation: "profileUpdate", target: "profileUpdate" },
-    { operation: "boardLookup", target: "boardLookupBySlug" },
+    { operation: "boardLookup", target: "boardLookup" },
     { operation: "boardCreate", target: "boardCreate" },
     { operation: "boardUpdate", target: "boardUpdate" },
-    { operation: "postLookup", target: "postLookup" },
-    { operation: "postCreate", target: "postCreate" },
-    { operation: "postUpdate", target: "postUpdate" },
+    { operation: "articleLookup", target: "articleLookup" },
+    { operation: "articleCreate", target: "articleCreate" },
+    { operation: "articleUpdate", target: "articleUpdate" },
+    { operation: "articleDeleteAsAdmin", target: "articleDelete" },
+    { operation: "articleDelete", target: "articleDelete" },
 ] as const;
 
 for (const routingCase of ROUTING_CASES) {

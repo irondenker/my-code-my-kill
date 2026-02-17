@@ -7,19 +7,20 @@
   "sqlInjection": {
     "enabled": false,
     "targets": {
-      "usernameLookup": false,
-      "registerCreateUser": false,
-      "profileLookupByUsername": false,
+      "authLookup": false,
+      "authCreate": false,
+      "profileLookup": false,
       "profileUpdate": false,
-      "boardLookupBySlug": false,
+      "boardLookup": false,
       "boardCreate": false,
       "boardUpdate": false,
-      "postLookup": false,
-      "postCreate": false,
-      "postUpdate": false
+      "articleLookup": false,
+      "articleCreate": false,
+      "articleUpdate": false,
+      "articleDelete": false
     }
   },
-  "SSTI": {
+  "ssti": {
     "enabled": false
   },
   "csrf": {
@@ -33,7 +34,7 @@
       "enabled": true
     }
   },
-  "XSS": {
+  "xss": {
     "stored": {
       "enabled": false
     },

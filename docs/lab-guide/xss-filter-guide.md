@@ -1,6 +1,6 @@
 # XSS 필터 가이드
 
-이 프로젝트의 XSS 관련 동작은 `server/lab-options.json`의 `XSS` 키로 제어합니다.
+이 프로젝트의 XSS 관련 동작은 `server/lab-options.json`의 `xss` 키로 제어합니다.
 
 ## 메인 설정 파일 경로
 
@@ -15,13 +15,13 @@
 - 클라이언트 전달 스크립트: `server/views/partials/scripts.ejs`
 - Bootstrap 동작 제어: `server/public/assets/js/app.js`
 
-## 설정 구조 (`XSS`)
+## 설정 구조 (`xss`)
 
 입력 JSON 스키마는 아래와 같습니다.
 
 ```json
 {
-  "XSS": {
+  "xss": {
     "stored": {
       "enabled": false
     },
@@ -62,9 +62,9 @@
 
 파서 내부에서는 이를 `xssInjection` 형태로 정규화해 사용합니다.
 
-- `XSS.stored.enabled` -> `xssInjection.storedXss`
-- `XSS.sanitize.clientSide.enabled` -> `xssInjection.clientSide.sanitizeEnabled`
-- `XSS.sanitize.serverSide.enabled` -> `xssInjection.serverSide.sanitizeEnabled`
+- `xss.stored.enabled` -> `xssInjection.storedXss`
+- `xss.sanitize.clientSide.enabled` -> `xssInjection.clientSide.sanitizeEnabled`
+- `xss.sanitize.serverSide.enabled` -> `xssInjection.serverSide.sanitizeEnabled`
 
 ## 런타임 동작
 

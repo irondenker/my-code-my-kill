@@ -22,16 +22,17 @@
   "sqlInjection": {
     "enabled": false,
     "targets": {
-      "usernameLookup": false,
-      "registerCreateUser": false,
-      "profileLookupByUsername": false,
+      "authLookup": false,
+      "authCreate": false,
+      "profileLookup": false,
       "profileUpdate": false,
-      "boardLookupBySlug": false,
+      "boardLookup": false,
       "boardCreate": false,
       "boardUpdate": false,
-      "postLookup": false,
-      "postCreate": false,
-      "postUpdate": false
+      "articleLookup": false,
+      "articleCreate": false,
+      "articleUpdate": false,
+      "articleDelete": false
     }
   }
 }
@@ -46,15 +47,15 @@
 
 아래 항목들은 모두 “요청 파라미터/사용자 입력이 SQL 문자열에 직접 이어붙는 형태”로 바뀌는 지점입니다.
 
-- `usernameLookup`
+- `authLookup`
   - 로그인/회원가입/어드민 유저 생성에서 username 조회(중복 체크 포함)가 취약해집니다.
   - 입력 지점: `/login`, `/register`, `/admin/users` 폼의 `username`
 
-- `registerCreateUser`
+- `authCreate`
   - 회원가입 시 “사용자 생성(INSERT)”이 취약해집니다.
   - 입력 지점: `/register` 폼의 `username` (및 내부적으로 `passwordHash` 등)
 
-- `profileLookupByUsername`
+- `profileLookup`
   - 프로필 조회(username/userId 기반)가 취약해집니다.
   - 입력 지점:
     - `GET /@:username`의 path param `username`
@@ -66,7 +67,7 @@
     - `/settings/profile` 폼의 `displayName`, `email`, `phoneNumber`, `bio`
     - 아바타 업로드/삭제 처리의 `profileImageUrl` 경로 업데이트
 
-- `boardLookupBySlug`
+- `boardLookup`
   - 보드 조회가 취약해집니다. (slug 조회 + boardId 조회 포함)
   - 입력 지점:
     - `/board/:slug` 등 path param `slug`
@@ -80,20 +81,24 @@
   - 어드민 보드 수정(UPDATE)이 취약해집니다.
   - 입력 지점: `/admin/boards/:boardId/edit` 폼
 
-- `postLookup`
+- `articleLookup`
   - 게시글 조회 계열(목록/상세/존재확인/이웃글 조회)이 취약해집니다.
   - 입력 지점:
     - `/board/:slug`의 `slug`, `page`
     - `/board/:slug/:displayId`의 `slug`, `displayId`
 
-- `postCreate`
+- `articleCreate`
   - 글쓰기(INSERT)가 취약해집니다.
   - 입력 지점: `/board/:slug/new`의 `title`, `content`
 
-- `postUpdate`
-  - 글수정 및 글삭제(soft delete) 쿼리가 취약해집니다.
+- `articleUpdate`
+  - 글수정(UPDATE) 쿼리가 취약해집니다.
   - 입력 지점:
     - `/board/:slug/:displayId/edit`의 `title`, `content`
+
+- `articleDelete`
+  - 글삭제(soft delete) 쿼리가 취약해집니다.
+  - 입력 지점:
     - `/board/:slug/:displayId`의 `slug`, `displayId`
 
 ## 추천 설정 예시
@@ -105,7 +110,7 @@
   "sqlInjection": {
     "enabled": true,
     "targets": {
-      "usernameLookup": true
+      "authLookup": true
     }
   }
 }
@@ -118,16 +123,17 @@
   "sqlInjection": {
     "enabled": true,
     "targets": {
-      "usernameLookup": true,
-      "registerCreateUser": true,
-      "profileLookupByUsername": true,
+      "authLookup": true,
+      "authCreate": true,
+      "profileLookup": true,
       "profileUpdate": true,
-      "boardLookupBySlug": true,
+      "boardLookup": true,
       "boardCreate": true,
       "boardUpdate": true,
-      "postLookup": true,
-      "postCreate": true,
-      "postUpdate": true
+      "articleLookup": true,
+      "articleCreate": true,
+      "articleUpdate": true,
+      "articleDelete": true
     }
   }
 }

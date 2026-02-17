@@ -22,7 +22,7 @@ export async function countArticles(): Promise<number> {
  * 특정 보드(slug)의 활성 게시글 수를 반환합니다.
  */
 export async function countArticlesBySlug(slug: string): Promise<number> {
-    if (isSqlInjectionTargetEnabled("postLookup")) {
+    if (isSqlInjectionTargetEnabled("articleLookup")) {
         return labImplementation.countArticlesBySlug(slug);
     }
     return normalImplementation.countArticlesBySlug(slug);
@@ -32,7 +32,7 @@ export async function countArticlesBySlug(slug: string): Promise<number> {
  * 전체 게시글 목록(outline)을 페이지네이션으로 조회합니다.
  */
 export async function listArticleOutlines(params: { offset: number; limit: number }): Promise<ArticleOutline[]> {
-    if (isSqlInjectionTargetEnabled("postLookup")) {
+    if (isSqlInjectionTargetEnabled("articleLookup")) {
         return labImplementation.listArticleOutlines(params);
     }
     return normalImplementation.listArticleOutlines(params);
@@ -43,7 +43,7 @@ export async function listArticleOutlinesBySlug(params: {
     offset: number;
     limit: number;
 }): Promise<ArticleOutline[]> {
-    if (isSqlInjectionTargetEnabled("postLookup")) {
+    if (isSqlInjectionTargetEnabled("articleLookup")) {
         return labImplementation.listArticleOutlinesBySlug(params);
     }
     return normalImplementation.listArticleOutlinesBySlug(params);
@@ -56,7 +56,7 @@ export async function findArticleBySlugDisplayId(params: {
     slug: string;
     displayId: number;
 }): Promise<ArticleRecord | null> {
-    if (isSqlInjectionTargetEnabled("postLookup")) {
+    if (isSqlInjectionTargetEnabled("articleLookup")) {
         return labImplementation.findArticleBySlugDisplayId(params);
     }
     return normalImplementation.findArticleBySlugDisplayId(params);
@@ -67,7 +67,7 @@ export async function findArticleBySlugDisplayId(params: {
  * (404/403 분기 등에 사용)
  */
 export async function doesArticleExistBySlugDisplayId(params: { slug: string; displayId: number }): Promise<boolean> {
-    if (isSqlInjectionTargetEnabled("postLookup")) {
+    if (isSqlInjectionTargetEnabled("articleLookup")) {
         return labImplementation.doesArticleExistBySlugDisplayId(params);
     }
     return normalImplementation.doesArticleExistBySlugDisplayId(params);
@@ -80,7 +80,7 @@ export async function findArticleForShowBySlugDisplayId(params: {
     slug: string;
     displayId: number;
 }): Promise<ArticleForShow | null> {
-    if (isSqlInjectionTargetEnabled("postLookup")) {
+    if (isSqlInjectionTargetEnabled("articleLookup")) {
         return labImplementation.findArticleForShowBySlugDisplayId(params);
     }
     return normalImplementation.findArticleForShowBySlugDisplayId(params);
@@ -94,7 +94,7 @@ export async function findNeighborArticles(params: {
     displayId: number;
     viewerUserId?: number;
 }): Promise<{ prevPost: NeighborPost; nextPost: NeighborPost }> {
-    if (isSqlInjectionTargetEnabled("postLookup")) {
+    if (isSqlInjectionTargetEnabled("articleLookup")) {
         return labImplementation.findNeighborArticles(params);
     }
     return normalImplementation.findNeighborArticles(params);

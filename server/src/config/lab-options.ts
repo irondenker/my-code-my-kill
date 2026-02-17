@@ -46,16 +46,17 @@ export type UploadValidationOptions = {
 export type SqlInjectionOptions = {
     enabled: boolean;
     targets: {
-        usernameLookup: boolean;
-        registerCreateUser: boolean;
-        profileLookupByUsername: boolean;
+        authLookup: boolean;
+        authCreate: boolean;
+        profileLookup: boolean;
         profileUpdate: boolean;
-        boardLookupBySlug: boolean;
+        boardLookup: boolean;
         boardCreate: boolean;
         boardUpdate: boolean;
-        postLookup: boolean;
-        postCreate: boolean;
-        postUpdate: boolean;
+        articleLookup: boolean;
+        articleCreate: boolean;
+        articleUpdate: boolean;
+        articleDelete: boolean;
     };
 };
 
@@ -99,16 +100,17 @@ const DEFAULT_LAB_OPTIONS: LabOptions = {
     sqlInjection: {
         enabled: false,
         targets: {
-            usernameLookup: false,
-            registerCreateUser: false,
-            profileLookupByUsername: false,
+            authLookup: false,
+            authCreate: false,
+            profileLookup: false,
             profileUpdate: false,
-            boardLookupBySlug: false,
+            boardLookup: false,
             boardCreate: false,
             boardUpdate: false,
-            postLookup: false,
-            postCreate: false,
-            postUpdate: false,
+            articleLookup: false,
+            articleCreate: false,
+            articleUpdate: false,
+            articleDelete: false,
         },
     },
     ssti: false,
@@ -335,14 +337,14 @@ function getDefaultXssInjectionOptions(): XssInjectionOptions {
 }
 
 /**
- * XSS 설정 루트(`XSS`)를 파싱합니다.
+ * XSS 설정 루트(`xss`)를 파싱합니다.
  *
  * 기대 형태(부분 JSON):
- * - `XSS: { "stored": { "enabled": boolean }, "sanitize": { "clientSide": {...}, "serverSide": {...} } }`
+ * - `xss: { "stored": { "enabled": boolean }, "sanitize": { "clientSide": {...}, "serverSide": {...} } }`
  *
  * 상세:
- * - `XSS.stored.enabled`: stored XSS 시뮬레이션 on/off
- * - `XSS.sanitize.clientSide|serverSide`: sanitize on/off + 룰 토글/커스텀 룰
+ * - `xss.stored.enabled`: stored XSS 시뮬레이션 on/off
+ * - `xss.sanitize.clientSide|serverSide`: sanitize on/off + 룰 토글/커스텀 룰
  */
 function parseXssInjectionOptions(value: unknown): XssInjectionOptions {
     if (typeof value === "undefined") {
@@ -350,7 +352,7 @@ function parseXssInjectionOptions(value: unknown): XssInjectionOptions {
     }
 
     if (!value || typeof value !== "object" || Array.isArray(value)) {
-        console.warn(`[CONFIG] Invalid lab option "XSS" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        console.warn(`[CONFIG] Invalid lab option "xss" in ${LAB_OPTIONS_PATH}. Using defaults.`);
         return getDefaultXssInjectionOptions();
     }
 
@@ -361,7 +363,7 @@ function parseXssInjectionOptions(value: unknown): XssInjectionOptions {
             ? (rawStored as Record<string, unknown>)
             : {};
     if (typeof rawStored !== "undefined" && (!rawStored || typeof rawStored !== "object" || Array.isArray(rawStored))) {
-        console.warn(`[CONFIG] Invalid lab option "XSS.stored" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        console.warn(`[CONFIG] Invalid lab option "xss.stored" in ${LAB_OPTIONS_PATH}. Using defaults.`);
     }
 
     const rawSanitize = options.sanitize;
@@ -370,17 +372,17 @@ function parseXssInjectionOptions(value: unknown): XssInjectionOptions {
             ? (rawSanitize as Record<string, unknown>)
             : {};
     if (typeof rawSanitize !== "undefined" && (!rawSanitize || typeof rawSanitize !== "object" || Array.isArray(rawSanitize))) {
-        console.warn(`[CONFIG] Invalid lab option "XSS.sanitize" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        console.warn(`[CONFIG] Invalid lab option "xss.sanitize" in ${LAB_OPTIONS_PATH}. Using defaults.`);
     }
 
     return {
         storedXss: parseBooleanOption(
             parsedStored.enabled,
-            "XSS.stored.enabled",
+            "xss.stored.enabled",
             DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
         ),
-        clientSide: parseXssSideOptions(parsedSanitize.clientSide, "XSS.sanitize.clientSide"),
-        serverSide: parseXssSideOptions(parsedSanitize.serverSide, "XSS.sanitize.serverSide"),
+        clientSide: parseXssSideOptions(parsedSanitize.clientSide, "xss.sanitize.clientSide"),
+        serverSide: parseXssSideOptions(parsedSanitize.serverSide, "xss.sanitize.serverSide"),
     };
 }
 
@@ -477,6 +479,20 @@ function parseDebugErrorRoutesOption(value: unknown): boolean {
 }
 
 /**
+ * SQLi 타깃 토글을 파싱합니다.
+ *
+ * - `sqlInjection.targets.<targetKey>` 값만 읽습니다.
+ * - 누락/오류 시 기본값으로 폴백합니다.
+ */
+function parseSqlInjectionTargetOption(params: {
+    parsedTargets: Record<string, unknown> | undefined;
+    targetKey: keyof SqlInjectionOptions["targets"];
+}): boolean {
+    const fallback = DEFAULT_LAB_OPTIONS.sqlInjection.targets[params.targetKey];
+    return parseBooleanOption(params.parsedTargets?.[params.targetKey], `sqlInjection.targets.${params.targetKey}`, fallback);
+}
+
+/**
  * SQL injection 시뮬레이션 옵션을 파싱합니다.
  *
  * - `sqlInjection.enabled`가 false면 전체적으로 꺼진 것으로 간주하되,
@@ -487,10 +503,10 @@ function parseDebugErrorRoutesOption(value: unknown): boolean {
  * - `sqlInjection: { "enabled": boolean, "targets": { "<targetKey>": boolean, ... } }`
  *
  * targets 키 목록:
- * - usernameLookup, registerCreateUser
- * - profileLookupByUsername, profileUpdate
- * - boardLookupBySlug, boardCreate, boardUpdate
- * - postLookup, postCreate, postUpdate
+ * - authLookup, authCreate
+ * - profileLookup, profileUpdate
+ * - boardLookup, boardCreate, boardUpdate
+ * - articleLookup, articleCreate, articleUpdate, articleDelete
  */
 function parseSqlInjectionOptions(value: unknown): SqlInjectionOptions {
     if (typeof value === "undefined") {
@@ -525,56 +541,50 @@ function parseSqlInjectionOptions(value: unknown): SqlInjectionOptions {
     }
 
     const targets = {
-        usernameLookup: parseBooleanOption(
-            parsedTargets?.usernameLookup,
-            "sqlInjection.targets.usernameLookup",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.usernameLookup,
-        ),
-        registerCreateUser: parseBooleanOption(
-            parsedTargets?.registerCreateUser,
-            "sqlInjection.targets.registerCreateUser",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.registerCreateUser,
-        ),
-        profileLookupByUsername: parseBooleanOption(
-            parsedTargets?.profileLookupByUsername,
-            "sqlInjection.targets.profileLookupByUsername",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.profileLookupByUsername,
-        ),
-        profileUpdate: parseBooleanOption(
-            parsedTargets?.profileUpdate,
-            "sqlInjection.targets.profileUpdate",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.profileUpdate,
-        ),
-        boardLookupBySlug: parseBooleanOption(
-            parsedTargets?.boardLookupBySlug,
-            "sqlInjection.targets.boardLookupBySlug",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.boardLookupBySlug,
-        ),
-        boardCreate: parseBooleanOption(
-            parsedTargets?.boardCreate,
-            "sqlInjection.targets.boardCreate",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.boardCreate,
-        ),
-        boardUpdate: parseBooleanOption(
-            parsedTargets?.boardUpdate,
-            "sqlInjection.targets.boardUpdate",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.boardUpdate,
-        ),
-        postLookup: parseBooleanOption(
-            parsedTargets?.postLookup,
-            "sqlInjection.targets.postLookup",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.postLookup,
-        ),
-        postCreate: parseBooleanOption(
-            parsedTargets?.postCreate,
-            "sqlInjection.targets.postCreate",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.postCreate,
-        ),
-        postUpdate: parseBooleanOption(
-            parsedTargets?.postUpdate,
-            "sqlInjection.targets.postUpdate",
-            DEFAULT_LAB_OPTIONS.sqlInjection.targets.postUpdate,
-        ),
+        authLookup: parseSqlInjectionTargetOption({
+            parsedTargets,
+            targetKey: "authLookup",
+        }),
+        authCreate: parseSqlInjectionTargetOption({
+            parsedTargets,
+            targetKey: "authCreate",
+        }),
+        profileLookup: parseSqlInjectionTargetOption({
+            parsedTargets,
+            targetKey: "profileLookup",
+        }),
+        profileUpdate: parseSqlInjectionTargetOption({
+            parsedTargets,
+            targetKey: "profileUpdate",
+        }),
+        boardLookup: parseSqlInjectionTargetOption({
+            parsedTargets,
+            targetKey: "boardLookup",
+        }),
+        boardCreate: parseSqlInjectionTargetOption({
+            parsedTargets,
+            targetKey: "boardCreate",
+        }),
+        boardUpdate: parseSqlInjectionTargetOption({
+            parsedTargets,
+            targetKey: "boardUpdate",
+        }),
+        articleLookup: parseSqlInjectionTargetOption({
+            parsedTargets,
+            targetKey: "articleLookup",
+        }),
+        articleCreate: parseSqlInjectionTargetOption({
+            parsedTargets,
+            targetKey: "articleCreate",
+        }),
+        articleUpdate: parseSqlInjectionTargetOption({
+            parsedTargets,
+            targetKey: "articleUpdate",
+        }),
+        articleDelete: parseSqlInjectionTargetOption({
+            parsedTargets,
+            targetKey: "articleDelete",
+        }),
     };
 
     return {
@@ -617,7 +627,7 @@ function parseCsrfOptions(value: unknown): CsrfOptions {
  * SSTI 토글을 파싱합니다.
  *
  * 기대 형태(부분 JSON):
- * - `SSTI: { "enabled": boolean }` (키가 대문자인 것에 주의)
+ * - `ssti: { "enabled": boolean }`
  */
 function parseSstiOption(value: unknown): boolean {
     if (typeof value === "undefined") {
@@ -625,14 +635,14 @@ function parseSstiOption(value: unknown): boolean {
     }
 
     if (!value || typeof value !== "object" || Array.isArray(value)) {
-        console.warn(`[CONFIG] Invalid lab option "SSTI" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        console.warn(`[CONFIG] Invalid lab option "ssti" in ${LAB_OPTIONS_PATH}. Using defaults.`);
         return DEFAULT_LAB_OPTIONS.ssti;
     }
 
     const options = value as Record<string, unknown>;
     return parseBooleanOption(
         options.enabled,
-        "SSTI.enabled",
+        "ssti.enabled",
         DEFAULT_LAB_OPTIONS.ssti,
     );
 }
@@ -642,7 +652,7 @@ function parseSstiOption(value: unknown): boolean {
  * 파일이 없거나 JSON이 깨졌거나 포맷이 틀린 경우, 기본값으로 폴백합니다.
  *
  * 기대 형태(최상위 부분 JSON):
- * - `{"sqlInjection": {...}, "SSTI": {...}, "debug": {...}, "csrf": {...}, "XSS": {...}, "uploadValidation": {...}}`
+ * - `{"sqlInjection": {...}, "ssti": {...}, "debug": {...}, "csrf": {...}, "xss": {...}, "uploadValidation": {...}}`
  */
 function loadLabOptions(): LabOptions {
     try {
@@ -657,10 +667,10 @@ function loadLabOptions(): LabOptions {
         const options = parsed as Record<string, unknown>;
         return {
             sqlInjection: parseSqlInjectionOptions(options.sqlInjection),
-            ssti: parseSstiOption(options.SSTI),
+            ssti: parseSstiOption(options.ssti),
             debugErrorRoutes: parseDebugErrorRoutesOption(options.debug),
             csrf: parseCsrfOptions(options.csrf),
-            xssInjection: parseXssInjectionOptions(options.XSS),
+            xssInjection: parseXssInjectionOptions(options.xss),
             uploadValidation: parseUploadValidationOptions(options.uploadValidation),
         };
     } catch (err) {

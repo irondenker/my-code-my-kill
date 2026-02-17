@@ -80,14 +80,15 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
         sqlInjection: {
             enabled: "true",
             targets: {
-                postLookup: "true",
+                articleLookup: "true",
                 boardUpdate: "false",
+                articleDelete: "true",
             },
         },
-        SSTI: { enabled: "true" },
+        ssti: { enabled: "true" },
         debug: { errorRoutes: { enabled: true } },
         csrf: { enabled: "false" },
-        XSS: {
+        xss: {
             stored: { enabled: "true" },
             sanitize: {
                 clientSide: {
@@ -118,8 +119,9 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
     });
 
     assert.equal(result.options.sqlInjection.enabled, true);
-    assert.equal(result.options.sqlInjection.targets.postLookup, true);
+    assert.equal(result.options.sqlInjection.targets.articleLookup, true);
     assert.equal(result.options.sqlInjection.targets.boardUpdate, false);
+    assert.equal(result.options.sqlInjection.targets.articleDelete, true);
     assert.equal(result.options.ssti, true);
     assert.equal(result.options.debugErrorRoutes, true);
     assert.equal(result.options.xssInjection.storedXss, true);
@@ -137,3 +139,34 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
     assert.equal(result.warnings.length > 0, true);
 });
 
+test("lab-options loader ignores deprecated SQLi target keys", async () => {
+    const payload = JSON.stringify({
+        sqlInjection: {
+            enabled: true,
+            targets: {
+                usernameLookup: true,
+                registerCreateUser: "false",
+                profileLookupByUsername: "true",
+                boardLookupBySlug: true,
+                postLookup: true,
+                postCreate: false,
+                postUpdate: "true",
+            },
+        },
+    });
+
+    const result = await readLabOptionsViaSubprocess({
+        LAB_OPTIONS_MODE: "payload",
+        LAB_OPTIONS_PAYLOAD: payload,
+    });
+
+    assert.equal(result.options.sqlInjection.enabled, true);
+    assert.equal(result.options.sqlInjection.targets.authLookup, false);
+    assert.equal(result.options.sqlInjection.targets.authCreate, false);
+    assert.equal(result.options.sqlInjection.targets.profileLookup, false);
+    assert.equal(result.options.sqlInjection.targets.boardLookup, false);
+    assert.equal(result.options.sqlInjection.targets.articleLookup, false);
+    assert.equal(result.options.sqlInjection.targets.articleCreate, false);
+    assert.equal(result.options.sqlInjection.targets.articleUpdate, false);
+    assert.equal(result.options.sqlInjection.targets.articleDelete, false);
+});
