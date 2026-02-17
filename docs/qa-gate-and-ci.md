@@ -50,6 +50,13 @@ USE_DOCKER_HOOKS=1 DOCKER_COMPOSE_FILE=docker-compose.prod.yml git commit
 워크플로 파일: `.github/workflows/server-ci.yml`
 
 - 트리거: `push`, `pull_request`, `workflow_dispatch`
+- 변경 파일이 아래 경로에만 해당하면 `server`, `server-db` job은 자동 생략
+  - `docs/**`
+  - `third-party/**`
+  - `.gitattributes`
+  - `.gitignore`
+  - `LICENSE`
+  - `README.md`
 - `server` job
   - `npm ci`
   - `npm run build`
