@@ -27,6 +27,7 @@ import {
     loginAs,
     withTestServer,
 } from "../helpers/http-test.helpers.js";
+import { getLabOptions } from "../../config/lab-options.js";
 
 function makeProfileEditBody(params: {
     csrfToken: string;
@@ -55,6 +56,7 @@ function addPngSignaturePrefix(bytes: Uint8Array): Uint8Array {
 }
 
 test("avatar controller rejects unsupported mime and supports upload/delete flow", { skip: skipReason }, async () => {
+    const { mimeCheck } = getLabOptions().uploadValidation;
     const username = makeId("avatarp1").slice(0, 32);
     const password = "avatar-pass-123";
     let userId: number | null = null;
@@ -100,8 +102,12 @@ test("avatar controller rejects unsupported mime and supports upload/delete flow
                 redirect: "manual",
             });
             const invalidMimeBody = await invalidMimeResponse.text();
-            assert.equal(invalidMimeResponse.status, 422);
-            assert.match(invalidMimeBody, /Unsupported image type\./);
+            if (mimeCheck) {
+                assert.equal(invalidMimeResponse.status, 422);
+                assert.match(invalidMimeBody, /Unsupported image type\./);
+            } else {
+                assert.equal(invalidMimeResponse.status, 302);
+            }
 
             const validForm = new FormData();
             validForm.set("_csrf", settingsPage.csrfToken);
@@ -166,6 +172,7 @@ test("avatar controller rejects unsupported mime and supports upload/delete flow
 });
 
 test("avatar controller validates missing file, magic number, file size, and image dimensions", { skip: skipReason }, async () => {
+    const { magicNumberCheck } = getLabOptions().uploadValidation;
     const username = makeId("avatar-valid").slice(0, 32);
     const password = "avatar-valid-pass-123";
     let userId: number | null = null;
@@ -216,8 +223,10 @@ test("avatar controller validates missing file, magic number, file size, and ima
                 redirect: "manual",
             });
             const invalidMagicBody = await invalidMagicResponse.text();
-            assert.equal(invalidMagicResponse.status, 422);
-            assert.match(invalidMagicBody, /Invalid image data\./);
+            if (magicNumberCheck) {
+                assert.equal(invalidMagicResponse.status, 422);
+                assert.match(invalidMagicBody, /Invalid image data\./);
+            }
 
             const tooLargePage = await fetchFormPage({
                 baseUrl,

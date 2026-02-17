@@ -13,6 +13,7 @@ import {
     storeArticleAttachment,
     storeArticleImage,
 } from "../../../services/article/article-upload.service.js";
+import { getLabOptions } from "../../../config/lab-options.js";
 
 const createdImageFiles = new Set<string>();
 const createdAttachmentFiles = new Set<string>();
@@ -88,6 +89,8 @@ test("storeArticleImage stores webp output and deleteStoredArticleImage removes 
 });
 
 test("storeArticleAttachment rejects unsupported extension when extension check is enabled", async () => {
+    const { extensionCheck, mimeCheck, magicNumberCheck } = getLabOptions().uploadValidation;
+    const shouldReject = extensionCheck || (magicNumberCheck && !mimeCheck);
     const content = Buffer.from("plain text");
     const file = makeUpload({
         originalname: "bad.exe",
@@ -96,13 +99,22 @@ test("storeArticleAttachment rejects unsupported extension when extension check 
         size: content.length,
     });
 
-    await assert.rejects(
-        async () => storeArticleAttachment(file),
-        /Unsupported attachment extension\./
-    );
+    if (shouldReject) {
+        await assert.rejects(
+            async () => storeArticleAttachment(file),
+            /Unsupported attachment (extension|type)\./
+        );
+        return;
+    }
+
+    const filename = await storeArticleAttachment(file);
+    createdAttachmentFiles.add(filename);
+    await deleteStoredArticleAttachment(filename);
+    createdAttachmentFiles.delete(filename);
 });
 
 test("storeArticleAttachment rejects invalid pdf signature", async () => {
+    const { magicNumberCheck } = getLabOptions().uploadValidation;
     const bogusPdf = Buffer.from("not-a-real-pdf");
     const file = makeUpload({
         originalname: "doc.pdf",
@@ -111,10 +123,18 @@ test("storeArticleAttachment rejects invalid pdf signature", async () => {
         size: bogusPdf.length,
     });
 
-    await assert.rejects(
-        async () => storeArticleAttachment(file),
-        /Unsupported attachment type\./
-    );
+    if (magicNumberCheck) {
+        await assert.rejects(
+            async () => storeArticleAttachment(file),
+            /Unsupported attachment type\./
+        );
+        return;
+    }
+
+    const filename = await storeArticleAttachment(file);
+    createdAttachmentFiles.add(filename);
+    await deleteStoredArticleAttachment(filename);
+    createdAttachmentFiles.delete(filename);
 });
 
 test("storeArticleAttachment stores and deletes utf-8 text attachment", async () => {
@@ -137,4 +157,3 @@ test("storeArticleAttachment stores and deletes utf-8 text attachment", async ()
     createdAttachmentFiles.delete(filename);
     await assert.rejects(async () => fs.access(outputPath));
 });
-

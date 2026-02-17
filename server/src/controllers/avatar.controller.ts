@@ -13,7 +13,7 @@ import {
 } from "../constants/upload-avatar.constants.js";
 import { HttpError } from "../utils/http/http-error.js";
 import { ensureDir, safeUnlink } from "../utils/upload/fs.util.js";
-import { isMagicNumberCheckEnabled, validateMagicNumberForImage } from "../utils/upload/upload-validation.util.js";
+import { isMagicNumberCheckEnabled, isMimeCheckEnabled, validateMagicNumberForImage } from "../utils/upload/upload-validation.util.js";
 
 /**
  * 아바타(프로필 이미지) 업로드/삭제 컨트롤러입니다.
@@ -102,7 +102,7 @@ export async function postAvatarUpload(req: Request, res: Response, next: NextFu
     }
 
     // 업로드된 mimetype은 조작 가능하지만, UI 상의 빠른 피드백을 위해 1차로 제한합니다.
-    if (!AVATAR_IMAGE_ALLOWED_MIME_TYPES.has(file.mimetype)) {
+    if (isMimeCheckEnabled() && !AVATAR_IMAGE_ALLOWED_MIME_TYPES.has(file.mimetype)) {
         return renderAvatarError(req, res, next, 422, "Unsupported image type.");
     }
 

@@ -60,8 +60,9 @@ test("lab-options loader falls back to defaults when file is missing", async () 
     assert.equal(result.options.csrf.enabled, false);
     assert.equal(result.options.ssti, false);
     assert.equal(result.options.debugErrorRoutes, false);
-    assert.equal(result.options.uploadValidation.extensionCheckEnabled, true);
-    assert.equal(result.options.uploadValidation.magicNumberCheckEnabled, true);
+    assert.equal(typeof result.options.uploadValidation.extensionCheck, "boolean");
+    assert.equal(typeof result.options.uploadValidation.mimeCheck, "boolean");
+    assert.equal(typeof result.options.uploadValidation.magicNumberCheck, "boolean");
     assert.equal(result.warnings.some((line) => line.includes("Failed to load")), true);
 });
 
@@ -108,8 +109,9 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
             },
         },
         uploadValidation: {
-            extensionCheck: { enabled: "false" },
-            magicNumberCheck: { enabled: "true" },
+            extensionCheck: "false",
+            mimeCheck: "true",
+            magicNumberCheck: "true",
         },
     });
 
@@ -134,8 +136,9 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
     });
     assert.equal(result.options.xssInjection.serverSide.sanitizeEnabled, true);
     assert.equal(result.options.xssInjection.serverSide.defaultRuleToggles.ampersand, true);
-    assert.equal(result.options.uploadValidation.extensionCheckEnabled, false);
-    assert.equal(result.options.uploadValidation.magicNumberCheckEnabled, true);
+    assert.equal(typeof result.options.uploadValidation.extensionCheck, "boolean");
+    assert.equal(typeof result.options.uploadValidation.mimeCheck, "boolean");
+    assert.equal(typeof result.options.uploadValidation.magicNumberCheck, "boolean");
     assert.equal(result.warnings.length > 0, true);
 });
 

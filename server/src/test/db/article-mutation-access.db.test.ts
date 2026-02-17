@@ -24,6 +24,7 @@ import {
     loginAs,
     withTestServer,
 } from "../helpers/http-test.helpers.js";
+import { getLabOptions } from "../../config/lab-options.js";
 
 if (runDbTests) {
     before(async () => {
@@ -325,6 +326,8 @@ test("article controller returns 404 for missing board or missing post edit targ
 });
 
 test("article create/edit return 422 when upload validation throws ArticleUploadError", { skip: skipReason }, async () => {
+    const { extensionCheck, mimeCheck, magicNumberCheck } = getLabOptions().uploadValidation;
+    const uploadValidationEnabled = extensionCheck || mimeCheck || magicNumberCheck;
     const username = makeId("article-upload-err").slice(0, 32);
     const password = "article-upload-err-pass-123";
     const boardSlug = makeId("upload-err-board").replace(/[^a-z0-9-]/g, "").toLowerCase().slice(0, 24);
@@ -386,8 +389,12 @@ test("article create/edit return 422 when upload validation throws ArticleUpload
                 redirect: "manual",
             });
             const createBody = await createResponse.text();
-            assert.equal(createResponse.status, 422);
-            assert.match(createBody, /Unsupported attachment type\./);
+            if (uploadValidationEnabled) {
+                assert.equal(createResponse.status, 422);
+                assert.match(createBody, /Unsupported attachment (type|extension)\./);
+            } else {
+                assert.equal(createResponse.status, 302);
+            }
 
             const editForm = await fetchFormPage({
                 baseUrl,
@@ -409,8 +416,12 @@ test("article create/edit return 422 when upload validation throws ArticleUpload
                 redirect: "manual",
             });
             const editBody = await editResponse.text();
-            assert.equal(editResponse.status, 422);
-            assert.match(editBody, /Unsupported attachment type\./);
+            if (uploadValidationEnabled) {
+                assert.equal(editResponse.status, 422);
+                assert.match(editBody, /Unsupported attachment (type|extension)\./);
+            } else {
+                assert.equal(editResponse.status, 302);
+            }
         });
     } finally {
         if (displayId !== null) {

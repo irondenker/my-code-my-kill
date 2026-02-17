@@ -22,12 +22,14 @@ test("resolveAttachmentExpectation prefers extension when trustExtension=true", 
         extension: ".pdf",
         mimetype: "text/plain",
         trustExtension: true,
+        trustMime: true,
     }), "pdf");
 
     assert.equal(resolveAttachmentExpectation({
         extension: ".txt",
         mimetype: "application/pdf",
         trustExtension: true,
+        trustMime: true,
     }), "text");
 });
 
@@ -36,18 +38,21 @@ test("resolveAttachmentExpectation falls back to mimetype when trustExtension=fa
         extension: ".unknown",
         mimetype: "application/pdf",
         trustExtension: false,
+        trustMime: true,
     }), "pdf");
 
     assert.equal(resolveAttachmentExpectation({
         extension: ".unknown",
         mimetype: "application/x-zip-compressed",
         trustExtension: false,
+        trustMime: true,
     }), "zip");
 
     assert.equal(resolveAttachmentExpectation({
         extension: ".unknown",
         mimetype: "application/octet-stream",
         trustExtension: false,
+        trustMime: true,
     }), null);
 });
 

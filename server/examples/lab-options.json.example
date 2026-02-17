@@ -27,12 +27,9 @@
     "enabled": false
   },
   "uploadValidation": {
-    "extensionCheck": {
-      "enabled": true
-    },
-    "magicNumberCheck": {
-      "enabled": true
-    }
+    "extensionCheck": true,
+    "mimeCheck": true,
+    "magicNumberCheck": true
   },
   "xss": {
     "stored": {

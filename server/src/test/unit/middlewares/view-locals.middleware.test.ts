@@ -52,8 +52,9 @@ function makeLabOptions(): LabOptions {
             },
         },
         uploadValidation: {
-            extensionCheckEnabled: true,
-            magicNumberCheckEnabled: true,
+            extensionCheck: true,
+            mimeCheck: true,
+            magicNumberCheck: true,
         },
     };
 }

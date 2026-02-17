@@ -15,6 +15,7 @@ import {
  *
  * 제공 기능:
  * - 확장자 allowlist 검증(첨부파일)
+ * - MIME allowlist 검증(이미지/첨부파일)
  * - 매직넘버(signature) 기반 파일 타입 검증(이미지/첨부파일)
  *
  * 설계:
@@ -26,14 +27,21 @@ import {
  * 첨부파일 확장자 검증을 활성화할지 여부를 반환합니다.
  */
 export function isExtensionCheckEnabled(): boolean {
-    return getLabOptions().uploadValidation.extensionCheckEnabled;
+    return getLabOptions().uploadValidation.extensionCheck;
+}
+
+/**
+ * MIME 타입 검증을 활성화할지 여부를 반환합니다.
+ */
+export function isMimeCheckEnabled(): boolean {
+    return getLabOptions().uploadValidation.mimeCheck;
 }
 
 /**
  * 매직넘버(파일 시그니처) 검증을 활성화할지 여부를 반환합니다.
  */
 export function isMagicNumberCheckEnabled(): boolean {
-    return getLabOptions().uploadValidation.magicNumberCheckEnabled;
+    return getLabOptions().uploadValidation.magicNumberCheck;
 }
 
 /**
@@ -61,15 +69,24 @@ export type AttachmentExpectation = "pdf" | "zip" | "text";
  *
  * @returns 기대 타입 또는 지원 불가(null)
  */
-export function resolveAttachmentExpectation(args: { extension: string; mimetype: string; trustExtension: boolean }): AttachmentExpectation | null {
-    const ext = args.extension;
+export function resolveAttachmentExpectation(args: {
+    extension: string;
+    mimetype: string;
+    trustExtension: boolean;
+    trustMime: boolean;
+}): AttachmentExpectation | null {
+    const ext = args.extension.toLowerCase();
     if (args.trustExtension) {
         if (ext === ".pdf") return "pdf";
         if (ext === ".zip") return "zip";
         if (ext === ".txt" || ext === ".csv") return "text";
     }
 
-    const mime = args.mimetype;
+    if (!args.trustMime) {
+        return null;
+    }
+
+    const mime = args.mimetype.toLowerCase();
     if (mime === "application/pdf") return "pdf";
     if (mime === "application/zip" || mime === "application/x-zip-compressed") return "zip";
     if (mime === "text/plain" || mime === "text/csv" || mime === "application/vnd.ms-excel") return "text";

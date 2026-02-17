@@ -39,8 +39,9 @@ export type XssInjectionOptions = {
 };
 
 export type UploadValidationOptions = {
-    extensionCheckEnabled: boolean;
-    magicNumberCheckEnabled: boolean;
+    extensionCheck: boolean;
+    mimeCheck: boolean;
+    magicNumberCheck: boolean;
 };
 
 export type SqlInjectionOptions = {
@@ -120,8 +121,9 @@ const DEFAULT_LAB_OPTIONS: LabOptions = {
     },
     xssInjection: { ...DEFAULT_XSS_INJECTION_OPTIONS },
     uploadValidation: {
-        extensionCheckEnabled: true,
-        magicNumberCheckEnabled: true,
+        extensionCheck: true,
+        mimeCheck: true,
+        magicNumberCheck: true,
     },
 };
 
@@ -158,8 +160,9 @@ function getDefaultLabOptions(): LabOptions {
             serverSide: cloneDefaultXssSideOptions(),
         },
         uploadValidation: {
-            extensionCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheckEnabled,
-            magicNumberCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheckEnabled,
+            extensionCheck: DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheck,
+            mimeCheck: DEFAULT_LAB_OPTIONS.uploadValidation.mimeCheck,
+            magicNumberCheck: DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheck,
         },
     };
 }
@@ -238,6 +241,7 @@ function parseEscapeRuleList(value: unknown, key: string): EscapeRule[] {
 
     return parsed;
 }
+
 
 /**
  * XSS sanitize 옵션(clientSide/serverSide 공통)의 파서입니다.
@@ -391,8 +395,9 @@ function parseXssInjectionOptions(value: unknown): XssInjectionOptions {
  */
 function getDefaultUploadValidationOptions(): UploadValidationOptions {
     return {
-        extensionCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheckEnabled,
-        magicNumberCheckEnabled: DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheckEnabled,
+        extensionCheck: DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheck,
+        mimeCheck: DEFAULT_LAB_OPTIONS.uploadValidation.mimeCheck,
+        magicNumberCheck: DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheck,
     };
 }
 
@@ -400,7 +405,7 @@ function getDefaultUploadValidationOptions(): UploadValidationOptions {
  * 업로드 검증 옵션을 파싱합니다.
  *
  * 기대 형태(부분 JSON):
- * - `uploadValidation: { "extensionCheck": { "enabled": boolean }, "magicNumberCheck": { "enabled": boolean } }`
+ * - `uploadValidation: { "extensionCheck": boolean, "mimeCheck": boolean, "magicNumberCheck": boolean }`
  */
 function parseUploadValidationOptions(value: unknown): UploadValidationOptions {
     if (typeof value === "undefined") {
@@ -413,34 +418,42 @@ function parseUploadValidationOptions(value: unknown): UploadValidationOptions {
     }
 
     const options = value as Record<string, unknown>;
-    const rawExtensionCheck = options.extensionCheck;
-    const parsedExtensionCheck =
-        rawExtensionCheck && typeof rawExtensionCheck === "object" && !Array.isArray(rawExtensionCheck)
-            ? (rawExtensionCheck as Record<string, unknown>)
+    const defaults = getDefaultUploadValidationOptions();
+
+    const rawDefaultRuleToggles = options.defaultRuleToggles;
+    const parsedDefaultRuleToggles =
+        rawDefaultRuleToggles && typeof rawDefaultRuleToggles === "object" && !Array.isArray(rawDefaultRuleToggles)
+            ? (rawDefaultRuleToggles as Record<string, unknown>)
             : {};
-    if (typeof rawExtensionCheck !== "undefined" && (!rawExtensionCheck || typeof rawExtensionCheck !== "object" || Array.isArray(rawExtensionCheck))) {
-        console.warn(`[CONFIG] Invalid lab option "uploadValidation.extensionCheck" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+    if (typeof rawDefaultRuleToggles !== "undefined") {
+        console.warn(
+            `[CONFIG] Deprecated lab option "uploadValidation.defaultRuleToggles" in ${LAB_OPTIONS_PATH}. Use "uploadValidation.<toggle>" instead.`,
+        );
     }
 
-    const rawMagicNumberCheck = options.magicNumberCheck;
-    const parsedMagicNumberCheck =
-        rawMagicNumberCheck && typeof rawMagicNumberCheck === "object" && !Array.isArray(rawMagicNumberCheck)
-            ? (rawMagicNumberCheck as Record<string, unknown>)
-            : {};
-    if (typeof rawMagicNumberCheck !== "undefined" && (!rawMagicNumberCheck || typeof rawMagicNumberCheck !== "object" || Array.isArray(rawMagicNumberCheck))) {
-        console.warn(`[CONFIG] Invalid lab option "uploadValidation.magicNumberCheck" in ${LAB_OPTIONS_PATH}. Using defaults.`);
-    }
+    const extensionCheckRaw =
+        typeof options.extensionCheck === "undefined" ? parsedDefaultRuleToggles.extensionCheck : options.extensionCheck;
+    const mimeCheckRaw = typeof options.mimeCheck === "undefined" ? parsedDefaultRuleToggles.mimeCheck : options.mimeCheck;
+    const magicNumberCheckRaw =
+        typeof options.magicNumberCheck === "undefined"
+            ? parsedDefaultRuleToggles.magicNumberCheck
+            : options.magicNumberCheck;
 
     return {
-        extensionCheckEnabled: parseBooleanOption(
-            parsedExtensionCheck.enabled,
-            "uploadValidation.extensionCheck.enabled",
-            DEFAULT_LAB_OPTIONS.uploadValidation.extensionCheckEnabled,
+        extensionCheck: parseBooleanOption(
+            extensionCheckRaw,
+            "uploadValidation.extensionCheck",
+            defaults.extensionCheck,
         ),
-        magicNumberCheckEnabled: parseBooleanOption(
-            parsedMagicNumberCheck.enabled,
-            "uploadValidation.magicNumberCheck.enabled",
-            DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheckEnabled,
+        mimeCheck: parseBooleanOption(
+            mimeCheckRaw,
+            "uploadValidation.mimeCheck",
+            defaults.mimeCheck,
+        ),
+        magicNumberCheck: parseBooleanOption(
+            magicNumberCheckRaw,
+            "uploadValidation.magicNumberCheck",
+            defaults.magicNumberCheck,
         ),
     };
 }

@@ -5,6 +5,7 @@ import sharp from "sharp";
 import { ensureDir, safeUnlink } from "../../utils/upload/fs.util.js";
 import {
     isExtensionCheckEnabled,
+    isMimeCheckEnabled,
     isMagicNumberCheckEnabled,
     resolveAttachmentExpectation,
     validateAllowedExtension,
@@ -67,7 +68,7 @@ export async function storeArticleImage(file: Express.Multer.File): Promise<stri
     if (isMagicNumberCheckEnabled()) {
         validateMagicNumberForImage(file.buffer);
     }
-    if (!ARTICLE_IMAGE_ALLOWED_MIME_TYPES.has(file.mimetype)) {
+    if (isMimeCheckEnabled() && !ARTICLE_IMAGE_ALLOWED_MIME_TYPES.has(file.mimetype)) {
         throw new Error("Unsupported image type.");
     }
     if (file.size > ARTICLE_IMAGE_MAX_BYTES) {
@@ -106,7 +107,7 @@ export async function storeArticleImage(file: Express.Multer.File): Promise<stri
  * @throws 검증 실패 시 Error(message)
  */
 export async function storeArticleAttachment(file: Express.Multer.File): Promise<string> {
-    if (!ARTICLE_ATTACHMENT_ALLOWED_MIME_TYPES.has(file.mimetype)) {
+    if (isMimeCheckEnabled() && !ARTICLE_ATTACHMENT_ALLOWED_MIME_TYPES.has(file.mimetype)) {
         throw new Error("Unsupported attachment type.");
     }
     if (file.size > ARTICLE_ATTACHMENT_MAX_BYTES) {
@@ -114,14 +115,19 @@ export async function storeArticleAttachment(file: Express.Multer.File): Promise
     }
 
     const extension = path.extname(file.originalname).toLowerCase();
-    if (isExtensionCheckEnabled()) {
+    const extensionCheckEnabled = isExtensionCheckEnabled();
+    const mimeCheckEnabled = isMimeCheckEnabled();
+    const magicNumberCheckEnabled = isMagicNumberCheckEnabled();
+
+    if (extensionCheckEnabled) {
         validateAllowedExtension(file.originalname, ARTICLE_ATTACHMENT_EXTENSIONS);
     }
-    if (isMagicNumberCheckEnabled()) {
+    if (magicNumberCheckEnabled) {
         const expectation = resolveAttachmentExpectation({
             extension,
             mimetype: file.mimetype,
-            trustExtension: isExtensionCheckEnabled(),
+            trustExtension: extensionCheckEnabled,
+            trustMime: mimeCheckEnabled,
         });
         if (!expectation) {
             throw new Error("Unsupported attachment type.");

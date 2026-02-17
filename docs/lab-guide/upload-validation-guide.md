@@ -29,7 +29,7 @@
   - `server/src/routes/user.routes.ts` (multer)
   - `server/src/controllers/avatar.controller.ts`
 
-## 토글 2개
+## 토글 3개
 
 토글은 `server/src/config/lab-options.ts`가 `lab-options.json`에서 로드합니다.
 이 옵션 파일은 프로세스 시작 시 1회 로드되므로, 값을 바꿨다면 서버를 재시작해야 반영됩니다.
@@ -37,12 +37,9 @@
 ```json
 {
   "uploadValidation": {
-    "extensionCheck": {
-      "enabled": true
-    },
-    "magicNumberCheck": {
-      "enabled": true
-    }
+    "extensionCheck": true,
+    "mimeCheck": true,
+    "magicNumberCheck": true
   }
 }
 ```
@@ -51,15 +48,20 @@
   - 기본 경로는 `path.join(process.cwd(), "lab-options.json")`입니다.
   - 일반적인 실행 방식(`npm -C server ...`)에서는 `server/lab-options.json`을 의미합니다.
 
-- `uploadValidation.extensionCheck.enabled`
+- `uploadValidation.extensionCheck`
   - `true`: 첨부파일 확장자는 허용 목록(예: `.pdf`, `.txt`, `.csv`, `.zip`) 안에 있어야 합니다.
   - `false`: 확장자 allowlist 검사를 건너뜁니다(랩/실험용). 다만 MIME/매직넘버가 켜져 있으면 콘텐츠는 여전히 거절될 수 있습니다.
 
-- `uploadValidation.magicNumberCheck.enabled`
+- `uploadValidation.mimeCheck`
+  - `true`: 업로드된 `mimetype`이 허용 목록(예: `application/pdf`, `image/png`) 안에 있어야 합니다.
+  - `false`: MIME allowlist 검사를 건너뜁니다(랩/실험용).
+
+- `uploadValidation.magicNumberCheck`
   - `true`: 실제 업로드된 바이트(`file.buffer`)를 보고 "겉으로 주장한 타입"과 "실제 내용"이 맞는지 검사합니다.
   - `false`: MIME/확장자 같은 "약한" 신호만 남습니다.
 
-기본값은 둘 다 `true`입니다.
+기본값은 셋 다 `true`입니다.
+
 
 ## 매직넘버 검사(바이너리 포맷)
 
@@ -71,7 +73,7 @@
 - PDF: `"%PDF-"`
 - ZIP: `"PK" ...`
 
-`uploadValidation.magicNumberCheck.enabled = true`일 때, 기대 타입과 시그니처가 맞지 않으면 업로드를 초기에 거절합니다.
+`uploadValidation.magicNumberCheck = true`일 때, 기대 타입과 시그니처가 맞지 않으면 업로드를 초기에 거절합니다.
 
 관련 코드:
 
