@@ -48,21 +48,36 @@ test("docker compose files use an allowed AUDIT_CLI_LOG_LEVEL", async () => {
 
 test("server env files use an allowed AUDIT_CLI_LOG_LEVEL", async () => {
     const serverRoot = process.cwd();
-    const prodEnvPath = path.join(serverRoot, ".env.production");
+    const examplesRoot = path.join(serverRoot, "examples");
+    const exampleDevEnvPath = path.join(examplesRoot, ".env.example");
+    const exampleProdEnvPath = path.join(examplesRoot, ".env.production.example");
     const optionalDevEnvPath = path.join(serverRoot, ".env");
+    const optionalProdEnvPath = path.join(serverRoot, ".env.production");
 
-    const [prodEnv, optionalDevEnv] = await Promise.all([
-        fs.readFile(prodEnvPath, "utf8"),
+    const [exampleDevEnv, exampleProdEnv, optionalDevEnv, optionalProdEnv] = await Promise.all([
+        fs.readFile(exampleDevEnvPath, "utf8"),
+        fs.readFile(exampleProdEnvPath, "utf8"),
         readFileIfExists(optionalDevEnvPath),
+        readFileIfExists(optionalProdEnvPath),
     ]);
 
-    const prodValue = readEnvStyleValue(prodEnv);
-    assert.notEqual(prodValue, null);
-    assert.equal(ALLOWED_LEVELS.has(prodValue ?? ""), true);
+    const exampleDevValue = readEnvStyleValue(exampleDevEnv);
+    const exampleProdValue = readEnvStyleValue(exampleProdEnv);
+
+    assert.notEqual(exampleDevValue, null);
+    assert.equal(ALLOWED_LEVELS.has(exampleDevValue ?? ""), true);
+    assert.notEqual(exampleProdValue, null);
+    assert.equal(ALLOWED_LEVELS.has(exampleProdValue ?? ""), true);
 
     if (optionalDevEnv !== null) {
         const devValue = readEnvStyleValue(optionalDevEnv);
         assert.notEqual(devValue, null);
         assert.equal(ALLOWED_LEVELS.has(devValue ?? ""), true);
+    }
+
+    if (optionalProdEnv !== null) {
+        const prodValue = readEnvStyleValue(optionalProdEnv);
+        assert.notEqual(prodValue, null);
+        assert.equal(ALLOWED_LEVELS.has(prodValue ?? ""), true);
     }
 });
