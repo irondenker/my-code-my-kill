@@ -66,3 +66,15 @@ export async function setUserRole(userId: number, role: "admin" | "user"): Promi
         { replacements: { userId, role }, type: QueryTypes.UPDATE }
     );
 }
+
+export async function setUserActive(userId: number, isActive: boolean): Promise<void> {
+    await sequelize.query(
+        `
+        UPDATE users
+        SET is_active = :isActive,
+            updated_at = NOW()
+        WHERE user_id = :userId
+        `,
+        { replacements: { userId, isActive }, type: QueryTypes.UPDATE }
+    );
+}
