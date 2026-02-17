@@ -30,7 +30,7 @@
     "dev:tsx": "tsx watch src/server.ts",
     "build": "tsc",
     "test": "find src/test -name '*.test.ts' ! -name '*.db.test.ts' -print0 | xargs -0 tsx --test",
-    "test:db": "RUN_DB_TESTS=1 find src/test -name '*.db.test.ts' -print0 | xargs -0 tsx --test",
+    "test:db": "find src/test -name '*.db.test.ts' -print0 | xargs -0 env RUN_DB_TESTS=1 tsx --test",
     "fix:openapi-drift": "node --import tsx src/scripts/sync-openapi-endpoints.ts",
     "check:openapi-drift": "node --import tsx src/scripts/check-openapi-drift.ts",
     "start": "node dist/server.js",

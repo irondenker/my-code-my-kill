@@ -25,7 +25,7 @@ services:
       NODE_ENV: development
       DB_HOST: db
       DB_PORT: 5432
-      AUDIT_CLI_LOG_LEVEL: none
+      AUDIT_CLI_LOG_LEVEL: errors
     depends_on:
       - db
     volumes:
