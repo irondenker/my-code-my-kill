@@ -1,7 +1,6 @@
 # API Docs
 
 - Swagger UI: `/api-docs`
-- OpenAPI JSON: `/api-docs/openapi.json`
 
 ## Notes
 

@@ -8,7 +8,7 @@ import { AVATAR_IMAGE_MAX_BYTES } from "../constants/upload-avatar.constants.js"
  * 전역 CSRF 보호 미들웨어 체인을 생성합니다.
  *
  * 목표:
- * - 일반 요청(urlencoded/json)은 `csurf`로 바로 검증합니다.
+ * - 일반 요청(urlencoded)은 `csurf`로 바로 검증합니다.
  * - multipart/form-data 요청은 `multer`가 먼저 body를 파싱해야 토큰(`_csrf`)을 읽을 수 있으므로,
  *   해당 경로에 한해 `multer -> csurf` 순서를 전역에서 보장합니다.
  *

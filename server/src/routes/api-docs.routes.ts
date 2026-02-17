@@ -3,11 +3,12 @@ import { openApiDocument } from "../docs/openapi.js";
 
 const router = Router();
 
-router.get("/api-docs/openapi.json", (_req, res) => {
-    res.json(openApiDocument);
-});
-
 router.get("/api-docs", (_req, res) => {
+    const inlinedSpecJson = JSON.stringify(openApiDocument)
+        .replace(/</g, "\\u003c")
+        .replace(/\u2028/g, "\\u2028")
+        .replace(/\u2029/g, "\\u2029");
+
     return res
         .status(200)
         .type("html")
@@ -27,8 +28,9 @@ router.get("/api-docs", (_req, res) => {
     <div id="swagger-ui"></div>
     <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
     <script>
+      const spec = ${inlinedSpecJson};
       window.ui = SwaggerUIBundle({
-        url: "/api-docs/openapi.json",
+        spec,
         dom_id: "#swagger-ui",
         deepLinking: true,
         displayRequestDuration: true,
@@ -40,4 +42,3 @@ router.get("/api-docs", (_req, res) => {
 });
 
 export default router;
-

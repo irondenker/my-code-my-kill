@@ -88,22 +88,6 @@ export const openApiDocument = {
                 },
             },
         },
-        "/api-docs/openapi.json": {
-            get: {
-                tags: ["Docs"],
-                summary: "OpenAPI document (JSON)",
-                responses: {
-                    200: {
-                        description: "OpenAPI document",
-                        content: {
-                            "application/json": {
-                                schema: { type: "object" },
-                            },
-                        },
-                    },
-                },
-            },
-        },
         "/api-docs": {
             get: {
                 tags: ["Docs"],

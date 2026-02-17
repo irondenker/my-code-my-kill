@@ -61,9 +61,8 @@ export function createApp() {
     app.use(createPublicStaticMiddleware({ publicDir }));
     app.use("/errors/common", createErrorCommonStaticMiddleware({ errorStaticRoot }));
 
-    // Body parsers (주의: multipart는 별도 처리)
+    // Body parser (주의: multipart는 별도 처리)
     app.use(express.urlencoded({ extended: false }));
-    app.use(express.json());
 
     // Session은 CSRF/인증/뷰 locals에서 사용되므로 먼저 등록합니다.
     app.use(createSessionMiddleware());
