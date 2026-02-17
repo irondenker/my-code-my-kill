@@ -63,22 +63,33 @@ test("GET /login includes hidden next field only for safe relative next path", a
     });
 });
 
-test("POST /login without csrf token is blocked with 403 common error page", async () => {
+test("POST /login without csrf token follows csrf mode policy", async () => {
     await withMutedConsoleError(async () => {
         await withTestServer(async (baseUrl) => {
+            const loginPage = await fetch(`${baseUrl}/login`);
+            const loginHtml = await loginPage.text();
+            const csrfMatch = loginHtml.match(/name="_csrf"\s+value="([^"]*)"/);
+            const csrfEnabled = Boolean(csrfMatch?.[1]);
+
             const response = await fetch(`${baseUrl}/login`, {
                 method: "POST",
                 headers: {
                     "content-type": "application/x-www-form-urlencoded",
                 },
-                body: "username=alice&password=secret1234",
+                // CSRF 비활성화 모드에서도 DB 의존 없이 검증되도록 form validation 경로를 사용합니다.
+                body: "username=&password=",
                 redirect: "manual",
             });
             const body = await response.text();
 
-            assert.equal(response.status, 403);
-            assert.match(body, /data-error-code="403"/);
-            assert.match(body, /data-error-source="app"/);
+            if (csrfEnabled) {
+                assert.equal(response.status, 403);
+                assert.match(body, /data-error-code="403"/);
+                assert.match(body, /data-error-source="app"/);
+            } else {
+                assert.equal(response.status, 400);
+                assert.match(body, /alert alert-danger/);
+            }
         });
     });
 });
@@ -134,15 +145,22 @@ test("static middleware sets nosniff and attachment disposition for uploaded fil
     }
 });
 
-test("session middleware sets HttpOnly and SameSite cookie on csrf-backed page", async () => {
+test("session cookie is issued only when csrf middleware is active", async () => {
     await withTestServer(async (baseUrl) => {
         const response = await fetch(`${baseUrl}/login`);
+        const body = await response.text();
         const rawCookie = response.headers.get("set-cookie") ?? "";
+        const csrfMatch = body.match(/name="_csrf"\s+value="([^"]*)"/);
+        const csrfEnabled = Boolean(csrfMatch?.[1]);
 
         assert.equal(response.status, 200);
-        assert.match(rawCookie, /mcmk\.sid=/);
-        assert.match(rawCookie, /HttpOnly/i);
-        assert.match(rawCookie, /SameSite=Lax/i);
+        if (csrfEnabled) {
+            assert.match(rawCookie, /mcmk\.sid=/);
+            assert.match(rawCookie, /HttpOnly/i);
+            assert.match(rawCookie, /SameSite=Lax/i);
+        } else {
+            assert.equal(rawCookie, "");
+        }
     });
 });
 

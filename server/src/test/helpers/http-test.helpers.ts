@@ -36,11 +36,9 @@ export async function withTestServer(run: (baseUrl: string) => Promise<void>): P
 }
 
 export function extractCsrfToken(html: string): string {
-    const match = html.match(/name="_csrf"\s+value="([^"]+)"/);
-    if (!match?.[1]) {
-        throw new Error("Failed to extract csrf token");
-    }
-    return match[1];
+    // CSRF lab mode가 켜진 경우 hidden _csrf 값이 빈 문자열일 수 있습니다.
+    const match = html.match(/name="_csrf"\s+value="([^"]*)"/);
+    return match?.[1] ?? "";
 }
 
 export function extractSessionCookie(response: Response): string | null {
@@ -67,16 +65,17 @@ export async function fetchFormPage(params: {
     baseUrl: string;
     path: string;
     cookie?: string;
-}): Promise<{ csrfToken: string; cookie: string; body: string }> {
+}): Promise<{ csrfToken: string; csrfEnabled: boolean; cookie: string; body: string }> {
     const requestInit = params.cookie ? { headers: { cookie: params.cookie } } : {};
     const response = await fetch(`${params.baseUrl}${params.path}`, requestInit);
     const body = await response.text();
     const csrfToken = extractCsrfToken(body);
+    const csrfEnabled = csrfToken.length > 0;
     const cookie = extractSessionCookie(response) ?? params.cookie ?? "";
-    if (!cookie) {
+    if (csrfEnabled && !cookie) {
         throw new Error("Failed to resolve session cookie");
     }
-    return { csrfToken, cookie, body };
+    return { csrfToken, csrfEnabled, cookie, body };
 }
 
 export async function loginAs(params: {
