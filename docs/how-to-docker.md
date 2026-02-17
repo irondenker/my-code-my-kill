@@ -42,6 +42,12 @@ docker compose -f docker-compose.prod.yml up -d --build server
 
 ## 💻 Dev
 
+### 커밋/푸시 전 필수 (DB 먼저 기동)
+
+```bash
+docker compose -f docker-compose.yml up -d db
+```
+
 ### 빌드 + 실행 (dev)
 
 ``` bash

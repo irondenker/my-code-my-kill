@@ -12,6 +12,14 @@ git config core.hooksPath .githooks
 - `pre-push`: `npm run test && npm run build && npm run check:openapi-drift`
 - 현재 브랜치가 `main`/`master`면 `pre-push`에서 `npm run test:db`까지 실행
 
+필수:
+
+- 커밋/푸시 전에는 Docker DB를 반드시 먼저 기동합니다.
+
+```bash
+docker compose -f docker-compose.yml up -d db
+```
+
 ## 2) hook 실행 제어 변수
 
 ### `RUN_DB_TESTS`
@@ -43,6 +51,7 @@ USE_DOCKER_HOOKS=1 DOCKER_COMPOSE_FILE=docker-compose.prod.yml git commit
 주의:
 
 - Docker hook 모드에서는 `server` 컨테이너가 이미 실행 중이어야 합니다.
+- Docker hook 모드에서도 DB 테스트를 위해 `db` 컨테이너가 반드시 실행 중이어야 합니다.
 - Docker daemon이 내려가 있으면 hook이 실패합니다.
 
 ## 3) GitHub Actions 품질 게이트
