@@ -16,7 +16,7 @@ import { sequelize } from "../../db/index.js";
  * - 동일 보드 내 displayId를 트랜잭션으로 할당하여 중복을 방지합니다.
  * - INSERT는 취약 쿼리로 실행됩니다.
  */
-export async function createBoardArticle(params: {
+export async function createArticle(params: {
     boardId: number;
     userId: number;
     title: string;
@@ -94,7 +94,7 @@ export async function createBoardArticle(params: {
  * 게시글을 업데이트합니다.
  * (facade에서 타깃 활성화 시에만 이 lab 구현이 호출됩니다.)
  */
-export async function updateBoardArticle(params: {
+export async function updateArticle(params: {
     postId: number;
     title: string;
     content: string;

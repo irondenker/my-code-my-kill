@@ -20,9 +20,9 @@ import {
     findBoardBySlug,
 } from "../services/board.service.js";
 import {
-    createBoardArticle,
+    createArticle,
     doesArticleExistBySlugDisplayId,
-    findBoardArticleForShowBySlugDisplayId,
+    findArticleForShowBySlugDisplayId,
     findNeighborArticles,
     findArticleBySlugDisplayId,
     deleteStoredArticleAttachment,
@@ -31,7 +31,7 @@ import {
     storeArticleImage,
     softDeleteArticleBySlugDisplayId,
     softDeleteArticleBySlugDisplayIdAsAdmin,
-    updateBoardArticle,
+    updateArticle,
 } from "../services/article.service.js";
 
 /**
@@ -219,7 +219,7 @@ export async function postArticleCreate(req: Request, res: Response) {
     // 5) DB 저장이 실패하면, 앞서 저장한 파일도 함께 정리합니다(누수 방지).
     let created;
     try {
-        created = await createBoardArticle({
+        created = await createArticle({
             boardId: board.boardId,
             userId: viewerContext.viewerUserId,
             title,
@@ -359,7 +359,7 @@ export async function postArticleEdit(req: Request, res: Response) {
     const imageUrl = uploads.imageUrl ?? post.imageUrl ?? null;
     const fileUrl = uploads.fileUrl ?? post.fileUrl ?? null;
 
-    const updated = await updateBoardArticle({
+    const updated = await updateArticle({
         postId: post.postId,
         title,
         content,
@@ -468,7 +468,7 @@ export async function getArticleShow(req: Request, res: Response) {
 
     // 3) 상세 조회는 게시글이 존재하는지 먼저 확인합니다.
     const { viewerUserId, isAdmin } = viewerContext;
-    const post = await findBoardArticleForShowBySlugDisplayId({ slug, displayId });
+    const post = await findArticleForShowBySlugDisplayId({ slug, displayId });
     if (!post) {
         throw new HttpError(404, "Not Found");
     }

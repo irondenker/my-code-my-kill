@@ -10,7 +10,7 @@ import * as normalImplementation from "./article-write.normal.service.js";
  * - 그 외 기능은 `article-write.normal.service`를 사용합니다.
  */
 
-export async function createBoardArticle(params: {
+export async function createArticle(params: {
     boardId: number;
     userId: number;
     title: string;
@@ -19,12 +19,12 @@ export async function createBoardArticle(params: {
     fileUrl?: string | null;
 }): Promise<{ displayId: number }> {
     if (isSqlInjectionTargetEnabled("postCreate")) {
-        return labImplementation.createBoardArticle(params);
+        return labImplementation.createArticle(params);
     }
-    return normalImplementation.createBoardArticle(params);
+    return normalImplementation.createArticle(params);
 }
 
-export async function updateBoardArticle(params: {
+export async function updateArticle(params: {
     postId: number;
     title: string;
     content: string;
@@ -32,9 +32,9 @@ export async function updateBoardArticle(params: {
     fileUrl?: string | null;
 }): Promise<boolean> {
     if (isSqlInjectionTargetEnabled("postUpdate")) {
-        return labImplementation.updateBoardArticle(params);
+        return labImplementation.updateArticle(params);
     }
-    return normalImplementation.updateBoardArticle(params);
+    return normalImplementation.updateArticle(params);
 }
 
 export async function softDeleteArticleBySlugDisplayIdAsAdmin(params: { slug: string; displayId: number }): Promise<boolean> {

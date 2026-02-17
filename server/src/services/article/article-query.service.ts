@@ -1,14 +1,14 @@
 import { isSqlInjectionTargetEnabled } from "../lab/sql-injection-control.service.js";
-import * as labImplementation from "./article-read.lab.service.js";
-import * as normalImplementation from "./article-read.normal.service.js";
+import * as labImplementation from "./article-query.lab.service.js";
+import * as normalImplementation from "./article-query.normal.service.js";
 import type { ArticleOutline, ArticleRecord } from "../../types/article.types.js";
 
 /**
  * 게시글 조회/존재확인 서비스 facade입니다.
  *
  * 모드:
- * - 타깃별 SQLi가 활성화된 기능만 `article-read.lab.service`를 사용합니다.
- * - 그 외 기능은 `article-read.normal.service`를 사용합니다.
+ * - 타깃별 SQLi가 활성화된 기능만 `article-query.lab.service`를 사용합니다.
+ * - 그 외 기능은 `article-query.normal.service`를 사용합니다.
  */
 
 export async function countArticles(): Promise<number> {

@@ -9,7 +9,7 @@ import { sequelize } from "../../db/index.js";
  * - create/update는 안전한 바인딩 쿼리만 사용합니다.
  */
 
-export async function createBoardArticle(params: {
+export async function createArticle(params: {
     boardId: number;
     userId: number;
     title: string;
@@ -92,7 +92,7 @@ export async function createBoardArticle(params: {
     });
 }
 
-export async function updateBoardArticle(params: {
+export async function updateArticle(params: {
     postId: number;
     title: string;
     content: string;

@@ -2,7 +2,7 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
 import type { ArticleForShow, NeighborPost } from "../../types/article.types.js";
 import type { ArticleShowRow, NeighborPostRow } from "../../types/article-data.types.js";
-import { mapBoardArticleForShow, mapNeighborArticle } from "../../utils/article-mapper.util.js";
+import { mapArticleForShow, mapNeighborArticle } from "../../utils/article-mapper.util.js";
 
 /**
  * 게시글 상세/이웃 조회 정상 모드 서비스입니다.
@@ -12,7 +12,7 @@ import { mapBoardArticleForShow, mapNeighborArticle } from "../../utils/article-
  * - 모든 DB 접근은 안전한 바인딩 쿼리를 사용합니다.
  */
 
-export async function findBoardArticleForShowBySlugDisplayId(params: {
+export async function findArticleForShowBySlugDisplayId(params: {
     slug: string;
     displayId: number;
 }): Promise<ArticleForShow | null> {
@@ -45,7 +45,7 @@ export async function findBoardArticleForShowBySlugDisplayId(params: {
     );
 
     const row = rows[0];
-    return row ? mapBoardArticleForShow(row) : null;
+    return row ? mapArticleForShow(row) : null;
 }
 
 export async function findNeighborArticles(params: {

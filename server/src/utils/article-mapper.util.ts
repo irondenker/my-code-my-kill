@@ -7,7 +7,7 @@ import { buildMediaUrl } from "./media-url.util.js";
 /**
  * DB 조회 결과(ArticleOutlineRow)를 애플리케이션 타입(ArticleOutline)으로 매핑합니다.
  */
-export function mapBoardArticleOutline(row: ArticleOutlineRow): ArticleOutline {
+export function mapArticleOutline(row: ArticleOutlineRow): ArticleOutline {
     return {
         boardSlug: row.board_slug,
         displayId: Number(row.display_id),
@@ -21,7 +21,7 @@ export function mapBoardArticleOutline(row: ArticleOutlineRow): ArticleOutline {
 /**
  * DB 조회 결과(ArticleRecordRow)를 애플리케이션 타입(ArticleRecord)으로 매핑합니다.
  */
-export function mapBoardArticleRecord(row: ArticleRecordRow): ArticleRecord {
+export function mapArticleRecord(row: ArticleRecordRow): ArticleRecord {
     return {
         postId: Number(row.post_id),
         boardId: Number(row.board_id),
@@ -39,7 +39,7 @@ export function mapBoardArticleRecord(row: ArticleRecordRow): ArticleRecord {
 /**
  * DB 조회 결과(ArticleShowRow)를 뷰 타입(ArticleForShow)으로 매핑합니다.
  */
-export function mapBoardArticleForShow(row: ArticleShowRow): ArticleForShow {
+export function mapArticleForShow(row: ArticleShowRow): ArticleForShow {
     return {
         board_slug: row.board_slug,
         display_id: Number(row.display_id),
