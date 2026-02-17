@@ -8,7 +8,7 @@ import {
     readArticleFormInput,
     renderArticleCreateForm,
     requireAuthenticatedViewerId,
-} from "../article.controller.helpers.js";
+} from "./article.controller.helpers.js";
 import { findBoardBySlug } from "../../services/board.service.js";
 import {
     ArticleUploadError,

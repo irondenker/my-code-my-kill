@@ -1,24 +1,24 @@
 import type { Request, Response } from "express";
-import type { ArticleRecord } from "../types/article.types.js";
-import type { BoardMeta, BoardReadAccess, ViewerContext } from "../types/board.types.js";
-import { HttpError } from "../utils/http-error.js";
+import type { ArticleRecord } from "../../types/article.types.js";
+import type { BoardMeta, BoardReadAccess, ViewerContext } from "../../types/board.types.js";
+import { HttpError } from "../../utils/http-error.js";
 import {
     buildViewerContext,
     getBoardCreateAccessResult,
     getBoardReadAccessResult,
-} from "../utils/board.policy.util.js";
+} from "../../utils/board.policy.util.js";
 import {
     canDeleteArticle,
     canEditArticle,
     canReadArticleForBoard,
     getArticleMutationPolicy,
-} from "../utils/article.policy.util.js";
+} from "../../utils/article.policy.util.js";
 import {
     type ArticleFormInput,
     buildArticleCreateFormViewModel,
     buildArticleEditFormViewModel,
-} from "../utils/article-form.util.js";
-import { parseArticleForm } from "../schemas/article.schema.js";
+} from "../../utils/article-form.util.js";
+import { parseArticleForm } from "../../schemas/article.schema.js";
 
 /**
  * 게시글 컨트롤러에서 재사용하는 보조 함수 모음입니다.

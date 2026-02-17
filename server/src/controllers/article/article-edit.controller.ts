@@ -7,7 +7,7 @@ import {
     getUploadedFile,
     readArticleFormInput,
     renderArticleEditForm,
-} from "../article.controller.helpers.js";
+} from "./article.controller.helpers.js";
 import {
     ArticleUploadError,
     findArticleBySlugDisplayId,

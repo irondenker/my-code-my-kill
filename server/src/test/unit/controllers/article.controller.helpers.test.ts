@@ -13,7 +13,7 @@ import {
     resolveArticleDeletePlan,
     resolveArticleShowMutationFlags,
     requireAuthenticatedViewerId,
-} from "../../../controllers/article.controller.helpers.js";
+} from "../../../controllers/article/article.controller.helpers.js";
 import { HttpError } from "../../../utils/http-error.js";
 
 function makeReq(params?: {

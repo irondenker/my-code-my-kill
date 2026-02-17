@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { HttpError } from "../../utils/http-error.js";
 import { getPositiveIntParamOrThrow, getStringParamOrThrow } from "../../utils/route-param.util.js";
-import { resolveArticleDeletePlan } from "../article.controller.helpers.js";
+import { resolveArticleDeletePlan } from "./article.controller.helpers.js";
 import {
     doesArticleExistBySlugDisplayId,
     softDeleteArticleBySlugDisplayId,

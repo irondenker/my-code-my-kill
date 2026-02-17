@@ -76,7 +76,7 @@
 ## 5) 현재 코드베이스 적용
 
 - `article`: 패턴 C (유즈케이스 분할)
-  - 이유: create/edit/show/delete가 독립적으로 변경되는 빈도가 높아 유즈케이스 파일 경계를 분리함. 공통 보조 로직은 `article.controller.helpers.ts`에서 유지.
+  - 이유: create/edit/show/delete가 독립적으로 변경되는 빈도가 높아 유즈케이스 파일 경계를 분리함. 공통 보조 로직은 `controllers/article/article.controller.helpers.ts`에서 유지.
 - `auth`: 패턴 C (유즈케이스 분할)
   - 이유: login/register/logout + page 렌더 유즈케이스가 분리되어 있고, 세션/감사로그 흐름 변경 충돌을 줄이기 위해 파일 경계를 분리함.
 - `admin`: 패턴 C (유즈케이스 분할)

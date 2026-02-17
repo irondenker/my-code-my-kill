@@ -6,7 +6,7 @@ import {
     ensureArticleReadAccessForViewer,
     ensureBoardReadAccess,
     resolveArticleShowMutationFlags,
-} from "../article.controller.helpers.js";
+} from "./article.controller.helpers.js";
 import { findBoardBySlug } from "../../services/board.service.js";
 import { findArticleForShowBySlugDisplayId, findNeighborArticles } from "../../services/article.service.js";
 
