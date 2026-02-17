@@ -1,8 +1,8 @@
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../../db/index.js";
-import type { ArticleOutline, ArticleRecord } from "../../types/article.types.js";
-import type { ArticleOutlineRow, ArticleRecordRow } from "../../types/article-data.types.js";
-import { mapArticleOutline, mapArticleRecord } from "../../utils/article-mapper.util.js";
+import type { ArticleForShow, ArticleOutline, ArticleRecord, NeighborPost } from "../../types/article.types.js";
+import type { ArticleOutlineRow, ArticleRecordRow, ArticleShowRow, NeighborPostRow } from "../../types/article-data.types.js";
+import { mapArticleForShow, mapArticleOutline, mapArticleRecord, mapNeighborArticle } from "../../utils/article-mapper.util.js";
 
 /**
  * 게시글 조회/존재확인 정상 모드 서비스입니다.
@@ -12,6 +12,9 @@ import { mapArticleOutline, mapArticleRecord } from "../../utils/article-mapper.
  * - 모든 DB 접근은 안전한 바인딩 쿼리를 사용합니다.
  */
 
+/**
+ * 전체 활성 게시글 수를 반환합니다.
+ */
 export async function countArticles(): Promise<number> {
     const rows = await sequelize.query<{ total_count: string }>(
         `
@@ -25,6 +28,9 @@ export async function countArticles(): Promise<number> {
     return Number(rows[0]?.total_count ?? 0);
 }
 
+/**
+ * 특정 보드(slug)의 활성 게시글 수를 반환합니다.
+ */
 export async function countArticlesBySlug(slug: string): Promise<number> {
     const rows = await sequelize.query<{ total_count: string }>(
         `
@@ -43,6 +49,9 @@ export async function countArticlesBySlug(slug: string): Promise<number> {
     return Number(rows[0]?.total_count ?? 0);
 }
 
+/**
+ * 전체 게시글 목록(outline)을 페이지네이션 형태로 조회합니다.
+ */
 export async function listArticleOutlines(params: { offset: number; limit: number }): Promise<ArticleOutline[]> {
     const { offset, limit } = params;
 
@@ -69,6 +78,9 @@ export async function listArticleOutlines(params: { offset: number; limit: numbe
     return rows.map(mapArticleOutline);
 }
 
+/**
+ * 특정 보드(slug)의 게시글 목록(outline)을 페이지네이션 형태로 조회합니다.
+ */
 export async function listArticleOutlinesBySlug(params: {
     slug: string;
     offset: number;
@@ -100,6 +112,9 @@ export async function listArticleOutlinesBySlug(params: {
     return rows.map(mapArticleOutline);
 }
 
+/**
+ * 보드 slug + 게시글 displayId로 게시글을 조회합니다.
+ */
 export async function findArticleBySlugDisplayId(params: {
     slug: string;
     displayId: number;
@@ -132,6 +147,9 @@ export async function findArticleBySlugDisplayId(params: {
     return row ? mapArticleRecord(row) : null;
 }
 
+/**
+ * 게시글이 존재하는지 여부를 반환합니다.
+ */
 export async function doesArticleExistBySlugDisplayId(params: { slug: string; displayId: number }): Promise<boolean> {
     const { slug, displayId } = params;
     const rows = await sequelize.query<{ exists: boolean }>(
@@ -149,4 +167,92 @@ export async function doesArticleExistBySlugDisplayId(params: { slug: string; di
     );
 
     return Boolean(rows[0]?.exists);
+}
+
+/**
+ * 게시글 상세 화면 렌더링용 데이터를 조회합니다.
+ */
+export async function findArticleForShowBySlugDisplayId(params: {
+    slug: string;
+    displayId: number;
+}): Promise<ArticleForShow | null> {
+    const { slug, displayId } = params;
+
+    const rows = await sequelize.query<ArticleShowRow>(
+        `
+        SELECT
+            b.board_id,
+            b.name AS board_name,
+            b.slug AS board_slug,
+            p.display_id,
+            p.user_id,
+            p.title,
+            u.username,
+            p.content,
+            p.image_url,
+            p.file_url,
+            p.created_at,
+            p.updated_at
+        FROM posts p
+        JOIN boards b ON p.board_id = b.board_id
+        JOIN users u ON p.user_id = u.user_id
+        WHERE b.slug = :slug
+          AND p.display_id = :displayId
+          AND p.use_yn = true
+        LIMIT 1
+        `,
+        { type: QueryTypes.SELECT, replacements: { slug, displayId } }
+    );
+
+    const row = rows[0];
+    return row ? mapArticleForShow(row) : null;
+}
+
+/**
+ * 게시글 상세 화면에서 이전/다음 게시글 링크를 조회합니다.
+ */
+export async function findNeighborArticles(params: {
+    boardId: number;
+    displayId: number;
+    viewerUserId?: number;
+}): Promise<{ prevPost: NeighborPost; nextPost: NeighborPost }> {
+    const predicate = typeof params.viewerUserId === "number" ? " AND user_id = :viewerUserId" : "";
+    const replacements =
+        typeof params.viewerUserId === "number"
+            ? { boardId: params.boardId, displayId: params.displayId, viewerUserId: params.viewerUserId }
+            : { boardId: params.boardId, displayId: params.displayId };
+
+    const [prevRows, nextRows] = await Promise.all([
+        sequelize.query<NeighborPostRow>(
+            `
+            SELECT display_id, title
+            FROM posts
+            WHERE board_id = :boardId
+              AND use_yn = true
+              AND display_id < :displayId
+              ${predicate}
+            ORDER BY display_id DESC
+            LIMIT 1
+            `,
+            { type: QueryTypes.SELECT, replacements }
+        ),
+        sequelize.query<NeighborPostRow>(
+            `
+            SELECT display_id, title
+            FROM posts
+            WHERE board_id = :boardId
+              AND use_yn = true
+              AND display_id > :displayId
+              ${predicate}
+            ORDER BY display_id ASC
+            LIMIT 1
+            `,
+            { type: QueryTypes.SELECT, replacements }
+        ),
+    ]);
+
+    const prevPost: NeighborPost = mapNeighborArticle(prevRows[0]);
+    const nextPost: NeighborPost = mapNeighborArticle(nextRows[0]);
+
+    return { prevPost, nextPost };
 }

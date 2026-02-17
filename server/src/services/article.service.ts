@@ -2,7 +2,7 @@
  * 게시글(Article) 서비스 facade(배럴) 파일입니다.
  *
  * 목적:
- * - 컨트롤러가 게시글 도메인 기능(query/write/view/upload)을
+ * - 컨트롤러가 게시글 도메인 기능(query/write/upload)을
  *   단일 import 경로로 사용할 수 있도록 노출합니다.
  */
 
@@ -22,6 +22,8 @@ export {
     listArticleOutlinesBySlug,
     findArticleBySlugDisplayId,
     doesArticleExistBySlugDisplayId,
+    findArticleForShowBySlugDisplayId,
+    findNeighborArticles,
 } from "./article/article-query.service.js";
 
 // Article write (articles: create/update/delete)
@@ -30,13 +32,10 @@ export {
     updateArticle,
     softDeleteArticleBySlugDisplayIdAsAdmin,
     softDeleteArticleBySlugDisplayId,
+    createArticleWithUploads,
+    updateArticleWithUploads,
+    ArticleUploadError,
 } from "./article/article-write.service.js";
-
-// Article view (view model data: article detail + neighbors)
-export {
-    findArticleForShowBySlugDisplayId,
-    findNeighborArticles,
-} from "./article/article-view.service.js";
 
 // Article upload (filesystem)
 export {
