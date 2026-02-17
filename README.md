@@ -23,12 +23,7 @@ git config core.hooksPath .githooks
   - 기본값(`RUN_DB_TESTS` 미지정)은 DB 테스트 생략(`0`)입니다.
   - `RUN_DB_TESTS=1`: DB 테스트 강제 실행
   - `RUN_DB_TESTS=0`: DB 테스트 강제 생략
-
-> 필수: 커밋/푸시 전에는 Docker DB를 반드시 먼저 켜두세요.
->
-> ```bash
-> docker compose -f docker-compose.yml up -d db
-> ```
+  - DB 테스트를 실행할 때(`RUN_DB_TESTS=1`)만 DB를 먼저 기동하세요.
 
 도커 기반으로 훅을 실행하려면 아래처럼 실행합니다.
 
@@ -41,7 +36,7 @@ USE_DOCKER_HOOKS=1 RUN_DB_TESTS=0 git push
 - 기본 compose 파일은 `docker-compose.yml`입니다.
 - 다른 compose 파일을 사용하면 `DOCKER_COMPOSE_FILE`로 지정할 수 있습니다.
 - 도커 훅 모드에서는 `server` 컨테이너가 실행 중이어야 합니다.
-- 도커 훅 모드에서도 DB 테스트를 위해 `db` 컨테이너는 반드시 실행 중이어야 합니다.
+- 도커 훅 모드에서 DB 테스트를 실행할 때(`RUN_DB_TESTS=1`)는 `db` 컨테이너도 실행 중이어야 합니다.
 
 ```bash
 cd server
