@@ -9,7 +9,7 @@ import {
     buildLoginSuccessAuditLogWriteParams,
     buildLogoutSuccessAuditLogWriteParams,
 } from "../../utils/audit-event-mapper.util.js";
-import { writeAuditLog, writeAuditLogSafely } from "./audit-log.service.js";
+import { writeAuditLog, writeAuditLogSafely } from "./audit-write.service.js";
 
 /**
  * 로그인 실패 이벤트를 안전하게 기록합니다.

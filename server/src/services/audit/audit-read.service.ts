@@ -4,58 +4,8 @@ import { sanitizeRecord } from "../../utils/record.util.js";
 import { isAuditAction } from "../../types/audit-action.types.js";
 import type { AuditLogRow } from "../../types/audit-log-data.types.js";
 import type { AuditLog } from "../../types/audit-log.types.js";
-import type { NormalizedAuditLogWriteInput } from "../../types/audit-log-write.types.js";
 
 const AUDIT_LOGS_TABLE = "audit_logs";
-
-/**
- * 감사로그 DB 저장 전용 함수입니다.
- *
- * @param input 정규화된 입력
- */
-export async function createAuditLog(
-    input: NormalizedAuditLogWriteInput
-): Promise<void> {
-    await sequelize.query(
-        `
-        INSERT INTO ${AUDIT_LOGS_TABLE} (
-            action,
-            actor_user_id,
-            actor_username,
-            target_user_id,
-            target_username,
-            details,
-            ip_address,
-            user_agent,
-            created_at
-        )
-        VALUES (
-            :action,
-            :actorUserId,
-            :actorUsername,
-            :targetUserId,
-            :targetUsername,
-            CAST(:detailsJson AS jsonb),
-            :ipAddress,
-            :userAgent,
-            NOW()
-        )
-        `,
-        {
-            type: QueryTypes.INSERT,
-            replacements: {
-                action: input.action,
-                actorUserId: input.actorUserId,
-                actorUsername: input.actorUsername,
-                targetUserId: input.targetUserId,
-                targetUsername: input.targetUsername,
-                detailsJson: input.detailsJson,
-                ipAddress: input.ipAddress,
-                userAgent: input.userAgent,
-            },
-        }
-    );
-}
 
 /**
  * 감사 로그를 최신순으로 조회합니다.
