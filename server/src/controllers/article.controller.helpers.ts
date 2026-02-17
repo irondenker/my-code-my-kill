@@ -1,13 +1,18 @@
 import type { Request, Response } from "express";
 import type { ArticleRecord } from "../types/article.types.js";
-import type { BoardMeta, ViewerContext } from "../types/board.types.js";
+import type { BoardMeta, BoardReadAccess, ViewerContext } from "../types/board.types.js";
 import { HttpError } from "../utils/http-error.js";
 import {
     buildViewerContext,
     getBoardCreateAccessResult,
     getBoardReadAccessResult,
 } from "../utils/board.policy.util.js";
-import { canEditArticle, getArticleMutationPolicy } from "../utils/article.policy.util.js";
+import {
+    canDeleteArticle,
+    canEditArticle,
+    canReadArticleForBoard,
+    getArticleMutationPolicy,
+} from "../utils/article.policy.util.js";
 import {
     type ArticleFormInput,
     buildArticleCreateFormViewModel,
@@ -58,6 +63,62 @@ export function ensurePostEditAccess(req: Request, post: Pick<ArticleRecord, "bo
         throw new HttpError(403, "Forbidden");
     }
     return viewerContext;
+}
+
+export function resolveArticleDeletePlan(
+    req: Request,
+    slug: string
+): { mode: "admin" | "selfOrAdmin"; requestUserId: number } {
+    const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
+    const requestUserId = requireAuthenticatedViewerId(viewerContext);
+    const policy = getArticleMutationPolicy(slug);
+
+    if (policy.delete === "admin") {
+        if (!viewerContext.isAdmin) {
+            throw new HttpError(403, "Forbidden");
+        }
+        return { mode: "admin", requestUserId };
+    }
+
+    return { mode: "selfOrAdmin", requestUserId };
+}
+
+export function ensureArticleReadAccessForViewer(params: {
+    boardReadAccess: BoardReadAccess;
+    viewerContext: ViewerContext;
+    postUserId: number;
+}) {
+    if (!canReadArticleForBoard(params.boardReadAccess, params.viewerContext, params.postUserId)) {
+        throw new HttpError(403, "Forbidden");
+    }
+}
+
+export function resolveArticleShowMutationFlags(params: {
+    boardSlug: string;
+    viewerContext: ViewerContext;
+    postUserId: number;
+}): { canEdit: boolean; canDelete: boolean } {
+    const mutationPolicy = getArticleMutationPolicy(params.boardSlug);
+    return {
+        canEdit: canEditArticle(mutationPolicy, params.viewerContext, params.postUserId),
+        canDelete: canDeleteArticle(mutationPolicy, params.viewerContext, params.postUserId),
+    };
+}
+
+export function buildNeighborArticleQueryParams(params: {
+    boardId: number;
+    displayId: number;
+    boardReadAccess: BoardReadAccess;
+    viewerContext: ViewerContext;
+}): { boardId: number; displayId: number; viewerUserId?: number } {
+    const queryParams: { boardId: number; displayId: number; viewerUserId?: number } = {
+        boardId: params.boardId,
+        displayId: params.displayId,
+    };
+    if (params.boardReadAccess === "owner_or_admin" && !params.viewerContext.isAdmin) {
+        queryParams.viewerUserId = requireAuthenticatedViewerId(params.viewerContext);
+    }
+    return queryParams;
 }
 
 export function requireAuthenticatedViewerId(viewerContext: ViewerContext): number {

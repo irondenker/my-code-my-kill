@@ -1,15 +1,10 @@
 import type { Request, Response } from "express";
 import { HttpError } from "../utils/http-error.js";
-import { buildViewerContext } from "../utils/board.policy.util.js";
-import {
-    canDeleteArticle,
-    canEditArticle,
-    canReadArticleForBoard,
-    getArticleMutationPolicy,
-} from "../utils/article.policy.util.js";
 import { getPositiveIntParamOrThrow, getStringParamOrThrow } from "../utils/route-param.util.js";
 import { validateArticleFormInput } from "../utils/article-form.util.js";
 import {
+    buildNeighborArticleQueryParams,
+    ensureArticleReadAccessForViewer,
     ensureBoardCreateAccess,
     ensureBoardReadAccess,
     ensurePostEditAccess,
@@ -17,6 +12,8 @@ import {
     readArticleFormInput,
     renderArticleCreateForm,
     renderArticleEditForm,
+    resolveArticleDeletePlan,
+    resolveArticleShowMutationFlags,
     requireAuthenticatedViewerId,
 } from "./article.controller.helpers.js";
 import { findBoardBySlug } from "../services/board.service.js";
@@ -37,7 +34,7 @@ import {
  *
  * 원칙:
  * - HTTP 흐름(req/res/redirect/render)만 담당합니다.
- * - 접근제어/폼검증/폼 렌더 모델 구성은 `article.controller.helpers`로 위임합니다.
+ * - 접근제어/입력 파싱/폼 렌더 모델 구성은 `article.controller.helpers`로 위임합니다.
  */
 
 async function requireBoardBySlug(slug: string) {
@@ -193,23 +190,16 @@ export async function postArticleEdit(req: Request, res: Response) {
 export async function deleteArticle(req: Request, res: Response) {
     const slug = getStringParamOrThrow(req, "slug");
     const displayId = getPositiveIntParamOrThrow(req, "displayId");
-
-    const viewerContext = buildViewerContext(req.session.userId, req.session.userRole);
-    const requestUserId = requireAuthenticatedViewerId(viewerContext);
-
-    const policy = getArticleMutationPolicy(slug);
+    const deletePlan = resolveArticleDeletePlan(req, slug);
     let deleted = false;
 
-    if (policy.delete === "admin") {
-        if (!viewerContext.isAdmin) {
-            throw new HttpError(403, "Forbidden");
-        }
+    if (deletePlan.mode === "admin") {
         deleted = await softDeleteArticleBySlugDisplayIdAsAdmin({ slug, displayId });
     } else {
         deleted = await softDeleteArticleBySlugDisplayId({
             slug,
             displayId,
-            requestUserId,
+            requestUserId: deletePlan.requestUserId,
         });
     }
 
@@ -239,21 +229,22 @@ export async function getArticleShow(req: Request, res: Response) {
         throw new HttpError(404, "Not Found");
     }
 
-    if (!canReadArticleForBoard(board.readAccess, viewerContext, post.user_id)) {
-        throw new HttpError(403, "Forbidden");
-    }
-
-    const mutationPolicy = getArticleMutationPolicy(slug);
-    const canEdit = canEditArticle(mutationPolicy, viewerContext, post.user_id);
-    const canDelete = canDeleteArticle(mutationPolicy, viewerContext, post.user_id);
-
-    const neighborParams: { boardId: number; displayId: number; viewerUserId?: number } = {
+    ensureArticleReadAccessForViewer({
+        boardReadAccess: board.readAccess,
+        viewerContext,
+        postUserId: post.user_id,
+    });
+    const { canEdit, canDelete } = resolveArticleShowMutationFlags({
+        boardSlug: slug,
+        viewerContext,
+        postUserId: post.user_id,
+    });
+    const neighborParams = buildNeighborArticleQueryParams({
         boardId: post.board_id,
         displayId,
-    };
-    if (board.readAccess === "owner_or_admin" && !viewerContext.isAdmin) {
-        neighborParams.viewerUserId = requireAuthenticatedViewerId(viewerContext);
-    }
+        boardReadAccess: board.readAccess,
+        viewerContext,
+    });
     const { prevPost, nextPost } = await findNeighborArticles(neighborParams);
 
     return res.render("board/show", {

@@ -12,6 +12,11 @@ import { parseProfileEditForm } from "../schemas/user.schema.js";
  * - 라우트 파라미터/폼 입력 정규화 및 검증
  * - 세션에 따른 노출 범위 제어(본인/관리자만 사적 정보 노출)
  * - 프로필 조회/수정은 `profile.service`로 위임
+ *
+ * 구조 메모:
+ * - 현재는 단일 컨트롤러 파일로 유지합니다.
+ * - `avatar.controller`와 일부 중복(세션 userId 검증/설정 화면 모델)은 있으나,
+ *   에러 처리 방식(redirect/throw/next) 차이가 커서 helper 공용화는 보류합니다.
  */
 
 /**

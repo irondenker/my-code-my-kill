@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+    buildNeighborArticleQueryParams,
+    ensureArticleReadAccessForViewer,
     ensureBoardCreateAccess,
     ensureBoardReadAccess,
     ensurePostEditAccess,
@@ -8,6 +10,8 @@ import {
     readArticleFormInput,
     renderArticleCreateForm,
     renderArticleEditForm,
+    resolveArticleDeletePlan,
+    resolveArticleShowMutationFlags,
     requireAuthenticatedViewerId,
 } from "../../../controllers/article.controller.helpers.js";
 import { HttpError } from "../../../utils/http-error.js";
@@ -170,6 +174,137 @@ test("requireAuthenticatedViewerId returns id for valid context and throws for i
             }),
         (error: unknown) => error instanceof HttpError && error.status === 401
     );
+});
+
+test("resolveArticleDeletePlan enforces auth/admin policy and returns expected mode", () => {
+    const ownerReq = makeReq({
+        session: { userId: 10, userRole: "user" },
+    });
+    const ownerPlan = resolveArticleDeletePlan(ownerReq, "free");
+    assert.deepEqual(ownerPlan, {
+        mode: "selfOrAdmin",
+        requestUserId: 10,
+    });
+
+    const strangerReq = makeReq({
+        session: { userId: 11, userRole: "user" },
+    });
+    assert.throws(
+        () => resolveArticleDeletePlan(strangerReq, "announcement"),
+        (error: unknown) => error instanceof HttpError && error.status === 403
+    );
+
+    const adminReq = makeReq({
+        session: { userId: 1, userRole: "admin" },
+    });
+    const adminPlan = resolveArticleDeletePlan(adminReq, "announcement");
+    assert.deepEqual(adminPlan, {
+        mode: "admin",
+        requestUserId: 1,
+    });
+});
+
+test("ensureArticleReadAccessForViewer allows readable cases and throws 403 otherwise", () => {
+    ensureArticleReadAccessForViewer({
+        boardReadAccess: "public",
+        viewerContext: {
+            viewerUserId: NaN,
+            isAuthenticated: false,
+            isAdmin: false,
+        },
+        postUserId: 1,
+    });
+
+    assert.throws(
+        () =>
+            ensureArticleReadAccessForViewer({
+                boardReadAccess: "owner_or_admin",
+                viewerContext: {
+                    viewerUserId: 7,
+                    isAuthenticated: true,
+                    isAdmin: false,
+                },
+                postUserId: 10,
+            }),
+        (error: unknown) => error instanceof HttpError && error.status === 403
+    );
+});
+
+test("resolveArticleShowMutationFlags returns edit/delete flags by board policy", () => {
+    const ownerFlags = resolveArticleShowMutationFlags({
+        boardSlug: "free",
+        viewerContext: {
+            viewerUserId: 10,
+            isAuthenticated: true,
+            isAdmin: false,
+        },
+        postUserId: 10,
+    });
+    assert.deepEqual(ownerFlags, { canEdit: true, canDelete: true });
+
+    const strangerFlags = resolveArticleShowMutationFlags({
+        boardSlug: "free",
+        viewerContext: {
+            viewerUserId: 11,
+            isAuthenticated: true,
+            isAdmin: false,
+        },
+        postUserId: 10,
+    });
+    assert.deepEqual(strangerFlags, { canEdit: false, canDelete: false });
+
+    const adminFlags = resolveArticleShowMutationFlags({
+        boardSlug: "announcement",
+        viewerContext: {
+            viewerUserId: 1,
+            isAuthenticated: true,
+            isAdmin: true,
+        },
+        postUserId: 10,
+    });
+    assert.deepEqual(adminFlags, { canEdit: true, canDelete: true });
+});
+
+test("buildNeighborArticleQueryParams includes viewer id only for owner_or_admin non-admin viewers", () => {
+    const publicParams = buildNeighborArticleQueryParams({
+        boardId: 5,
+        displayId: 8,
+        boardReadAccess: "public",
+        viewerContext: {
+            viewerUserId: NaN,
+            isAuthenticated: false,
+            isAdmin: false,
+        },
+    });
+    assert.deepEqual(publicParams, { boardId: 5, displayId: 8 });
+
+    const ownerOnlyParams = buildNeighborArticleQueryParams({
+        boardId: 5,
+        displayId: 8,
+        boardReadAccess: "owner_or_admin",
+        viewerContext: {
+            viewerUserId: 42,
+            isAuthenticated: true,
+            isAdmin: false,
+        },
+    });
+    assert.deepEqual(ownerOnlyParams, {
+        boardId: 5,
+        displayId: 8,
+        viewerUserId: 42,
+    });
+
+    const adminParams = buildNeighborArticleQueryParams({
+        boardId: 5,
+        displayId: 8,
+        boardReadAccess: "owner_or_admin",
+        viewerContext: {
+            viewerUserId: 1,
+            isAuthenticated: true,
+            isAdmin: true,
+        },
+    });
+    assert.deepEqual(adminParams, { boardId: 5, displayId: 8 });
 });
 
 test("readArticleFormInput parses object body and falls back for non-object body", () => {

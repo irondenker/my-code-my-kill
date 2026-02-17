@@ -26,6 +26,11 @@ import { isMagicNumberCheckEnabled, validateMagicNumberForImage } from "../utils
  * 주의:
  * - DB 업데이트는 `profile.service`로 위임합니다.
  * - 파일 시스템 작업은 실패 가능성이 높으므로, 예외 처리 흐름을 명확히 유지합니다.
+ *
+ * 구조 메모:
+ * - 현재는 단일 컨트롤러 파일로 유지합니다.
+ * - `user.controller`와 세션/프로필 렌더 일부가 유사하지만,
+ *   이 파일은 `next(HttpError)` 기반 분기가 있어 단순 helper 병합 시 흐름이 오히려 복잡해질 수 있습니다.
  */
 
 /**
