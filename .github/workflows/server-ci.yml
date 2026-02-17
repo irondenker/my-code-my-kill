@@ -4,6 +4,9 @@ name: Server CI
   pull_request:
   push:
 
+permissions:
+  contents: write
+
 jobs:
   server:
     runs-on: ubuntu-latest
@@ -36,8 +39,44 @@ jobs:
         run: npm run test
         working-directory: server
 
+      # 라우트 기준으로 OpenAPI 문서를 자동 동기화한다.
+      - name: Sync OpenAPI docs
+        run: npm run fix:openapi-drift
+        working-directory: server
+
       # 라우트 선언과 OpenAPI 문서 간 드리프트를 검증한다.
       # 한계: 런타임 동작 자체를 실행 검증하지는 않는다.
       - name: Check OpenAPI drift
         run: npm run check:openapi-drift
+        working-directory: server
+
+      # PR에서는 자동 동기화 결과가 있으면 실패시켜 문서 반영을 강제한다.
+      - name: Detect OpenAPI doc changes
+        id: openapi_changes
+        run: |
+          if git diff --quiet -- src/docs/openapi.ts src/docs/openapi.overrides.ts; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+        working-directory: server
+
+      - name: Fail pull request on unsynced OpenAPI docs
+        if: github.event_name == 'pull_request' && steps.openapi_changes.outputs.changed == 'true'
+        run: |
+          echo "OpenAPI 문서가 라우트 기준으로 자동 보정되었습니다."
+          echo "로컬에서 npm run fix:openapi-drift 실행 후 변경사항을 커밋하세요."
+          git diff -- src/docs/openapi.ts src/docs/openapi.overrides.ts
+          exit 1
+        working-directory: server
+
+      # push 이벤트에서는 자동 보정된 OpenAPI 문서를 봇 커밋으로 반영한다.
+      - name: Auto-commit synced OpenAPI docs
+        if: github.event_name == 'push' && github.actor != 'github-actions[bot]' && steps.openapi_changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/docs/openapi.ts src/docs/openapi.overrides.ts
+          git commit -m "📚 Docs: auto-sync OpenAPI endpoints [skip ci]"
+          git push
         working-directory: server

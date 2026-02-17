@@ -1,3 +1,5 @@
+import { loginRequestBodyOpenApiSchema } from "../schemas/auth.schema.js";
+
 export const openApiDocument = {
     openapi: "3.0.3",
     info: {
@@ -116,16 +118,7 @@ export const openApiDocument = {
                     required: true,
                     content: {
                         "application/x-www-form-urlencoded": {
-                            schema: {
-                                type: "object",
-                                required: ["username", "password"],
-                                properties: {
-                                    username: { type: "string" },
-                                    password: { type: "string" },
-                                    next: { type: "string" },
-                                    _csrf: { type: "string" },
-                                },
-                            },
+                            schema: loginRequestBodyOpenApiSchema,
                         },
                     },
                 },

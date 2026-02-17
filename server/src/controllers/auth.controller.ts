@@ -9,6 +9,7 @@ import {
     logLoginSuccessSafely,
     logLogoutSuccessSafely,
 } from "../services/audit.service.js";
+import { parseLoginForm } from "../schemas/auth.schema.js";
 import { hashPassword, isValidPassword, verifyPassword } from "../utils/password.util.js";
 import { getSafeRedirectPath } from "../utils/redirect.util.js";
 import { isValidUsername } from "../utils/username.util.js";
@@ -170,25 +171,21 @@ export async function postRegister(req: Request, res: Response) {
  * - `next`는 open redirect 방지를 위해 `getSafeRedirectPath`로 제한합니다.
  */
 export async function postLogin(req: Request, res: Response) {
-    // 1) 입력값/메타데이터를 먼저 수집합니다.
-    //    - next: 사용자 입력(폼) 기반 이동 경로
-    //    - safeNextForView: 실패 시 폼 재렌더링에 넣을 안전 경로
-    //    - nextPath: 성공 시 최종 redirect 경로(기본 /board)
-    const username = normalizeString(req.body?.username);
-    const password = String(req.body?.password ?? "");
-    const nextFromBody = normalizeString(req.body?.next);
-    const safeNextForView = getSafeRedirectPath(nextFromBody, "");
-    const nextPath = getSafeRedirectPath(nextFromBody, "/board");
+    // 1) 실패 응답에 필요한 fallback 메타를 먼저 계산합니다.
+    const rawUsername = normalizeString(req.body?.username);
+    const rawNextFromBody = normalizeString(req.body?.next);
+    const safeNextForView = getSafeRedirectPath(rawNextFromBody, "");
     const ipAddress = getRequestIp(req);
     const userAgent = getRequestUserAgent(req);
 
-    // 2) 필수값 누락은 실패 감사로그를 남기고 400으로 종료합니다.
-    if (!username || !password) {
+    // 2) zod 스키마 기반으로 로그인 폼을 검증/정규화합니다.
+    const parsedLoginForm = parseLoginForm(req.body ?? {});
+    if (!parsedLoginForm.success) {
         await logLoginFailedSafely({
-            actorUsername: username || null,
+            actorUsername: rawUsername || null,
             targetUserId: null,
-            targetUsername: username || null,
-            attemptedUsername: username || null,
+            targetUsername: rawUsername || null,
+            attemptedUsername: rawUsername || null,
             reason: "missing_credentials",
             ipAddress,
             userAgent,
@@ -198,6 +195,8 @@ export async function postLogin(req: Request, res: Response) {
             nextPath: safeNextForView || null,
         });
     }
+    const { username, password, next } = parsedLoginForm.data;
+    const nextPath = getSafeRedirectPath(next, "/board");
 
     // 3) 계정 조회 + 비밀번호 검증 실패는 동일 메시지로 응답해 계정 유무 노출을 줄입니다.
     const user = await findUserByUsername(username);
