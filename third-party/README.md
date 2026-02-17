@@ -38,6 +38,6 @@ This file records third-party code, templates, fonts, and assets used in this re
 
 Repository-level copyright and license for original code/assets:
 
-- `owner`: TODO (your name or organization)
-- `year`: TODO
-- `license`: TODO
+- `owner`: Youngwoo Cho (Irondenker)
+- `year`: 2025-2026
+- `license`: MIT

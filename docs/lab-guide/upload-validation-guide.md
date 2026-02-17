@@ -24,7 +24,7 @@
 
 - 게시판(이미지 + 첨부파일)
   - `server/src/routes/board.routes.ts` (multer)
-  - `server/src/controllers/board.controller.ts` (`storePostImage`, `storePostAttachment`)
+  - `server/src/services/article/article-upload.service.ts` (`storeArticleImage`, `storeArticleAttachment`)
 - 아바타
   - `server/src/routes/user.routes.ts` (multer)
   - `server/src/controllers/avatar.controller.ts`
@@ -37,8 +37,12 @@
 ```json
 {
   "uploadValidation": {
-    "extensionCheckEnabled": true,
-    "magicNumberCheckEnabled": true
+    "extensionCheck": {
+      "enabled": true
+    },
+    "magicNumberCheck": {
+      "enabled": true
+    }
   }
 }
 ```
@@ -47,11 +51,11 @@
   - 기본 경로는 `path.join(process.cwd(), "lab-options.json")`입니다.
   - 일반적인 실행 방식(`npm -C server ...`)에서는 `server/lab-options.json`을 의미합니다.
 
-- `extensionCheckEnabled`
+- `uploadValidation.extensionCheck.enabled`
   - `true`: 첨부파일 확장자는 허용 목록(예: `.pdf`, `.txt`, `.csv`, `.zip`) 안에 있어야 합니다.
   - `false`: 확장자 allowlist 검사를 건너뜁니다(랩/실험용). 다만 MIME/매직넘버가 켜져 있으면 콘텐츠는 여전히 거절될 수 있습니다.
 
-- `magicNumberCheckEnabled`
+- `uploadValidation.magicNumberCheck.enabled`
   - `true`: 실제 업로드된 바이트(`file.buffer`)를 보고 "겉으로 주장한 타입"과 "실제 내용"이 맞는지 검사합니다.
   - `false`: MIME/확장자 같은 "약한" 신호만 남습니다.
 
@@ -67,7 +71,7 @@
 - PDF: `"%PDF-"`
 - ZIP: `"PK" ...`
 
-`magicNumberCheckEnabled = true`일 때, 기대 타입과 시그니처가 맞지 않으면 업로드를 초기에 거절합니다.
+`uploadValidation.magicNumberCheck.enabled = true`일 때, 기대 타입과 시그니처가 맞지 않으면 업로드를 초기에 거절합니다.
 
 관련 코드:
 

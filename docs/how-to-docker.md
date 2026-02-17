@@ -84,3 +84,14 @@ docker compose exec -T server npm run build
 docker compose exec -T server npm run check:openapi-drift
 docker compose exec -T server npm run test:db
 ```
+
+### git hook을 Docker 컨테이너에서 실행
+
+```bash
+USE_DOCKER_HOOKS=1 git commit
+USE_DOCKER_HOOKS=1 RUN_DB_TESTS=1 git push
+```
+
+- 기본 compose 파일은 `docker-compose.yml`입니다.
+- 다른 compose 파일을 사용하면 `DOCKER_COMPOSE_FILE`로 지정할 수 있습니다.
+- 상세 제어 방식은 [`docs/qa-gate-and-ci.md`](./qa-gate-and-ci.md)를 참고하세요.

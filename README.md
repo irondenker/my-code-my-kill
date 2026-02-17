@@ -19,7 +19,7 @@ git config core.hooksPath .githooks
 ```
 
 - `pre-commit`: `(cd server && npm run test)`
-- `pre-push`: `(cd server && npm run build && npm run check:openapi-drift)`
+- `pre-push`: `(cd server && npm run test && npm run build && npm run check:openapi-drift)`
   - 현재 브랜치가 `main`/`master`면 `npm run test:db`를 자동 실행합니다.
   - `RUN_DB_TESTS=1`: 브랜치와 무관하게 DB 테스트 강제 실행
   - `RUN_DB_TESTS=0`: 브랜치와 무관하게 DB 테스트 강제 생략
@@ -29,7 +29,7 @@ git config core.hooksPath .githooks
 ```bash
 USE_DOCKER_HOOKS=1 git commit
 USE_DOCKER_HOOKS=1 RUN_DB_TESTS=1 git push
-RUN_DB_TESTS=0 git push
+USE_DOCKER_HOOKS=1 RUN_DB_TESTS=0 git push
 ```
 
 - 기본 compose 파일은 `docker-compose.yml`입니다.
@@ -47,6 +47,23 @@ npm run test:db
 ```bash
 docker compose -f docker-compose.yml exec -T server npm run test:db
 ```
+
+## GitHub Actions Gate
+
+CI는 `.github/workflows/server-ci.yml`에서 아래처럼 동작합니다.
+
+- `server` job
+  - `npm run build`
+  - `npm run test`
+  - `npm run fix:openapi-drift`
+  - `npm run check:openapi-drift`
+- `server-db` job
+  - postgres service 기동
+  - `npm run db:migrate`
+  - `npm run test:db`
+
+`workflow_dispatch`로 수동 실행할 때는 `run_db_tests=false`가 기본값이라 `server-db`가 생략됩니다.
+`push`/`pull_request` 이벤트에서는 `server-db`가 항상 실행됩니다.
 
 ## Solo Dev Mode (Optional)
 
@@ -109,6 +126,7 @@ docker compose -f docker-compose.yml exec -T server npm run test:db
 | 문서 | 설명 |
 | --- | --- |
 | [`docs/how-to-docker.md`](./docs/how-to-docker.md) | Docker 운영 명령 모음 |
+| [`docs/qa-gate-and-ci.md`](./docs/qa-gate-and-ci.md) | 로컬 훅/CI 품질 게이트 운영 가이드 |
 
 ### Guides
 
@@ -116,6 +134,8 @@ docker compose -f docker-compose.yml exec -T server npm run test:db
 | --- | --- |
 | [`docs/lab-guide/xss-filter-guide.md`](./docs/lab-guide/xss-filter-guide.md) | XSS 실습 설정 가이드 |
 | [`docs/lab-guide/sqli-lab-guide.md`](./docs/lab-guide/sqli-lab-guide.md) | SQLi 실습 설정 가이드 |
+| [`docs/lab-guide/upload-validation-guide.md`](./docs/lab-guide/upload-validation-guide.md) | 업로드 검증 실습 설정 가이드 |
+| [`docs/session-lifecycle.md`](./docs/session-lifecycle.md) | 로그인 세션 생성/재생성/파기 흐름 정리 |
 
 ## Links
 

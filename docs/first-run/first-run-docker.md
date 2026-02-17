@@ -60,12 +60,11 @@ docker volume create postgresql
 
 ```bash
 docker compose -f docker-compose.yml up -d --build
-docker compose -f docker-compose.yml exec server npx sequelize-cli db:create --config config/config.cjs
-docker compose -f docker-compose.yml exec server npx sequelize-cli db:migrate --config config/config.cjs
-docker compose -f docker-compose.yml exec server npx sequelize-cli db:seed:all --config config/config.cjs
+docker compose -f docker-compose.yml exec -T server npm run db:migrate
+docker compose -f docker-compose.yml exec -T server npm run db:seed:all
 ```
 
-DB가 막 뜨는 타이밍이면 `db:create`가 실패할 수 있습니다. 이 경우 5~10초 후 다시 실행하세요.
+DB 컨테이너가 막 뜨는 타이밍이면 마이그레이션 접속이 실패할 수 있습니다. 이 경우 5~10초 후 다시 실행하세요.
 
 ## 4) 실행 모드 선택 (prod 또는 dev)
 
@@ -108,6 +107,8 @@ docker compose -f docker-compose.yml logs -f nginx
 
 ```bash
 docker compose -f docker-compose.yml exec -T server npm run test
+docker compose -f docker-compose.yml exec -T server npm run build
+docker compose -f docker-compose.yml exec -T server npm run check:openapi-drift
 docker compose -f docker-compose.yml exec -T server npm run test:db
 ```
 
@@ -118,6 +119,7 @@ docker compose -f docker-compose.yml exec -T server npm run test:db
 - 기본 마이그레이션 경로는 `server/migrations`입니다.
 - 기존 체인이 필요하면 `server/migrations/old`와 `--migrations-path` 옵션을 사용하세요.
 - prod 컨테이너에는 `sequelize-cli`가 없으므로 마이그레이션/시드는 dev에서 처리해야 합니다.
+- 로컬 hook/CI 제어 변수는 [`docs/qa-gate-and-ci.md`](../qa-gate-and-ci.md)를 참고하세요.
 
 ## 감사로그 콘솔 출력 설정 (`AUDIT_CLI_LOG_LEVEL`)
 
