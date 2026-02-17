@@ -370,10 +370,12 @@ test("updateArticleWithUploads deletes replaced old files after successful updat
             await fs.access(path.join(ARTICLE_ATTACHMENT_UPLOAD_DIR, newFileUrl));
         }
         if (oldImageUrl) {
-            await assert.rejects(async () => fs.access(path.join(ARTICLE_IMAGE_UPLOAD_DIR, oldImageUrl)));
+            const oldImageName = oldImageUrl;
+            await assert.rejects(async () => fs.access(path.join(ARTICLE_IMAGE_UPLOAD_DIR, oldImageName)));
         }
         if (oldFileUrl) {
-            await assert.rejects(async () => fs.access(path.join(ARTICLE_ATTACHMENT_UPLOAD_DIR, oldFileUrl)));
+            const oldFileName = oldFileUrl;
+            await assert.rejects(async () => fs.access(path.join(ARTICLE_ATTACHMENT_UPLOAD_DIR, oldFileName)));
         }
     } finally {
         await deleteStoredArticleImage(newImageUrl);
