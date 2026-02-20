@@ -244,7 +244,7 @@ Cloud Load Balancer 오설정
 
 * 클릭재킹
 
-### 🌐 Layer 4 — Browser
+### Layer 4 — Browser
 
 > 브라우저 내부이지만 Origin 모델을 초월하는 영역
 
@@ -261,7 +261,7 @@ Cloud Load Balancer 오설정
 * SOP 우회 가능
 * 탭 간 접근 가능
 
-### 💻 Layer 5 — Endpoint
+### Layer 5 — Endpoint
 
 > 사용자 환경은 신뢰 가능한가?
 > 브라우저 보안 모델을 초월할 수 있는가?
