@@ -251,7 +251,6 @@ Cloud Load Balancer 오설정
 범위
 
 * 브라우저 확장 (WebExtension)
-* DevTools
 * Extension background script
 * Browser internal APIs
 * Native Messaging 인터페이스 (브라우저 쪽)
