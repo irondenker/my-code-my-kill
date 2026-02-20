@@ -180,7 +180,7 @@ Cloud Load Balancer 오설정
 * AWS metadata 탈취
 * 내부 관리자 API 접근
 
-### 🌐 Layer 3 — Web Sandbox
+### Layer 3 — Web Sandbox
 
 > Origin 기반 정책이 강제되는 영역
 
