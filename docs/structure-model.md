@@ -1,18 +1,6 @@
-# 웹 보안/웹 해킹 5계층 기반 종합 요점정리
+# 5계층 기반 웹 구조 요점정리
 
-## 구조 개요
-
-1. Network / Infrastructure
-2. Server / Application
-3. Web Origin Sandbox
-4. Browser Privileged Context
-5. Endpoint / OS Privileged
-
----
-
-## 통제 지점 (Control Plane)
-
-### Layer 1 — 네트워크 / 인프라 레이어
+## Layer 1 — 네트워크 / 인프라 레이어
 
 > 이 요청이 서버까지 도달할 수 있는가?
 > 그리고 통신은 신뢰 가능한가?
@@ -26,7 +14,7 @@
 * LB
 * WAF
 
-#### 1. TLS / HTTPS
+### 1. TLS / HTTPS
 
 * 암호화 강제 여부
 * HSTS 설정 여부
@@ -39,7 +27,7 @@
 * 잘못된 인증서 신뢰
 * 내부망 평문 통신
 
-#### 2. Reverse Proxy / Gateway (Nginx 등)
+### 2. Reverse Proxy / Gateway (Nginx 등)
 
 * proxy_pass 구성
 * 내부 IP 노출 여부
@@ -53,7 +41,7 @@
 * proxy misconfiguration
 * cache poisoning
 
-#### 3. WAF / Rate Limiting
+### 3. WAF / Rate Limiting
 
 * 비정상 트래픽 탐지
 * brute force 방지
@@ -65,7 +53,7 @@
 * rate limit race
 * path normalization 우회
 
-#### 4. 경계 분리
+### 4. 경계 분리
 
 * 내부망과 외부망 분리
 * 관리자 인터페이스 외부 노출 여부
@@ -76,7 +64,7 @@ BGP hijacking
 CDN 오염
 Cloud Load Balancer 오설정
 
-### Layer 2 — Server / Application Stack
+## Layer 2 — Server / Application Stack
 
 > 서버는 무엇을 신뢰하고 있는가?
 > 어디에서 검증을 놓쳤는가?
@@ -90,7 +78,7 @@ Cloud Load Balancer 오설정
 * Internal Service
 * File System
 
-#### 1. 입력 검증 (Input Validation)
+### 1. 입력 검증 (Input Validation)
 
 * 타입 검증
 * 길이 제한
@@ -104,7 +92,7 @@ Cloud Load Balancer 오설정
 * Template Injection
 * NoSQL Injection
 
-#### 2. 출력 인코딩 (Output Encoding)
+### 2. 출력 인코딩 (Output Encoding)
 
 * HTML context
 * Attribute context
@@ -117,7 +105,7 @@ Cloud Load Balancer 오설정
 * Stored XSS
 * DOM XSS
 
-#### 3. 인증 (Authentication)
+### 3. 인증 (Authentication)
 
 * 세션 vs JWT
 * 세션 고정 공격
@@ -130,7 +118,7 @@ Cloud Load Balancer 오설정
 * 토큰 재사용
 * remember-me 악용
 
-#### 4. 인가 (Authorization)
+### 4. 인가 (Authorization)
 
 * 서버에서 권한 검증하는가?
 * IDOR 존재 여부
@@ -143,7 +131,7 @@ Cloud Load Balancer 오설정
 * 수직 권한 상승
 * 관리자 API 직접 호출
 
-#### 5. 상태 관리 (State Management)
+### 5. 상태 관리 (State Management)
 
 * 결제 상태 변경 로직
 * 중복 요청 처리
@@ -156,7 +144,7 @@ Cloud Load Balancer 오설정
 * 중복 쿠폰
 * 상태 우회
 
-#### 6. 파일 업로드
+### 6. 파일 업로드
 
 * 확장자 화이트리스트
 * MIME 검증
@@ -169,7 +157,7 @@ Cloud Load Balancer 오설정
 * 경로 조작
 * 이미지 폴리글랏
 
-#### 7. 내부 통신 (SSRF 관점)
+### 7. 내부 통신 (SSRF 관점)
 
 * 외부 URL fetch 기능
 * 내부 메타데이터 접근 가능 여부
@@ -180,7 +168,7 @@ Cloud Load Balancer 오설정
 * AWS metadata 탈취
 * 내부 관리자 API 접근
 
-### Layer 3 — Web Sandbox
+## Layer 3 — Web Sandbox
 
 > Origin 기반 정책이 강제되는 영역
 
@@ -197,7 +185,7 @@ Cloud Load Balancer 오설정
 * WebView
 * PWA (Progressive Web App)
 
-#### 1. CSP
+### 1. CSP
 
 * nonce 기반 정책 여부
 * unsafe-inline 사용 여부
@@ -209,12 +197,12 @@ Cloud Load Balancer 오설정
 * 서버 취약점 제거 못함
 * 신뢰된 JS 내부 DOM 조작 못 막음
 
-#### 2. Same-Origin Policy(SOP)
+### 2. Same-Origin Policy(SOP)
 
 * 출처 분리 구조
 * 서브도메인 신뢰 구조
 
-#### 3. CORS
+### 3. CORS
 
 * 허용 Origin 범위
 * credentials 허용 여부
@@ -224,7 +212,7 @@ Cloud Load Balancer 오설정
 * 잘못된 wildcard
 * reflected origin 허용
 
-#### 4. Cookie 정책
+### 4. Cookie 정책
 
 * HttpOnly
 * Secure
@@ -235,7 +223,7 @@ Cloud Load Balancer 오설정
 * CSRF
 * 세션 탈취
 
-#### 5. Frame 보호
+### 5. Frame 보호
 
 * X-Frame-Options
 * frame-ancestors
@@ -244,29 +232,29 @@ Cloud Load Balancer 오설정
 
 * 클릭재킹
 
-### Layer 4 — Browser
+## Layer 4 — Browser
 
 > 브라우저 내부이지만 Origin 모델을 초월하는 영역
 
-범위
+범위:
 
 * 브라우저 확장 (WebExtension)
 * Extension background script
 * Browser internal APIs
 * Native Messaging 인터페이스 (브라우저 쪽)
 
-📌 특징
+특징:
 
 * CSP 우회 가능
 * SOP 우회 가능
 * 탭 간 접근 가능
 
-### Layer 5 — Endpoint
+## Layer 5 — Endpoint
 
 > 사용자 환경은 신뢰 가능한가?
 > 브라우저 보안 모델을 초월할 수 있는가?
 
-범위
+범위:
 
 * 네이티브 `.exe`
 * 키로거
@@ -280,7 +268,7 @@ Cloud Load Balancer 오설정
 * 브리지 인터페이스(JS가 OS API 호출, 예시 - `window.Android.getFile()`)
 * OS 루트 CA 설치
 
-📌 특징:
+특징:
 
 * 네트워크 가로채기 가능
 * 쿠키 파일 직접 접근 가능
