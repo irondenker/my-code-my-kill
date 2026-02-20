@@ -19,6 +19,7 @@ import { createErrorCommonStaticMiddleware, createPublicStaticMiddleware } from 
 import { HttpError } from "./utils/http/http-error.js";
 import { getLabOptions } from "./config/lab-options.js";
 import { createXssEscaper } from "./utils/xss-escape.util.js";
+import { createCspMiddleware } from "./middlewares/csp.js";
 
 /**
  * 앱 전역 설정은 프로세스 시작 시 1회 로드한 스냅샷으로 사용합니다.
@@ -51,6 +52,12 @@ const escapeForXss = createXssEscaper(labOptions.xssInjection.serverSide);
  */
 export function createApp() {
     const app = express();
+
+    // `x-powered-by = Express` 출력 방지
+    app.disable("x-powered-by");
+
+    // CSP 설정
+    app.use(createCspMiddleware({ reportOnly: true }));
 
     // 운영 환경에서 reverse proxy(nginx 등) 뒤에 있을 수 있으므로 trust proxy를 활성화합니다.
     app.set("trust proxy", 1);
