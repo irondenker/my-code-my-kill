@@ -1,0 +1,17 @@
+{
+  "id": "GET__root",
+  "method": "GET",
+  "path": "/",
+  "routeFile": "server/src/routes/root.routes.ts",
+  "middlewares": [],
+  "handler": {
+    "name": "getRootPage",
+    "file": "server/src/controllers/root.controller.ts",
+    "line": 9
+  },
+  "sinks": [],
+  "exits": [
+    "res.render()"
+  ],
+  "warnings": []
+}

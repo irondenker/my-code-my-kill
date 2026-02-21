@@ -3,33 +3,13 @@
   "method": "GET",
   "path": "/occur/ssr/:code",
   "routeFile": "server/src/routes/occur.routes.ts",
-  "globalMiddlewares": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()"
-  ],
   "middlewares": [],
-  "middlewareChain": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()"
-  ],
   "handler": {
     "name": "INLINE_HANDLER@server/src/routes/occur.routes.ts:18"
   },
   "sinks": [],
   "exits": [
-    "next_err"
+    "next(err)"
   ],
   "warnings": []
 }

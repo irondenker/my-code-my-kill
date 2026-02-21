@@ -1,0 +1,22 @@
+{
+  "id": "POST__board_slug_displayId_edit",
+  "method": "POST",
+  "path": "/board/:slug/:displayId/edit",
+  "routeFile": "server/src/routes/board.routes.ts",
+  "middlewares": [
+    "requireAuthRedirect"
+  ],
+  "handler": {
+    "name": "postArticleEdit",
+    "file": "server/src/controllers/article/article-edit.controller.ts",
+    "line": 41
+  },
+  "sinks": [],
+  "exits": [
+    "res.redirect()"
+  ],
+  "redirectTargets": [
+    "`/board/${post.boardSlug}/${post.displayId}`"
+  ],
+  "warnings": []
+}

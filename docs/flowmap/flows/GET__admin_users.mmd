@@ -1,14 +1,22 @@
 flowchart TD
-ENTRY["ENTRY\nGET /admin/users"]
-ENTRY --> MW1["MW: createCspMiddleware()"]
-MW1 --> MW2["MW: createPublicStaticMiddleware()"]
-MW2 --> MW3["MW: /errors/common: createErrorCommonStaticMiddleware()"]
-MW3 --> MW4["MW: express.urlencoded()"]
-MW4 --> MW5["MW: createSessionMiddleware()"]
-MW5 --> MW6["MW: createRequestLogger()"]
-MW6 --> MW7["MW: ...globalCsrfMiddlewares"]
-MW7 --> MW8["MW: createViewLocalsMiddleware()"]
-MW8 --> MW9["MW: requireAdminRedirect"]
-MW9 --> HANDLER["HANDLER: getAdminUsersPage"]
+subgraph ENTRY_BLOCK["[ENTRY]"]
+direction TB
+ENTRY["GET /admin/users"]
+end
+subgraph MIDDLEWARES["[MIDDLEWARES]"]
+direction TB
+MIDDLEWARE1["<b>[Global Middlewares]</b>"]
+MIDDLEWARE2["requireAdminRedirect()"]
+end
+ENTRY --> MIDDLEWARE1
+MIDDLEWARE1 --> MIDDLEWARE2
+subgraph HANDLER_BLOCK["[HANDLER]"]
+direction TB
+HANDLER["getAdminUsersPage()"]
+end
+MIDDLEWARE2 --> HANDLER
+classDef middleware font-size:10px,padding:2px,stroke-width:1;
+classDef diagnostics stroke-dasharray: 2 2;
 classDef sink stroke-width:2;
 classDef exit stroke-dasharray: 4 2;
+class MIDDLEWARE1,MIDDLEWARE2 middleware;

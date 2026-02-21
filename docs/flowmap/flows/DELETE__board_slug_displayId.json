@@ -1,0 +1,23 @@
+{
+  "id": "DELETE__board_slug_displayId",
+  "method": "DELETE",
+  "path": "/board/:slug/:displayId",
+  "routeFile": "server/src/routes/board.routes.ts",
+  "middlewares": [
+    "requireAuth"
+  ],
+  "handler": {
+    "name": "deleteArticle",
+    "file": "server/src/controllers/article/article-delete.controller.ts",
+    "line": 12
+  },
+  "sinks": [],
+  "exits": [
+    "res.send()",
+    "res.redirect()"
+  ],
+  "redirectTargets": [
+    "`/board/${encodeURIComponent(slug)}`"
+  ],
+  "warnings": []
+}

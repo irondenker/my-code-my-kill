@@ -3,28 +3,7 @@
   "method": "POST",
   "path": "/admin/users/:userId/role",
   "routeFile": "server/src/routes/admin.routes.ts",
-  "globalMiddlewares": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()"
-  ],
   "middlewares": [
-    "requireAdminRedirect"
-  ],
-  "middlewareChain": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()",
     "requireAdminRedirect"
   ],
   "handler": {
@@ -32,11 +11,12 @@
     "file": "server/src/controllers/admin/admin-users.controller.ts",
     "line": 147
   },
-  "sinks": [
-    "REDIRECT"
-  ],
+  "sinks": [],
   "exits": [
-    "redirect"
+    "res.redirect()"
+  ],
+  "redirectTargets": [
+    "/admin/users"
   ],
   "warnings": []
 }

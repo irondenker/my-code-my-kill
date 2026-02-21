@@ -3,28 +3,7 @@
   "method": "POST",
   "path": "/admin/boards/:boardId/edit",
   "routeFile": "server/src/routes/admin.routes.ts",
-  "globalMiddlewares": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()"
-  ],
   "middlewares": [
-    "requireAdminRedirect"
-  ],
-  "middlewareChain": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()",
     "requireAdminRedirect"
   ],
   "handler": {
@@ -32,13 +11,13 @@
     "file": "server/src/controllers/admin/admin-boards.controller.ts",
     "line": 187
   },
-  "sinks": [
-    "RENDER",
-    "REDIRECT"
-  ],
+  "sinks": [],
   "exits": [
-    "render",
-    "redirect"
+    "res.render()",
+    "res.redirect()"
+  ],
+  "redirectTargets": [
+    "/admin/boards"
   ],
   "warnings": []
 }

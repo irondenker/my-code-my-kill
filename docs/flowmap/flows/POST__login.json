@@ -1,0 +1,28 @@
+{
+  "id": "POST__login",
+  "method": "POST",
+  "path": "/login",
+  "routeFile": "server/src/routes/auth.routes.ts",
+  "middlewares": [],
+  "handler": {
+    "name": "postLogin",
+    "file": "server/src/controllers/auth/auth-login.controller.ts",
+    "line": 28
+  },
+  "sinks": [],
+  "exits": [
+    "res.render()",
+    "res.redirect()"
+  ],
+  "redirectTargets": [
+    "nextPath"
+  ],
+  "renderDiagnostics": {
+    "statuses": [
+      "400",
+      "401",
+      "403"
+    ]
+  },
+  "warnings": []
+}

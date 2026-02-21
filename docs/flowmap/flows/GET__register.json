@@ -1,0 +1,15 @@
+{
+  "id": "GET__register",
+  "method": "GET",
+  "path": "/register",
+  "routeFile": "server/src/routes/auth.routes.ts",
+  "middlewares": [],
+  "handler": {
+    "name": "getRegisterPage",
+    "file": "server/src/controllers/auth/auth-pages.controller.ts",
+    "line": 34
+  },
+  "sinks": [],
+  "exits": [],
+  "warnings": []
+}

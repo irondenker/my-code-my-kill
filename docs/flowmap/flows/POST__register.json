@@ -3,39 +3,26 @@
   "method": "POST",
   "path": "/register",
   "routeFile": "server/src/routes/auth.routes.ts",
-  "globalMiddlewares": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()"
-  ],
   "middlewares": [],
-  "middlewareChain": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()"
-  ],
   "handler": {
     "name": "postRegister",
     "file": "server/src/controllers/auth/auth-register.controller.ts",
     "line": 21
   },
-  "sinks": [
-    "RENDER",
-    "REDIRECT"
-  ],
+  "sinks": [],
   "exits": [
-    "render",
-    "redirect"
+    "res.render()",
+    "res.redirect()"
   ],
+  "redirectTargets": [
+    "/board"
+  ],
+  "renderDiagnostics": {
+    "statuses": [
+      "400",
+      "422",
+      "409"
+    ]
+  },
   "warnings": []
 }

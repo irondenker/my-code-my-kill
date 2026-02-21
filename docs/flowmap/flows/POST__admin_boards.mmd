@@ -1,0 +1,33 @@
+flowchart TD
+subgraph ENTRY_BLOCK["[ENTRY]"]
+direction TB
+ENTRY["POST /admin/boards"]
+end
+subgraph MIDDLEWARES["[MIDDLEWARES]"]
+direction TB
+MIDDLEWARE1["<b>[Global Middlewares]</b>"]
+MIDDLEWARE2["requireAdminRedirect()"]
+end
+ENTRY --> MIDDLEWARE1
+MIDDLEWARE1 --> MIDDLEWARE2
+subgraph HANDLER_BLOCK["[HANDLER]"]
+direction TB
+HANDLER["postAdminBoardCreate()"]
+end
+MIDDLEWARE2 --> HANDLER
+subgraph EXITS["[EXITS]"]
+direction TB
+EXIT1["res.redirect()"]
+end
+HANDLER --> EXIT1
+subgraph NEXT_ENTRY["[NEXT ENTRY]"]
+direction TB
+NEXT_ENTRY1["/admin/boards"]
+end
+EXIT1 --> NEXT_ENTRY1
+classDef middleware font-size:10px,padding:2px,stroke-width:1;
+classDef diagnostics stroke-dasharray: 2 2;
+classDef sink stroke-width:2;
+classDef exit stroke-dasharray: 4 2;
+class MIDDLEWARE1,MIDDLEWARE2 middleware;
+class EXIT1 exit;

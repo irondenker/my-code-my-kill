@@ -1,0 +1,31 @@
+{
+  "id": "POST__settings_profile",
+  "method": "POST",
+  "path": "/settings/profile",
+  "routeFile": "server/src/routes/user.routes.ts",
+  "middlewares": [
+    "requireAuthRedirect"
+  ],
+  "handler": {
+    "name": "postProfileEdit",
+    "file": "server/src/controllers/user.controller.ts",
+    "line": 117
+  },
+  "sinks": [
+    "req.session()"
+  ],
+  "exits": [
+    "res.render()",
+    "res.redirect()"
+  ],
+  "redirectTargets": [
+    "/login",
+    "`/@${profile.username}`"
+  ],
+  "renderDiagnostics": {
+    "statuses": [
+      "422"
+    ]
+  },
+  "warnings": []
+}

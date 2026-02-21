@@ -1,0 +1,17 @@
+{
+  "id": "GET__board_slug_new",
+  "method": "GET",
+  "path": "/board/:slug/new",
+  "routeFile": "server/src/routes/board.routes.ts",
+  "middlewares": [
+    "requireAuthRedirect"
+  ],
+  "handler": {
+    "name": "getArticleCreateForm",
+    "file": "server/src/controllers/article/article-create.controller.ts",
+    "line": 26
+  },
+  "sinks": [],
+  "exits": [],
+  "warnings": []
+}

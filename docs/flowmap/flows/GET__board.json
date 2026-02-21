@@ -1,0 +1,17 @@
+{
+  "id": "GET__board",
+  "method": "GET",
+  "path": "/board",
+  "routeFile": "server/src/routes/board.routes.ts",
+  "middlewares": [],
+  "handler": {
+    "name": "getBoardIndex",
+    "file": "server/src/controllers/board.controller.ts",
+    "line": 102
+  },
+  "sinks": [],
+  "exits": [
+    "res.render()"
+  ],
+  "warnings": []
+}

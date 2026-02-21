@@ -1,0 +1,22 @@
+{
+  "id": "POST__board_slug",
+  "method": "POST",
+  "path": "/board/:slug",
+  "routeFile": "server/src/routes/board.routes.ts",
+  "middlewares": [
+    "requireAuthRedirect"
+  ],
+  "handler": {
+    "name": "postArticleCreate",
+    "file": "server/src/controllers/article/article-create.controller.ts",
+    "line": 39
+  },
+  "sinks": [],
+  "exits": [
+    "res.redirect()"
+  ],
+  "redirectTargets": [
+    "`/board/${board.slug}/${created.displayId}`"
+  ],
+  "warnings": []
+}

@@ -1,0 +1,17 @@
+{
+  "id": "POST__labs_ssti",
+  "method": "POST",
+  "path": "/labs/ssti",
+  "routeFile": "server/src/routes/lab-ssti.routes.ts",
+  "middlewares": [],
+  "handler": {
+    "name": "INLINE_HANDLER@server/src/routes/lab-ssti.routes.ts:40"
+  },
+  "sinks": [
+    "req.session()"
+  ],
+  "exits": [
+    "res.render()"
+  ],
+  "warnings": []
+}

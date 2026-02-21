@@ -1,0 +1,26 @@
+{
+  "id": "POST__users_avatar",
+  "method": "POST",
+  "path": "/users/avatar",
+  "routeFile": "server/src/routes/user.routes.ts",
+  "middlewares": [
+    "requireAuthRedirect"
+  ],
+  "handler": {
+    "name": "postAvatarUpload",
+    "file": "server/src/controllers/avatar.controller.ts",
+    "line": 83
+  },
+  "sinks": [
+    "req.session()",
+    "File Upload",
+    "Image Upload"
+  ],
+  "exits": [
+    "res.redirect()"
+  ],
+  "redirectTargets": [
+    "redirectTarget"
+  ],
+  "warnings": []
+}

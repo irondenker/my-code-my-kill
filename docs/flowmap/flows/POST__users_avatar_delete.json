@@ -1,0 +1,24 @@
+{
+  "id": "POST__users_avatar_delete",
+  "method": "POST",
+  "path": "/users/avatar/delete",
+  "routeFile": "server/src/routes/user.routes.ts",
+  "middlewares": [
+    "requireAuthRedirect"
+  ],
+  "handler": {
+    "name": "postAvatarDelete",
+    "file": "server/src/controllers/avatar.controller.ts",
+    "line": 172
+  },
+  "sinks": [
+    "req.session()"
+  ],
+  "exits": [
+    "res.redirect()"
+  ],
+  "redirectTargets": [
+    "redirectTarget"
+  ],
+  "warnings": []
+}

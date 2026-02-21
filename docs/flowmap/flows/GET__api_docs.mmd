@@ -1,17 +1,26 @@
 flowchart TD
-ENTRY["ENTRY\nGET /api-docs"]
-ENTRY --> MW1["MW: createCspMiddleware()"]
-MW1 --> MW2["MW: createPublicStaticMiddleware()"]
-MW2 --> MW3["MW: /errors/common: createErrorCommonStaticMiddleware()"]
-MW3 --> MW4["MW: express.urlencoded()"]
-MW4 --> MW5["MW: createSessionMiddleware()"]
-MW5 --> MW6["MW: createRequestLogger()"]
-MW6 --> MW7["MW: ...globalCsrfMiddlewares"]
-MW7 --> MW8["MW: createViewLocalsMiddleware()"]
-MW8 --> HANDLER["HANDLER: INLINE_HANDLER@server/src/routes/api-docs.routes.ts:6"]
-HANDLER --> SINK1["SINK: SEND"]
-HANDLER --> EXIT1["EXIT: send"]
+subgraph ENTRY_BLOCK["[ENTRY]"]
+direction TB
+ENTRY["GET /api-docs"]
+end
+subgraph MIDDLEWARES["[MIDDLEWARES]"]
+direction TB
+MIDDLEWARE1["<b>[Global Middlewares]</b>"]
+end
+ENTRY --> MIDDLEWARE1
+subgraph HANDLER_BLOCK["[HANDLER]"]
+direction TB
+HANDLER["Inline Handler<br/>(api-docs.routes.ts)"]
+end
+MIDDLEWARE1 --> HANDLER
+subgraph EXITS["[EXITS]"]
+direction TB
+EXIT1["res.send()"]
+end
+HANDLER --> EXIT1
+classDef middleware font-size:10px,padding:2px,stroke-width:1;
+classDef diagnostics stroke-dasharray: 2 2;
 classDef sink stroke-width:2;
 classDef exit stroke-dasharray: 4 2;
-class SINK1 sink;
+class MIDDLEWARE1 middleware;
 class EXIT1 exit;

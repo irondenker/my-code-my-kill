@@ -1,0 +1,43 @@
+flowchart TD
+subgraph ENTRY_BLOCK["[ENTRY]"]
+direction TB
+ENTRY["POST /register"]
+end
+subgraph MIDDLEWARES["[MIDDLEWARES]"]
+direction TB
+MIDDLEWARE1["<b>[Global Middlewares]</b>"]
+end
+ENTRY --> MIDDLEWARE1
+subgraph HANDLER_BLOCK["[HANDLER]"]
+direction TB
+HANDLER["postRegister()"]
+end
+MIDDLEWARE1 --> HANDLER
+subgraph ERROR_STATUS["[ERROR STATUS]"]
+direction TB
+RDIAG1["400"]
+RDIAG2["422"]
+RDIAG3["409"]
+end
+subgraph EXITS["[EXITS]"]
+direction TB
+EXIT1["res.render()"]
+EXIT2["res.redirect()"]
+end
+HANDLER --> EXIT1
+HANDLER --> EXIT2
+EXIT1 --> RDIAG1
+EXIT1 --> RDIAG2
+EXIT1 --> RDIAG3
+subgraph NEXT_ENTRY["[NEXT ENTRY]"]
+direction TB
+NEXT_ENTRY1["/board"]
+end
+EXIT2 --> NEXT_ENTRY1
+classDef middleware font-size:10px,padding:2px,stroke-width:1;
+classDef diagnostics stroke-dasharray: 2 2;
+classDef sink stroke-width:2;
+classDef exit stroke-dasharray: 4 2;
+class MIDDLEWARE1 middleware;
+class RDIAG1,RDIAG2,RDIAG3 diagnostics;
+class EXIT1,EXIT2 exit;

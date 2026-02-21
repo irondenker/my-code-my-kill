@@ -1,0 +1,19 @@
+{
+  "id": "GET__board_slug",
+  "method": "GET",
+  "path": "/board/:slug",
+  "routeFile": "server/src/routes/board.routes.ts",
+  "middlewares": [],
+  "handler": {
+    "name": "getBoardBySlug",
+    "file": "server/src/controllers/board.controller.ts",
+    "line": 121
+  },
+  "sinks": [
+    "req.session()"
+  ],
+  "exits": [
+    "res.render()"
+  ],
+  "warnings": []
+}

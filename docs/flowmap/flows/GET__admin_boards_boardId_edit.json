@@ -1,0 +1,19 @@
+{
+  "id": "GET__admin_boards_boardId_edit",
+  "method": "GET",
+  "path": "/admin/boards/:boardId/edit",
+  "routeFile": "server/src/routes/admin.routes.ts",
+  "middlewares": [
+    "requireAdminRedirect"
+  ],
+  "handler": {
+    "name": "getAdminBoardEditPage",
+    "file": "server/src/controllers/admin/admin-boards.controller.ts",
+    "line": 162
+  },
+  "sinks": [],
+  "exits": [
+    "res.render()"
+  ],
+  "warnings": []
+}

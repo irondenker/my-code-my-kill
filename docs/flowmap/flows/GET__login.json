@@ -1,0 +1,15 @@
+{
+  "id": "GET__login",
+  "method": "GET",
+  "path": "/login",
+  "routeFile": "server/src/routes/auth.routes.ts",
+  "middlewares": [],
+  "handler": {
+    "name": "getLoginPage",
+    "file": "server/src/controllers/auth/auth-pages.controller.ts",
+    "line": 26
+  },
+  "sinks": [],
+  "exits": [],
+  "warnings": []
+}

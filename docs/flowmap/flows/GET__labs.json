@@ -1,0 +1,15 @@
+{
+  "id": "GET__labs",
+  "method": "GET",
+  "path": "/labs",
+  "routeFile": "server/src/routes/lab-ssti.routes.ts",
+  "middlewares": [],
+  "handler": {
+    "name": "INLINE_HANDLER@server/src/routes/lab-ssti.routes.ts:13"
+  },
+  "sinks": [],
+  "exits": [
+    "res.render()"
+  ],
+  "warnings": []
+}

@@ -3,35 +3,13 @@
   "method": "GET",
   "path": "/labs/ssti",
   "routeFile": "server/src/routes/lab-ssti.routes.ts",
-  "globalMiddlewares": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()"
-  ],
   "middlewares": [],
-  "middlewareChain": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()"
-  ],
   "handler": {
     "name": "INLINE_HANDLER@server/src/routes/lab-ssti.routes.ts:19"
   },
-  "sinks": [
-    "RENDER"
-  ],
+  "sinks": [],
   "exits": [
-    "render"
+    "res.render()"
   ],
   "warnings": []
 }

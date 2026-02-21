@@ -1,0 +1,17 @@
+{
+  "id": "GET__board_slug_displayId_edit",
+  "method": "GET",
+  "path": "/board/:slug/:displayId/edit",
+  "routeFile": "server/src/routes/board.routes.ts",
+  "middlewares": [
+    "requireAuthRedirect"
+  ],
+  "handler": {
+    "name": "getArticleEditForm",
+    "file": "server/src/controllers/article/article-edit.controller.ts",
+    "line": 25
+  },
+  "sinks": [],
+  "exits": [],
+  "warnings": []
+}

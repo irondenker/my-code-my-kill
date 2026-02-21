@@ -3,38 +3,17 @@
   "method": "GET",
   "path": "/@:username",
   "routeFile": "server/src/routes/user.routes.ts",
-  "globalMiddlewares": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()"
-  ],
   "middlewares": [],
-  "middlewareChain": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()"
-  ],
   "handler": {
     "name": "getUserProfile",
     "file": "server/src/controllers/user.controller.ts",
     "line": 43
   },
   "sinks": [
-    "RENDER",
-    "SESSION"
+    "req.session()"
   ],
   "exits": [
-    "render"
+    "res.render()"
   ],
   "warnings": []
 }

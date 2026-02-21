@@ -1,0 +1,19 @@
+{
+  "id": "GET__admin_audit_logs",
+  "method": "GET",
+  "path": "/admin/audit-logs",
+  "routeFile": "server/src/routes/audit.routes.ts",
+  "middlewares": [
+    "requireAdminRedirect"
+  ],
+  "handler": {
+    "name": "getAuditLogsPage",
+    "file": "server/src/controllers/audit.controller.ts",
+    "line": 8
+  },
+  "sinks": [],
+  "exits": [
+    "res.render()"
+  ],
+  "warnings": []
+}

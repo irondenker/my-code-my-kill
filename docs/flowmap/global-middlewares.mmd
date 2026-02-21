@@ -1,0 +1,26 @@
+flowchart TD
+subgraph ENTRY_BLOCK["[ENTRY]"]
+direction TB
+ENTRY["Global Middleware Chain"]
+end
+subgraph GLOBAL_MIDDLEWARES["[GLOBAL MIDDLEWARES]"]
+direction TB
+GMW1["createCspMiddleware()"]
+GMW2["createPublicStaticMiddleware()"]
+GMW3["/errors/common: createErrorCommonStaticMiddleware()"]
+GMW4["express.urlencoded()"]
+GMW5["createSessionMiddleware()"]
+GMW6["createRequestLogger()"]
+GMW7["...globalCsrfMiddlewares"]
+GMW8["createViewLocalsMiddleware()"]
+end
+ENTRY --> GMW1
+GMW1 --> GMW2
+GMW2 --> GMW3
+GMW3 --> GMW4
+GMW4 --> GMW5
+GMW5 --> GMW6
+GMW6 --> GMW7
+GMW7 --> GMW8
+classDef middleware font-size:10px,padding:2px,stroke-width:1;
+class GMW1,GMW2,GMW3,GMW4,GMW5,GMW6,GMW7,GMW8 middleware;

@@ -3,38 +3,20 @@
   "method": "POST",
   "path": "/logout",
   "routeFile": "server/src/routes/auth.routes.ts",
-  "globalMiddlewares": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()"
-  ],
   "middlewares": [],
-  "middlewareChain": [
-    "createCspMiddleware()",
-    "createPublicStaticMiddleware()",
-    "/errors/common: createErrorCommonStaticMiddleware()",
-    "express.urlencoded()",
-    "createSessionMiddleware()",
-    "createRequestLogger()",
-    "...globalCsrfMiddlewares",
-    "createViewLocalsMiddleware()"
-  ],
   "handler": {
     "name": "postLogout",
     "file": "server/src/controllers/auth/auth-logout.controller.ts",
     "line": 15
   },
   "sinks": [
-    "REDIRECT",
-    "SESSION"
+    "req.session()"
   ],
   "exits": [
-    "redirect"
+    "res.redirect()"
+  ],
+  "redirectTargets": [
+    "/"
   ],
   "warnings": []
 }

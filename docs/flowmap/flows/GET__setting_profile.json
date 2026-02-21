@@ -1,0 +1,25 @@
+{
+  "id": "GET__setting_profile",
+  "method": "GET",
+  "path": "/setting/profile",
+  "routeFile": "server/src/routes/user.routes.ts",
+  "middlewares": [
+    "requireAuthRedirect"
+  ],
+  "handler": {
+    "name": "getProfileEditForm",
+    "file": "server/src/controllers/user.controller.ts",
+    "line": 89
+  },
+  "sinks": [
+    "req.session()"
+  ],
+  "exits": [
+    "res.render()",
+    "res.redirect()"
+  ],
+  "redirectTargets": [
+    "/login"
+  ],
+  "warnings": []
+}

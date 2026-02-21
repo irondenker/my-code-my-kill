@@ -1,0 +1,23 @@
+{
+  "id": "POST__board_slug_displayId_delete",
+  "method": "POST",
+  "path": "/board/:slug/:displayId/delete",
+  "routeFile": "server/src/routes/board.routes.ts",
+  "middlewares": [
+    "requireAuthRedirect"
+  ],
+  "handler": {
+    "name": "deleteArticle",
+    "file": "server/src/controllers/article/article-delete.controller.ts",
+    "line": 12
+  },
+  "sinks": [],
+  "exits": [
+    "res.send()",
+    "res.redirect()"
+  ],
+  "redirectTargets": [
+    "`/board/${encodeURIComponent(slug)}`"
+  ],
+  "warnings": []
+}

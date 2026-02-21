@@ -1,0 +1,15 @@
+{
+  "id": "GET__api_docs",
+  "method": "GET",
+  "path": "/api-docs",
+  "routeFile": "server/src/routes/api-docs.routes.ts",
+  "middlewares": [],
+  "handler": {
+    "name": "INLINE_HANDLER@server/src/routes/api-docs.routes.ts:6"
+  },
+  "sinks": [],
+  "exits": [
+    "res.send()"
+  ],
+  "warnings": []
+}

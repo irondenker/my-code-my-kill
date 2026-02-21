@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-21T10:04:21.313Z",
+  "generatedAt": "2026-02-21T14:12:52.883Z",
   "project": "my-code-my-kill/server",
   "endpoints": [
     {
@@ -15,11 +15,9 @@
         "file": "server/src/controllers/admin/admin-dashboard.controller.ts",
         "line": 9
       },
-      "sinks": [
-        "RENDER"
-      ],
+      "sinks": [],
       "exits": [
-        "render"
+        "res.render()"
       ]
     },
     {
@@ -51,11 +49,12 @@
         "file": "server/src/controllers/admin/admin-boards.controller.ts",
         "line": 57
       },
-      "sinks": [
-        "REDIRECT"
-      ],
+      "sinks": [],
       "exits": [
-        "redirect"
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "/admin/boards"
       ]
     },
     {
@@ -71,11 +70,9 @@
         "file": "server/src/controllers/admin/admin-boards.controller.ts",
         "line": 162
       },
-      "sinks": [
-        "RENDER"
-      ],
+      "sinks": [],
       "exits": [
-        "render"
+        "res.render()"
       ]
     },
     {
@@ -91,13 +88,13 @@
         "file": "server/src/controllers/admin/admin-boards.controller.ts",
         "line": 187
       },
-      "sinks": [
-        "RENDER",
-        "REDIRECT"
-      ],
+      "sinks": [],
       "exits": [
-        "render",
-        "redirect"
+        "res.render()",
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "/admin/boards"
       ]
     },
     {
@@ -129,11 +126,12 @@
         "file": "server/src/controllers/admin/admin-users.controller.ts",
         "line": 147
       },
-      "sinks": [
-        "REDIRECT"
-      ],
+      "sinks": [],
       "exits": [
-        "redirect"
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "/admin/users"
       ]
     },
     {
@@ -149,11 +147,12 @@
         "file": "server/src/controllers/admin/admin-users.controller.ts",
         "line": 90
       },
-      "sinks": [
-        "REDIRECT"
-      ],
+      "sinks": [],
       "exits": [
-        "redirect"
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "/admin/users"
       ]
     },
     {
@@ -165,11 +164,9 @@
       "handler": {
         "name": "INLINE_HANDLER@server/src/routes/api-docs.routes.ts:6"
       },
-      "sinks": [
-        "SEND"
-      ],
+      "sinks": [],
       "exits": [
-        "send"
+        "res.send()"
       ]
     },
     {
@@ -185,11 +182,9 @@
         "file": "server/src/controllers/audit.controller.ts",
         "line": 8
       },
-      "sinks": [
-        "RENDER"
-      ],
+      "sinks": [],
       "exits": [
-        "render"
+        "res.render()"
       ]
     },
     {
@@ -217,14 +212,21 @@
         "file": "server/src/controllers/auth/auth-login.controller.ts",
         "line": 28
       },
-      "sinks": [
-        "RENDER",
-        "REDIRECT"
-      ],
+      "sinks": [],
       "exits": [
-        "render",
-        "redirect"
-      ]
+        "res.render()",
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "nextPath"
+      ],
+      "renderDiagnostics": {
+        "statuses": [
+          "400",
+          "401",
+          "403"
+        ]
+      }
     },
     {
       "id": "POST__logout",
@@ -238,11 +240,13 @@
         "line": 15
       },
       "sinks": [
-        "REDIRECT",
-        "SESSION"
+        "req.session()"
       ],
       "exits": [
-        "redirect"
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "/"
       ]
     },
     {
@@ -270,14 +274,21 @@
         "file": "server/src/controllers/auth/auth-register.controller.ts",
         "line": 21
       },
-      "sinks": [
-        "RENDER",
-        "REDIRECT"
-      ],
+      "sinks": [],
       "exits": [
-        "render",
-        "redirect"
-      ]
+        "res.render()",
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "/board"
+      ],
+      "renderDiagnostics": {
+        "statuses": [
+          "400",
+          "422",
+          "409"
+        ]
+      }
     },
     {
       "id": "GET__board",
@@ -290,11 +301,9 @@
         "file": "server/src/controllers/board.controller.ts",
         "line": 102
       },
-      "sinks": [
-        "RENDER"
-      ],
+      "sinks": [],
       "exits": [
-        "render"
+        "res.render()"
       ]
     },
     {
@@ -309,11 +318,10 @@
         "line": 121
       },
       "sinks": [
-        "RENDER",
-        "SESSION"
+        "req.session()"
       ],
       "exits": [
-        "render"
+        "res.render()"
       ]
     },
     {
@@ -329,11 +337,12 @@
         "file": "server/src/controllers/article/article-create.controller.ts",
         "line": 39
       },
-      "sinks": [
-        "REDIRECT"
-      ],
+      "sinks": [],
       "exits": [
-        "redirect"
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "`/board/${board.slug}/${created.displayId}`"
       ]
     },
     {
@@ -347,11 +356,9 @@
         "file": "server/src/controllers/article/article-show.controller.ts",
         "line": 21
       },
-      "sinks": [
-        "RENDER"
-      ],
+      "sinks": [],
       "exits": [
-        "render"
+        "res.render()"
       ]
     },
     {
@@ -367,13 +374,13 @@
         "file": "server/src/controllers/article/article-delete.controller.ts",
         "line": 12
       },
-      "sinks": [
-        "SEND",
-        "REDIRECT"
-      ],
+      "sinks": [],
       "exits": [
-        "send",
-        "redirect"
+        "res.send()",
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "`/board/${encodeURIComponent(slug)}`"
       ]
     },
     {
@@ -389,13 +396,13 @@
         "file": "server/src/controllers/article/article-delete.controller.ts",
         "line": 12
       },
-      "sinks": [
-        "SEND",
-        "REDIRECT"
-      ],
+      "sinks": [],
       "exits": [
-        "send",
-        "redirect"
+        "res.send()",
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "`/board/${encodeURIComponent(slug)}`"
       ]
     },
     {
@@ -427,11 +434,12 @@
         "file": "server/src/controllers/article/article-edit.controller.ts",
         "line": 41
       },
-      "sinks": [
-        "REDIRECT"
-      ],
+      "sinks": [],
       "exits": [
-        "redirect"
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "`/board/${post.boardSlug}/${post.displayId}`"
       ]
     },
     {
@@ -459,11 +467,9 @@
       "handler": {
         "name": "INLINE_HANDLER@server/src/routes/lab-ssti.routes.ts:13"
       },
-      "sinks": [
-        "RENDER"
-      ],
+      "sinks": [],
       "exits": [
-        "render"
+        "res.render()"
       ]
     },
     {
@@ -475,11 +481,9 @@
       "handler": {
         "name": "INLINE_HANDLER@server/src/routes/lab-ssti.routes.ts:19"
       },
-      "sinks": [
-        "RENDER"
-      ],
+      "sinks": [],
       "exits": [
-        "render"
+        "res.render()"
       ]
     },
     {
@@ -492,11 +496,10 @@
         "name": "INLINE_HANDLER@server/src/routes/lab-ssti.routes.ts:40"
       },
       "sinks": [
-        "RENDER",
-        "SESSION"
+        "req.session()"
       ],
       "exits": [
-        "render"
+        "res.render()"
       ]
     },
     {
@@ -510,7 +513,7 @@
       },
       "sinks": [],
       "exits": [
-        "next_err"
+        "next(err)"
       ]
     },
     {
@@ -524,11 +527,9 @@
         "file": "server/src/controllers/root.controller.ts",
         "line": 9
       },
-      "sinks": [
-        "RENDER"
-      ],
+      "sinks": [],
       "exits": [
-        "render"
+        "res.render()"
       ]
     },
     {
@@ -540,11 +541,9 @@
       "handler": {
         "name": "INLINE_HANDLER@server/src/routes/root.routes.ts:6"
       },
-      "sinks": [
-        "SEND"
-      ],
+      "sinks": [],
       "exits": [
-        "send"
+        "res.send()"
       ]
     },
     {
@@ -559,11 +558,10 @@
         "line": 43
       },
       "sinks": [
-        "RENDER",
-        "SESSION"
+        "req.session()"
       ],
       "exits": [
-        "render"
+        "res.render()"
       ]
     },
     {
@@ -580,13 +578,14 @@
         "line": 89
       },
       "sinks": [
-        "RENDER",
-        "REDIRECT",
-        "SESSION"
+        "req.session()"
       ],
       "exits": [
-        "render",
-        "redirect"
+        "res.render()",
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "/login"
       ]
     },
     {
@@ -603,14 +602,21 @@
         "line": 117
       },
       "sinks": [
-        "RENDER",
-        "REDIRECT",
-        "SESSION"
+        "req.session()"
       ],
       "exits": [
-        "render",
-        "redirect"
-      ]
+        "res.render()",
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "/login",
+        "`/@${profile.username}`"
+      ],
+      "renderDiagnostics": {
+        "statuses": [
+          "422"
+        ]
+      }
     },
     {
       "id": "GET__settings_profile",
@@ -626,13 +632,14 @@
         "line": 89
       },
       "sinks": [
-        "RENDER",
-        "REDIRECT",
-        "SESSION"
+        "req.session()"
       ],
       "exits": [
-        "render",
-        "redirect"
+        "res.render()",
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "/login"
       ]
     },
     {
@@ -649,14 +656,21 @@
         "line": 117
       },
       "sinks": [
-        "RENDER",
-        "REDIRECT",
-        "SESSION"
+        "req.session()"
       ],
       "exits": [
-        "render",
-        "redirect"
-      ]
+        "res.render()",
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "/login",
+        "`/@${profile.username}`"
+      ],
+      "renderDiagnostics": {
+        "statuses": [
+          "422"
+        ]
+      }
     },
     {
       "id": "POST__users_avatar",
@@ -672,13 +686,15 @@
         "line": 83
       },
       "sinks": [
-        "REDIRECT",
-        "SESSION",
-        "UPLOAD",
-        "IMAGE"
+        "req.session()",
+        "File Upload",
+        "Image Upload"
       ],
       "exits": [
-        "redirect"
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "redirectTarget"
       ]
     },
     {
@@ -695,11 +711,13 @@
         "line": 172
       },
       "sinks": [
-        "REDIRECT",
-        "SESSION"
+        "req.session()"
       ],
       "exits": [
-        "redirect"
+        "res.redirect()"
+      ],
+      "redirectTargets": [
+        "redirectTarget"
       ]
     }
   ]

@@ -1,18 +1,32 @@
 flowchart TD
-ENTRY["ENTRY\nGET /board/:slug"]
-ENTRY --> MW1["MW: createCspMiddleware()"]
-MW1 --> MW2["MW: createPublicStaticMiddleware()"]
-MW2 --> MW3["MW: /errors/common: createErrorCommonStaticMiddleware()"]
-MW3 --> MW4["MW: express.urlencoded()"]
-MW4 --> MW5["MW: createSessionMiddleware()"]
-MW5 --> MW6["MW: createRequestLogger()"]
-MW6 --> MW7["MW: ...globalCsrfMiddlewares"]
-MW7 --> MW8["MW: createViewLocalsMiddleware()"]
-MW8 --> HANDLER["HANDLER: getBoardBySlug"]
-HANDLER --> SINK1["SINK: RENDER"]
-HANDLER --> SINK2["SINK: SESSION"]
-HANDLER --> EXIT1["EXIT: render"]
+subgraph ENTRY_BLOCK["[ENTRY]"]
+direction TB
+ENTRY["GET /board/:slug"]
+end
+subgraph MIDDLEWARES["[MIDDLEWARES]"]
+direction TB
+MIDDLEWARE1["<b>[Global Middlewares]</b>"]
+end
+ENTRY --> MIDDLEWARE1
+subgraph HANDLER_BLOCK["[HANDLER]"]
+direction TB
+HANDLER["getBoardBySlug()"]
+end
+MIDDLEWARE1 --> HANDLER
+subgraph SINKS["[SINKS]"]
+direction TB
+SINK1["req.session()"]
+end
+HANDLER --> SINK1
+subgraph EXITS["[EXITS]"]
+direction TB
+EXIT1["res.render()"]
+end
+HANDLER --> EXIT1
+classDef middleware font-size:10px,padding:2px,stroke-width:1;
+classDef diagnostics stroke-dasharray: 2 2;
 classDef sink stroke-width:2;
 classDef exit stroke-dasharray: 4 2;
-class SINK1,SINK2 sink;
+class MIDDLEWARE1 middleware;
+class SINK1 sink;
 class EXIT1 exit;
