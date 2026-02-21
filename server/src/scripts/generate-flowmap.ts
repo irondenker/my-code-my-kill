@@ -1140,6 +1140,20 @@ async function buildFlowEndpoints(params: {
     return flows;
 }
 
+async function readExistingGeneratedAt(flowmapDir: string): Promise<string | null> {
+    const catalogPath = path.join(flowmapDir, "catalog.json");
+    try {
+        const raw = await fs.readFile(catalogPath, "utf8");
+        const parsed = JSON.parse(raw) as { generatedAt?: unknown };
+        if (typeof parsed.generatedAt === "string" && parsed.generatedAt.trim().length > 0) {
+            return parsed.generatedAt;
+        }
+    } catch {
+        return null;
+    }
+    return null;
+}
+
 async function writeFlowmapArtifacts(params: {
     repoRoot: string;
     flowEndpoints: FlowEndpoint[];
@@ -1149,9 +1163,10 @@ async function writeFlowmapArtifacts(params: {
     const flowDir = path.join(flowmapDir, "flows");
     await fs.mkdir(flowmapDir, { recursive: true });
     await fs.mkdir(flowDir, { recursive: true });
+    const generatedAt = (await readExistingGeneratedAt(flowmapDir)) ?? new Date().toISOString();
 
     const catalog = {
-        generatedAt: new Date().toISOString(),
+        generatedAt,
         project: "my-code-my-kill/server",
         endpoints: params.flowEndpoints.map((endpoint) => ({
             id: endpoint.id,
