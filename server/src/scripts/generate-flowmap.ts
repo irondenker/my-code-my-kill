@@ -6,31 +6,30 @@ const ROUTE_METHODS = new Set(["get", "post", "put", "patch", "delete"]);
 const METHOD_ORDER = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
 
 const SINK_RULES = [
-    { sink: "DB_RAW", patterns: [/sequelize\.query\s*\(/] },
-    { sink: "DB_ORM", patterns: [/\.(findOne|findAll|create|update|destroy)\s*\(/] },
-    { sink: "RENDER", patterns: [/res\.render\s*\(/, /\.render\s*\(/] },
-    { sink: "SEND", patterns: [/res\.send\s*\(/, /\.send\s*\(/] },
-    { sink: "JSON", patterns: [/res\.json\s*\(/, /\.json\s*\(/] },
-    { sink: "REDIRECT", patterns: [/res\.redirect\s*\(/, /\.redirect\s*\(/] },
-    { sink: "SESSION", patterns: [/req\.session\b/, /req\.session\.regenerate\s*\(/] },
-    { sink: "COOKIE", patterns: [/res\.cookie\s*\(/] },
-    { sink: "UPLOAD", patterns: [/multer\s*\(/, /req\.(file|files)\b/] },
-    { sink: "IMAGE", patterns: [/sharp\s*\(/] },
-    { sink: "FS", patterns: [/\bfs\.\w+\s*\(/] },
-    { sink: "EXTERNAL", patterns: [/\bfetch\s*\(/, /axios\./] },
-    { sink: "LAB_TOGGLE", patterns: [/SECURITY_LAB/i, /\bCSRF\b/i, /\bXSS\b/i] },
+    { sink: "DB: Raw Query", patterns: [/sequelize\.query\s*\(/] },
+    { sink: "DB: ORM", patterns: [/\.(findOne|findAll|create|update|destroy)\s*\(/] },
+    { sink: "req.session()", patterns: [/req\.session\b/, /req\.session\.regenerate\s*\(/] },
+    { sink: "res.cookie()", patterns: [/res\.cookie\s*\(/] },
+    { sink: "File Upload", patterns: [/multer\s*\(/, /req\.(file|files)\b/] },
+    { sink: "Image Upload", patterns: [/sharp\s*\(/] },
+    { sink: "fs", patterns: [/\bfs\.\w+\s*\(/] },
+    { sink: "AJAX", patterns: [/\bfetch\s*\(/, /axios\./] },
+    { sink: "Lab Options", patterns: [/SECURITY_LAB/i, /\bCSRF\b/i, /\bXSS\b/i] },
 ] as const;
 
 const EXIT_RULES = [
-    { exit: "render", patterns: [/res\.render\s*\(/, /\.render\s*\(/] },
-    { exit: "send", patterns: [/res\.send\s*\(/, /\.send\s*\(/] },
-    { exit: "json", patterns: [/res\.json\s*\(/, /\.json\s*\(/] },
-    { exit: "redirect", patterns: [/res\.redirect\s*\(/, /\.redirect\s*\(/] },
-    { exit: "next_err", patterns: [/\bnext\s*\(/] },
+    { exit: "res.render()", patterns: [/res\.render\s*\(/, /\.render\s*\(/] },
+    { exit: "res.send()", patterns: [/res\.send\s*\(/, /\.send\s*\(/] },
+    { exit: "JSON", patterns: [/res\.json\s*\(/, /\.json\s*\(/] },
+    { exit: "res.redirect()", patterns: [/res\.redirect\s*\(/, /\.redirect\s*\(/] },
+    { exit: "next(err)", patterns: [/\bnext\s*\(/] },
 ] as const;
 
 type Sink = typeof SINK_RULES[number]["sink"];
 type Exit = typeof EXIT_RULES[number]["exit"];
+type RenderDiagnostics = {
+    statuses: string[];
+};
 
 type RouteImportBinding = {
     importedName: string;
@@ -68,6 +67,8 @@ type FlowEndpoint = {
     };
     sinks: Sink[];
     exits: Exit[];
+    redirectTargets: string[];
+    renderDiagnostics: RenderDiagnostics;
     globalMiddlewares: string[];
     warnings: string[];
 };
@@ -142,6 +143,34 @@ function sanitizeInlineLabel(raw: string): string {
     return raw.replace(/\s+/g, " ").trim();
 }
 
+function formatCallableLabel(raw: string): string {
+    const label = sanitizeInlineLabel(raw);
+    if (!label) {
+        return label;
+    }
+    const inlineHandlerMatch = label.match(/^INLINE_HANDLER@(.+):(\d+)$/);
+    if (inlineHandlerMatch) {
+        const filePath = inlineHandlerMatch[1] ?? "";
+        return `Inline Handler<br/>(${path.basename(filePath)})`;
+    }
+    const inlineMiddlewareMatch = label.match(/^INLINE_MIDDLEWARE@(.+):(\d+)$/);
+    if (inlineMiddlewareMatch) {
+        const filePath = inlineMiddlewareMatch[1] ?? "";
+        const line = inlineMiddlewareMatch[2] ?? "";
+        return `inlineMiddleware() @ ${path.basename(filePath)}:${line}`;
+    }
+    if (label.includes("->") || label.startsWith("...")) {
+        return label;
+    }
+    if (/\)\s*$/.test(label)) {
+        return label;
+    }
+    if (/^[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*)*$/.test(label)) {
+        return `${label}()`;
+    }
+    return label;
+}
+
 function getNodeLine(sourceFile: ts.SourceFile, node: ts.Node): number {
     return sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
 }
@@ -207,7 +236,7 @@ function getExpressionLabel(sourceFile: ts.SourceFile, fileRel: string, expressi
     }
     if (ts.isArrowFunction(expression) || ts.isFunctionExpression(expression)) {
         const line = getNodeLine(sourceFile, expression);
-        return `INLINE_MW@${fileRel}:${line}`;
+        return `INLINE_MIDDLEWARE@${fileRel}:${line}`;
     }
     return sanitizeInlineLabel(expression.getText(sourceFile));
 }
@@ -455,7 +484,79 @@ async function resolveExportedDeclaration(params: {
     return null;
 }
 
-function scanSinksAndExits(handlerText: string): { sinks: Sink[]; exits: Exit[] } {
+function formatRedirectTargetExpression(expression: ts.Expression, sourceFile: ts.SourceFile): string {
+    if (ts.isStringLiteral(expression) || ts.isNoSubstitutionTemplateLiteral(expression)) {
+        return expression.text;
+    }
+    return sanitizeInlineLabel(expression.getText(sourceFile));
+}
+
+function extractRedirectTargets(handlerText: string): string[] {
+    const sourceFile = ts.createSourceFile("handler.ts", handlerText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const targets: string[] = [];
+
+    const visit = (node: ts.Node) => {
+        if (
+            ts.isCallExpression(node) &&
+            ts.isPropertyAccessExpression(node.expression) &&
+            node.expression.name.text === "redirect"
+        ) {
+            const firstArg = node.arguments[0];
+            if (!firstArg) {
+                targets.push("<missing>");
+            } else {
+                targets.push(formatRedirectTargetExpression(firstArg, sourceFile));
+            }
+        }
+        ts.forEachChild(node, visit);
+    };
+    visit(sourceFile);
+
+    return dedupePreserveOrder(targets);
+}
+
+function extractRenderDiagnostics(handlerText: string): RenderDiagnostics {
+    const sourceFile = ts.createSourceFile("handler.ts", handlerText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const statuses: string[] = [];
+
+    const visit = (node: ts.Node) => {
+        if (
+            ts.isCallExpression(node) &&
+            ts.isPropertyAccessExpression(node.expression) &&
+            node.expression.name.text === "render"
+        ) {
+            const renderReceiver = node.expression.expression;
+            if (
+                ts.isCallExpression(renderReceiver) &&
+                ts.isPropertyAccessExpression(renderReceiver.expression) &&
+                renderReceiver.expression.name.text === "status"
+            ) {
+                const statusArg = renderReceiver.arguments[0];
+                if (statusArg) {
+                    if (ts.isNumericLiteral(statusArg)) {
+                        const numericStatus = Number(statusArg.text);
+                        if (Number.isFinite(numericStatus) && numericStatus >= 400) {
+                            statuses.push(statusArg.text);
+                        }
+                    }
+                }
+            }
+        }
+        ts.forEachChild(node, visit);
+    };
+    visit(sourceFile);
+
+    return {
+        statuses: dedupePreserveOrder(statuses),
+    };
+}
+
+function scanSinksAndExits(handlerText: string): {
+    sinks: Sink[];
+    exits: Exit[];
+    redirectTargets: string[];
+    renderDiagnostics: RenderDiagnostics;
+} {
     const sinks: Sink[] = [];
     const exits: Exit[] = [];
 
@@ -470,7 +571,130 @@ function scanSinksAndExits(handlerText: string): { sinks: Sink[]; exits: Exit[] 
         }
     }
 
-    return { sinks, exits };
+    return {
+        sinks,
+        exits,
+        redirectTargets: extractRedirectTargets(handlerText),
+        renderDiagnostics: extractRenderDiagnostics(handlerText),
+    };
+}
+
+function buildRedirectSinkLabel(params: { sink: Sink }): string {
+    return params.sink;
+}
+
+function buildPathMethodIndex(endpoints: FlowEndpoint[]): Map<string, Set<string>> {
+    const index = new Map<string, Set<string>>();
+    for (const endpoint of endpoints) {
+        const methods = index.get(endpoint.path) ?? new Set<string>();
+        methods.add(endpoint.method.toUpperCase());
+        index.set(endpoint.path, methods);
+    }
+    return index;
+}
+
+function annotateRedirectTargetWithMethod(params: { target: string; pathMethodIndex: Map<string, Set<string>> }): string {
+    const trimmed = params.target.trim();
+    if (!trimmed.startsWith("/")) {
+        return trimmed;
+    }
+    const methods = params.pathMethodIndex.get(trimmed);
+    if (!methods || methods.size === 0) {
+        return trimmed;
+    }
+    if (methods.has("GET")) {
+        return `GET ${trimmed}`;
+    }
+    const ordered = [...methods].sort((left, right) => compareMethods(left, right));
+    if (ordered.length === 1) {
+        return `${ordered[0]} ${trimmed}`;
+    }
+    return `${ordered.join("|")} ${trimmed}`;
+}
+
+function normalizeRedirectTarget(target: string): string {
+    let normalized = target.trim();
+    if (normalized.startsWith("`") && normalized.endsWith("`") && normalized.length >= 2) {
+        normalized = normalized.slice(1, -1);
+    }
+    return normalized;
+}
+
+function formatRedirectTargetForDisplay(target: string): string {
+    let formatted = normalizeRedirectTarget(target);
+    formatted = formatted.replace(/\$\{([^}]+)\}/g, (_match, inner: string) => `<i>{${inner.trim()}}</i>`);
+    if (/^[A-Za-z_$][\w$.]*$/.test(formatted)) {
+        return `<i>{${formatted}}</i>`;
+    }
+    return formatted;
+}
+
+function normalizeRouteSegmentPattern(segment: string): string {
+    return segment.replace(/:[A-Za-z0-9_]+/g, ":");
+}
+
+function normalizeExpressionSegmentPattern(segment: string): string {
+    return segment.replace(/\$\{[^}]+\}/g, ":").replace(/<i>\{[^}]+\}<\/i>/g, ":");
+}
+
+function inferRouteTemplatePathFromExpressionPath(params: { expressionPath: string; knownPaths: string[] }): string | null {
+    const expressionPath = params.expressionPath.trim();
+    if (!expressionPath.startsWith("/")) {
+        return null;
+    }
+    const expressionSegments = expressionPath.split("/");
+    for (const knownPath of params.knownPaths) {
+        const routeSegments = knownPath.split("/");
+        if (routeSegments.length !== expressionSegments.length) {
+            continue;
+        }
+        let matched = true;
+        for (let index = 0; index < routeSegments.length; index += 1) {
+            const routeSegment = routeSegments[index];
+            const expressionSegment = expressionSegments[index];
+            if (routeSegment === undefined || expressionSegment === undefined) {
+                matched = false;
+                break;
+            }
+            const normalizedRoute = normalizeRouteSegmentPattern(routeSegment);
+            const normalizedExpression = normalizeExpressionSegmentPattern(expressionSegment);
+            if (normalizedRoute !== normalizedExpression) {
+                matched = false;
+                break;
+            }
+        }
+        if (matched) {
+            return knownPath;
+        }
+    }
+    return null;
+}
+
+function formatRouteTemplatePathForDisplay(pathValue: string): string {
+    return pathValue.replace(/:([A-Za-z0-9_]+)/g, (_match, name: string) => `<i>{:${name}}</i>`);
+}
+
+function buildRedirectNextEntries(params: {
+    redirectTargets: string[];
+    pathMethodIndex: Map<string, Set<string>>;
+}): string[] {
+    // 다이어그램 과밀 방지를 위해 대표 타겟 1개만 노출합니다.
+    const firstTarget = params.redirectTargets[0];
+    if (!firstTarget) {
+        return [];
+    }
+    const normalizedTarget = normalizeRedirectTarget(firstTarget);
+    const inferredRoutePath = inferRouteTemplatePathFromExpressionPath({
+        expressionPath: normalizedTarget,
+        knownPaths: [...params.pathMethodIndex.keys()],
+    });
+    if (inferredRoutePath) {
+        return [formatRouteTemplatePathForDisplay(inferredRoutePath)];
+    }
+    if (normalizedTarget.startsWith("/")) {
+        return [annotateRedirectTargetWithMethod({ target: normalizedTarget, pathMethodIndex: params.pathMethodIndex })];
+    }
+    return [formatRedirectTargetForDisplay(normalizedTarget)];
 }
 
 function buildEndpointId(method: string, routePath: string): string {
@@ -494,17 +718,33 @@ function buildMermaid(params: {
     routeMiddlewares: string[];
     sinks: Sink[];
     exits: Exit[];
+    redirectTargets: string[];
+    renderDiagnostics: RenderDiagnostics;
+    pathMethodIndex: Map<string, Set<string>>;
 }): string {
     const lines: string[] = ["flowchart TD"];
+    const middlewareNodeIds: string[] = [];
     const sinkNodeIds: string[] = [];
     const exitNodeIds: string[] = [];
+    const renderExitNodeIds: string[] = [];
+    const redirectExitNodeIds: string[] = [];
+    const renderDiagnosticNodeIds: string[] = [];
     const maxNodes = 30;
+    const renderDiagnosticItems = [...params.renderDiagnostics.statuses];
 
-    lines.push(`ENTRY["ENTRY\\n${params.method.toUpperCase()} ${params.path}"]`);
+    lines.push(`subgraph ENTRY_BLOCK["[ENTRY]"]`);
+    lines.push("direction TB");
+    lines.push(`ENTRY["${params.method.toUpperCase()} ${params.path}"]`);
+    lines.push("end");
     let currentNode = "ENTRY";
 
-    const middlewareChain = [...params.globalMiddlewares, ...params.routeMiddlewares];
-    const middlewareNodeBudget = Math.max(0, maxNodes - (1 + 1 + params.sinks.length + params.exits.length));
+    const middlewareChain = [
+        ...(params.globalMiddlewares.length > 0 ? ["<b>[Global Middlewares]</b>"] : []),
+        ...params.routeMiddlewares,
+    ];
+    const reservedNodes =
+        1 + 1 + params.sinks.length + params.exits.length + renderDiagnosticItems.length + (params.redirectTargets.length > 0 ? 1 : 0);
+    const middlewareNodeBudget = Math.max(0, maxNodes - reservedNodes);
     let effectiveMiddlewares = [...middlewareChain];
 
     if (effectiveMiddlewares.length > middlewareNodeBudget) {
@@ -519,36 +759,186 @@ function buildMermaid(params: {
         }
     }
 
-    for (const [index, middleware] of effectiveMiddlewares.entries()) {
-        const nodeId = `MW${index + 1}`;
-        const label = sanitizeInlineLabel(middleware).slice(0, 100).replace(/"/g, "'");
-        lines.push(`${currentNode} --> ${nodeId}["MW: ${label}"]`);
-        currentNode = nodeId;
+    if (effectiveMiddlewares.length > 0) {
+        lines.push(`subgraph MIDDLEWARES["[MIDDLEWARES]"]`);
+        lines.push("direction TB");
+        for (const [index, middleware] of effectiveMiddlewares.entries()) {
+            const nodeId = `MIDDLEWARE${index + 1}`;
+            const label = formatCallableLabel(middleware).slice(0, 90).replace(/"/g, "'");
+            middlewareNodeIds.push(nodeId);
+            lines.push(`${nodeId}["${label}"]`);
+        }
+        lines.push("end");
+        const firstMiddlewareNode = middlewareNodeIds[0];
+        if (firstMiddlewareNode) {
+            lines.push(`ENTRY --> ${firstMiddlewareNode}`);
+        }
+        for (let index = 1; index < middlewareNodeIds.length; index += 1) {
+            const previousNode = middlewareNodeIds[index - 1];
+            const currentMiddlewareNode = middlewareNodeIds[index];
+            if (!previousNode || !currentMiddlewareNode) {
+                continue;
+            }
+            lines.push(`${previousNode} --> ${currentMiddlewareNode}`);
+        }
+        const lastMiddlewareNode = middlewareNodeIds[middlewareNodeIds.length - 1];
+        if (lastMiddlewareNode) {
+            currentNode = lastMiddlewareNode;
+        }
     }
 
-    const handlerLabel = sanitizeInlineLabel(params.handlerName).slice(0, 120).replace(/"/g, "'");
-    lines.push(`${currentNode} --> HANDLER["HANDLER: ${handlerLabel}"]`);
+    const handlerLabel = formatCallableLabel(params.handlerName).slice(0, 120).replace(/"/g, "'");
+    lines.push(`subgraph HANDLER_BLOCK["[HANDLER]"]`);
+    lines.push("direction TB");
+    lines.push(`HANDLER["${handlerLabel}"]`);
+    lines.push("end");
+    lines.push(`${currentNode} --> HANDLER`);
 
-    for (const [index, sink] of params.sinks.entries()) {
-        const nodeId = `SINK${index + 1}`;
-        sinkNodeIds.push(nodeId);
-        lines.push(`HANDLER --> ${nodeId}["SINK: ${sink}"]`);
+    if (renderDiagnosticItems.length > 0) {
+        lines.push(`subgraph ERROR_STATUS["[ERROR STATUS]"]`);
+        lines.push("direction TB");
+        for (const [index, status] of renderDiagnosticItems.entries()) {
+            const nodeId = `RDIAG${index + 1}`;
+            const label = sanitizeInlineLabel(status).slice(0, 120).replace(/"/g, "'");
+            renderDiagnosticNodeIds.push(nodeId);
+            lines.push(`${nodeId}["${label}"]`);
+        }
+        lines.push("end");
     }
 
-    for (const [index, exitKind] of params.exits.entries()) {
-        const nodeId = `EXIT${index + 1}`;
-        exitNodeIds.push(nodeId);
-        lines.push(`HANDLER --> ${nodeId}["EXIT: ${exitKind}"]`);
+    if (params.sinks.length > 0) {
+        lines.push(`subgraph SINKS["[SINKS]"]`);
+        lines.push("direction TB");
+        for (const [index, sink] of params.sinks.entries()) {
+            const nodeId = `SINK${index + 1}`;
+            sinkNodeIds.push(nodeId);
+            const sinkLabelRaw = buildRedirectSinkLabel({ sink });
+            const sinkLabel = sinkLabelRaw.replace(/"/g, "'");
+            lines.push(`${nodeId}["${sinkLabel}"]`);
+        }
+        lines.push("end");
+        for (const nodeId of sinkNodeIds) {
+            lines.push(`HANDLER --> ${nodeId}`);
+        }
+    }
+    if (params.exits.length > 0) {
+        lines.push(`subgraph EXITS["[EXITS]"]`);
+        lines.push("direction TB");
+        for (const [index, exitKind] of params.exits.entries()) {
+            const nodeId = `EXIT${index + 1}`;
+            exitNodeIds.push(nodeId);
+            if (exitKind === "res.render()") {
+                renderExitNodeIds.push(nodeId);
+            }
+            if (exitKind === "res.redirect()" && params.redirectTargets.length > 0) {
+                redirectExitNodeIds.push(nodeId);
+            }
+            lines.push(`${nodeId}["${exitKind}"]`);
+        }
+        lines.push("end");
+        for (const nodeId of exitNodeIds) {
+            lines.push(`HANDLER --> ${nodeId}`);
+        }
     }
 
+    if (renderDiagnosticNodeIds.length > 0) {
+        const renderTargets = [...renderExitNodeIds];
+        if (renderTargets.length > 0) {
+            for (const renderTargetNodeId of renderTargets) {
+                for (const diagnosticNodeId of renderDiagnosticNodeIds) {
+                    lines.push(`${renderTargetNodeId} --> ${diagnosticNodeId}`);
+                }
+            }
+        } else {
+            for (const diagnosticNodeId of renderDiagnosticNodeIds) {
+                lines.push(`HANDLER --> ${diagnosticNodeId}`);
+            }
+        }
+    }
+
+    const nextEntries = buildRedirectNextEntries({
+        redirectTargets: params.redirectTargets,
+        pathMethodIndex: params.pathMethodIndex,
+    });
+    if (redirectExitNodeIds.length > 0 && nextEntries.length > 0) {
+        const nextEntryNodeIds: string[] = [];
+        lines.push(`subgraph NEXT_ENTRY["[NEXT ENTRY]"]`);
+        lines.push("direction TB");
+        for (const [index, nextEntryRaw] of nextEntries.entries()) {
+            const nodeId = `NEXT_ENTRY${index + 1}`;
+            const label = nextEntryRaw.replace(/"/g, "'");
+            nextEntryNodeIds.push(nodeId);
+            lines.push(`${nodeId}["${label}"]`);
+        }
+        lines.push("end");
+        for (const redirectExitNodeId of redirectExitNodeIds) {
+            for (const nextEntryNodeId of nextEntryNodeIds) {
+                lines.push(`${redirectExitNodeId} --> ${nextEntryNodeId}`);
+            }
+        }
+    }
+
+    lines.push("classDef middleware font-size:10px,padding:2px,stroke-width:1;");
+    lines.push("classDef diagnostics stroke-dasharray: 2 2;");
     lines.push("classDef sink stroke-width:2;");
     lines.push("classDef exit stroke-dasharray: 4 2;");
 
+    if (middlewareNodeIds.length > 0) {
+        lines.push(`class ${middlewareNodeIds.join(",")} middleware;`);
+    }
+    if (renderDiagnosticNodeIds.length > 0) {
+        lines.push(`class ${renderDiagnosticNodeIds.join(",")} diagnostics;`);
+    }
     if (sinkNodeIds.length > 0) {
         lines.push(`class ${sinkNodeIds.join(",")} sink;`);
     }
     if (exitNodeIds.length > 0) {
         lines.push(`class ${exitNodeIds.join(",")} exit;`);
+    }
+
+    return `${lines.join("\n")}\n`;
+}
+
+function buildGlobalMiddlewaresMermaid(globalMiddlewares: string[]): string {
+    const lines: string[] = ["flowchart TD"];
+    const nodeIds: string[] = [];
+
+    lines.push(`subgraph ENTRY_BLOCK["[ENTRY]"]`);
+    lines.push("direction TB");
+    lines.push(`ENTRY["Global Middleware Chain"]`);
+    lines.push("end");
+
+    if (globalMiddlewares.length === 0) {
+        lines.push(`ENTRY --> EMPTY["(none)"]`);
+        return `${lines.join("\n")}\n`;
+    }
+
+    lines.push(`subgraph GLOBAL_MIDDLEWARES["[GLOBAL MIDDLEWARES]"]`);
+    lines.push("direction TB");
+    for (const [index, middleware] of globalMiddlewares.entries()) {
+        const nodeId = `GMW${index + 1}`;
+        const label = sanitizeInlineLabel(middleware).slice(0, 100).replace(/"/g, "'");
+        nodeIds.push(nodeId);
+        lines.push(`${nodeId}["${label}"]`);
+    }
+    lines.push("end");
+
+    const first = nodeIds[0];
+    if (first) {
+        lines.push(`ENTRY --> ${first}`);
+    }
+    for (let index = 1; index < nodeIds.length; index += 1) {
+        const prev = nodeIds[index - 1];
+        const curr = nodeIds[index];
+        if (!prev || !curr) {
+            continue;
+        }
+        lines.push(`${prev} --> ${curr}`);
+    }
+
+    lines.push("classDef middleware font-size:10px,padding:2px,stroke-width:1;");
+    if (nodeIds.length > 0) {
+        lines.push(`class ${nodeIds.join(",")} middleware;`);
     }
 
     return `${lines.join("\n")}\n`;
@@ -713,6 +1103,7 @@ async function buildFlowEndpoints(params: {
         const scanned = scanSinksAndExits(handlerText);
         const mergedSinks = dedupePreserveOrder(scanned.sinks) as Sink[];
         const mergedExits = dedupePreserveOrder(scanned.exits) as Exit[];
+        const redirectTargets = dedupePreserveOrder(scanned.redirectTargets);
 
         flows.push({
             id: buildEndpointId(endpoint.method, endpoint.path),
@@ -727,6 +1118,8 @@ async function buildFlowEndpoints(params: {
             },
             sinks: mergedSinks,
             exits: mergedExits,
+            redirectTargets,
+            renderDiagnostics: scanned.renderDiagnostics,
             globalMiddlewares: params.appFlowContext.globalMiddlewares,
             warnings,
         });
@@ -754,7 +1147,7 @@ async function writeFlowmapArtifacts(params: {
 }): Promise<void> {
     const flowmapDir = path.resolve(params.repoRoot, "docs/flowmap");
     const flowDir = path.join(flowmapDir, "flows");
-    await fs.rm(flowmapDir, { recursive: true, force: true });
+    await fs.mkdir(flowmapDir, { recursive: true });
     await fs.mkdir(flowDir, { recursive: true });
 
     const catalog = {
@@ -769,26 +1162,34 @@ async function writeFlowmapArtifacts(params: {
             handler: endpoint.handler,
             sinks: endpoint.sinks,
             exits: endpoint.exits,
+            ...(endpoint.redirectTargets.length > 0 ? { redirectTargets: endpoint.redirectTargets } : {}),
+            ...(endpoint.renderDiagnostics.statuses.length > 0 ? { renderDiagnostics: endpoint.renderDiagnostics } : {}),
         })),
     };
 
     await fs.writeFile(path.join(flowmapDir, "catalog.json"), `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
+    const globalMiddlewares = params.flowEndpoints[0]?.globalMiddlewares ?? [];
+    await fs.writeFile(path.join(flowmapDir, "global-middlewares.mmd"), buildGlobalMiddlewaresMermaid(globalMiddlewares), "utf8");
+    const pathMethodIndex = buildPathMethodIndex(params.flowEndpoints);
 
+    const expectedFlowFilenames = new Set<string>();
     for (const endpoint of params.flowEndpoints) {
         const flowJsonPath = path.join(flowDir, `${endpoint.id}.json`);
         const flowMmdPath = path.join(flowDir, `${endpoint.id}.mmd`);
+        expectedFlowFilenames.add(`${endpoint.id}.json`);
+        expectedFlowFilenames.add(`${endpoint.id}.mmd`);
 
         const flowPayload = {
             id: endpoint.id,
             method: endpoint.method,
             path: endpoint.path,
             routeFile: endpoint.routeFile,
-            globalMiddlewares: endpoint.globalMiddlewares,
             middlewares: endpoint.middlewares,
-            middlewareChain: [...endpoint.globalMiddlewares, ...endpoint.middlewares],
             handler: endpoint.handler,
             sinks: endpoint.sinks,
             exits: endpoint.exits,
+            ...(endpoint.redirectTargets.length > 0 ? { redirectTargets: endpoint.redirectTargets } : {}),
+            ...(endpoint.renderDiagnostics.statuses.length > 0 ? { renderDiagnostics: endpoint.renderDiagnostics } : {}),
             warnings: endpoint.warnings,
         };
 
@@ -800,6 +1201,9 @@ async function writeFlowmapArtifacts(params: {
             routeMiddlewares: endpoint.middlewares,
             sinks: endpoint.sinks,
             exits: endpoint.exits,
+            redirectTargets: endpoint.redirectTargets,
+            renderDiagnostics: endpoint.renderDiagnostics,
+            pathMethodIndex,
         });
 
         await fs.writeFile(flowJsonPath, `${JSON.stringify(flowPayload, null, 2)}\n`, "utf8");
@@ -819,9 +1223,14 @@ async function writeFlowmapArtifacts(params: {
     indexLines.push("");
     indexLines.push(`Generated at: ${catalog.generatedAt}`);
     indexLines.push("");
+    indexLines.push("## Shared");
+    indexLines.push("");
+    indexLines.push("- [Global Middlewares](global-middlewares.mmd)");
+    indexLines.push("");
 
     for (const section of [...groups.keys()].sort()) {
         indexLines.push(`## ${section}`);
+        indexLines.push("");
         const items = groups.get(section) ?? [];
         items.sort((left, right) => {
             const byPath = left.path.localeCompare(right.path);
@@ -838,6 +1247,24 @@ async function writeFlowmapArtifacts(params: {
     }
 
     await fs.writeFile(path.join(flowmapDir, "index.md"), `${indexLines.join("\n").trimEnd()}\n`, "utf8");
+
+    // 생성 산출물 디렉토리는 "정의된 파일만" 유지합니다.
+    // Finder/iCloud 충돌 복사본(e.g. `flows 2`, `index 2.md`)도 여기서 정리합니다.
+    const expectedTopLevelEntries = new Set(["catalog.json", "index.md", "global-middlewares.mmd", "flows"]);
+    const topLevelEntries = await fs.readdir(flowmapDir, { withFileTypes: true });
+    for (const entry of topLevelEntries) {
+        if (expectedTopLevelEntries.has(entry.name)) {
+            continue;
+        }
+        await fs.rm(path.join(flowmapDir, entry.name), { recursive: true, force: true });
+    }
+
+    const currentFlowEntries = await fs.readdir(flowDir, { withFileTypes: true });
+    for (const entry of currentFlowEntries) {
+        if (!entry.isFile() || !expectedFlowFilenames.has(entry.name)) {
+            await fs.rm(path.join(flowDir, entry.name), { recursive: true, force: true });
+        }
+    }
 
     const flowWarnings = [
         ...params.routeWarnings,
