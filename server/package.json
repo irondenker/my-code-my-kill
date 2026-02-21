@@ -33,6 +33,8 @@
     "test:db": "find src/test -name '*.db.test.ts' -print0 | xargs -0 env RUN_DB_TESTS=1 tsx --test",
     "fix:openapi-drift": "node --import tsx src/scripts/sync-openapi-endpoints.ts",
     "check:openapi-drift": "node --import tsx src/scripts/check-openapi-drift.ts",
+    "flowmap:gen": "node --import tsx src/scripts/generate-flowmap.ts",
+    "flowmap:check": "npm run flowmap:gen && cd .. && git diff --exit-code docs/flowmap && test -z \"$(git ls-files --others --exclude-standard docs/flowmap)\"",
     "start": "node dist/server.js",
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",

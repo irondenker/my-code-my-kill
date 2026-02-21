@@ -1,0 +1,39 @@
+{
+  "id": "GET__board_slug_displayId",
+  "method": "GET",
+  "path": "/board/:slug/:displayId",
+  "routeFile": "server/src/routes/board.routes.ts",
+  "globalMiddlewares": [
+    "createCspMiddleware()",
+    "createPublicStaticMiddleware()",
+    "/errors/common: createErrorCommonStaticMiddleware()",
+    "express.urlencoded()",
+    "createSessionMiddleware()",
+    "createRequestLogger()",
+    "...globalCsrfMiddlewares",
+    "createViewLocalsMiddleware()"
+  ],
+  "middlewares": [],
+  "middlewareChain": [
+    "createCspMiddleware()",
+    "createPublicStaticMiddleware()",
+    "/errors/common: createErrorCommonStaticMiddleware()",
+    "express.urlencoded()",
+    "createSessionMiddleware()",
+    "createRequestLogger()",
+    "...globalCsrfMiddlewares",
+    "createViewLocalsMiddleware()"
+  ],
+  "handler": {
+    "name": "getArticleShow",
+    "file": "server/src/controllers/article/article-show.controller.ts",
+    "line": 21
+  },
+  "sinks": [
+    "RENDER"
+  ],
+  "exits": [
+    "render"
+  ],
+  "warnings": []
+}

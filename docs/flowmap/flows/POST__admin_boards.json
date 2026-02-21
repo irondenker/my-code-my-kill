@@ -1,0 +1,42 @@
+{
+  "id": "POST__admin_boards",
+  "method": "POST",
+  "path": "/admin/boards",
+  "routeFile": "server/src/routes/admin.routes.ts",
+  "globalMiddlewares": [
+    "createCspMiddleware()",
+    "createPublicStaticMiddleware()",
+    "/errors/common: createErrorCommonStaticMiddleware()",
+    "express.urlencoded()",
+    "createSessionMiddleware()",
+    "createRequestLogger()",
+    "...globalCsrfMiddlewares",
+    "createViewLocalsMiddleware()"
+  ],
+  "middlewares": [
+    "requireAdminRedirect"
+  ],
+  "middlewareChain": [
+    "createCspMiddleware()",
+    "createPublicStaticMiddleware()",
+    "/errors/common: createErrorCommonStaticMiddleware()",
+    "express.urlencoded()",
+    "createSessionMiddleware()",
+    "createRequestLogger()",
+    "...globalCsrfMiddlewares",
+    "createViewLocalsMiddleware()",
+    "requireAdminRedirect"
+  ],
+  "handler": {
+    "name": "postAdminBoardCreate",
+    "file": "server/src/controllers/admin/admin-boards.controller.ts",
+    "line": 57
+  },
+  "sinks": [
+    "REDIRECT"
+  ],
+  "exits": [
+    "redirect"
+  ],
+  "warnings": []
+}

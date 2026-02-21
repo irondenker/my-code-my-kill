@@ -1,0 +1,706 @@
+{
+  "generatedAt": "2026-02-21T10:04:21.313Z",
+  "project": "my-code-my-kill/server",
+  "endpoints": [
+    {
+      "id": "GET__admin",
+      "method": "GET",
+      "path": "/admin",
+      "routeFile": "server/src/routes/admin.routes.ts",
+      "middlewares": [
+        "requireAdminRedirect"
+      ],
+      "handler": {
+        "name": "getAdminDashboard",
+        "file": "server/src/controllers/admin/admin-dashboard.controller.ts",
+        "line": 9
+      },
+      "sinks": [
+        "RENDER"
+      ],
+      "exits": [
+        "render"
+      ]
+    },
+    {
+      "id": "GET__admin_boards",
+      "method": "GET",
+      "path": "/admin/boards",
+      "routeFile": "server/src/routes/admin.routes.ts",
+      "middlewares": [
+        "requireAdminRedirect"
+      ],
+      "handler": {
+        "name": "getAdminBoardsPage",
+        "file": "server/src/controllers/admin/admin-boards.controller.ts",
+        "line": 49
+      },
+      "sinks": [],
+      "exits": []
+    },
+    {
+      "id": "POST__admin_boards",
+      "method": "POST",
+      "path": "/admin/boards",
+      "routeFile": "server/src/routes/admin.routes.ts",
+      "middlewares": [
+        "requireAdminRedirect"
+      ],
+      "handler": {
+        "name": "postAdminBoardCreate",
+        "file": "server/src/controllers/admin/admin-boards.controller.ts",
+        "line": 57
+      },
+      "sinks": [
+        "REDIRECT"
+      ],
+      "exits": [
+        "redirect"
+      ]
+    },
+    {
+      "id": "GET__admin_boards_boardId_edit",
+      "method": "GET",
+      "path": "/admin/boards/:boardId/edit",
+      "routeFile": "server/src/routes/admin.routes.ts",
+      "middlewares": [
+        "requireAdminRedirect"
+      ],
+      "handler": {
+        "name": "getAdminBoardEditPage",
+        "file": "server/src/controllers/admin/admin-boards.controller.ts",
+        "line": 162
+      },
+      "sinks": [
+        "RENDER"
+      ],
+      "exits": [
+        "render"
+      ]
+    },
+    {
+      "id": "POST__admin_boards_boardId_edit",
+      "method": "POST",
+      "path": "/admin/boards/:boardId/edit",
+      "routeFile": "server/src/routes/admin.routes.ts",
+      "middlewares": [
+        "requireAdminRedirect"
+      ],
+      "handler": {
+        "name": "postAdminBoardEdit",
+        "file": "server/src/controllers/admin/admin-boards.controller.ts",
+        "line": 187
+      },
+      "sinks": [
+        "RENDER",
+        "REDIRECT"
+      ],
+      "exits": [
+        "render",
+        "redirect"
+      ]
+    },
+    {
+      "id": "GET__admin_users",
+      "method": "GET",
+      "path": "/admin/users",
+      "routeFile": "server/src/routes/admin.routes.ts",
+      "middlewares": [
+        "requireAdminRedirect"
+      ],
+      "handler": {
+        "name": "getAdminUsersPage",
+        "file": "server/src/controllers/admin/admin-users.controller.ts",
+        "line": 82
+      },
+      "sinks": [],
+      "exits": []
+    },
+    {
+      "id": "POST__admin_users_userId_role",
+      "method": "POST",
+      "path": "/admin/users/:userId/role",
+      "routeFile": "server/src/routes/admin.routes.ts",
+      "middlewares": [
+        "requireAdminRedirect"
+      ],
+      "handler": {
+        "name": "postAdminUserRole",
+        "file": "server/src/controllers/admin/admin-users.controller.ts",
+        "line": 147
+      },
+      "sinks": [
+        "REDIRECT"
+      ],
+      "exits": [
+        "redirect"
+      ]
+    },
+    {
+      "id": "POST__admin_users_userId_status",
+      "method": "POST",
+      "path": "/admin/users/:userId/status",
+      "routeFile": "server/src/routes/admin.routes.ts",
+      "middlewares": [
+        "requireAdminRedirect"
+      ],
+      "handler": {
+        "name": "postAdminUserStatus",
+        "file": "server/src/controllers/admin/admin-users.controller.ts",
+        "line": 90
+      },
+      "sinks": [
+        "REDIRECT"
+      ],
+      "exits": [
+        "redirect"
+      ]
+    },
+    {
+      "id": "GET__api_docs",
+      "method": "GET",
+      "path": "/api-docs",
+      "routeFile": "server/src/routes/api-docs.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "INLINE_HANDLER@server/src/routes/api-docs.routes.ts:6"
+      },
+      "sinks": [
+        "SEND"
+      ],
+      "exits": [
+        "send"
+      ]
+    },
+    {
+      "id": "GET__admin_audit_logs",
+      "method": "GET",
+      "path": "/admin/audit-logs",
+      "routeFile": "server/src/routes/audit.routes.ts",
+      "middlewares": [
+        "requireAdminRedirect"
+      ],
+      "handler": {
+        "name": "getAuditLogsPage",
+        "file": "server/src/controllers/audit.controller.ts",
+        "line": 8
+      },
+      "sinks": [
+        "RENDER"
+      ],
+      "exits": [
+        "render"
+      ]
+    },
+    {
+      "id": "GET__login",
+      "method": "GET",
+      "path": "/login",
+      "routeFile": "server/src/routes/auth.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "getLoginPage",
+        "file": "server/src/controllers/auth/auth-pages.controller.ts",
+        "line": 26
+      },
+      "sinks": [],
+      "exits": []
+    },
+    {
+      "id": "POST__login",
+      "method": "POST",
+      "path": "/login",
+      "routeFile": "server/src/routes/auth.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "postLogin",
+        "file": "server/src/controllers/auth/auth-login.controller.ts",
+        "line": 28
+      },
+      "sinks": [
+        "RENDER",
+        "REDIRECT"
+      ],
+      "exits": [
+        "render",
+        "redirect"
+      ]
+    },
+    {
+      "id": "POST__logout",
+      "method": "POST",
+      "path": "/logout",
+      "routeFile": "server/src/routes/auth.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "postLogout",
+        "file": "server/src/controllers/auth/auth-logout.controller.ts",
+        "line": 15
+      },
+      "sinks": [
+        "REDIRECT",
+        "SESSION"
+      ],
+      "exits": [
+        "redirect"
+      ]
+    },
+    {
+      "id": "GET__register",
+      "method": "GET",
+      "path": "/register",
+      "routeFile": "server/src/routes/auth.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "getRegisterPage",
+        "file": "server/src/controllers/auth/auth-pages.controller.ts",
+        "line": 34
+      },
+      "sinks": [],
+      "exits": []
+    },
+    {
+      "id": "POST__register",
+      "method": "POST",
+      "path": "/register",
+      "routeFile": "server/src/routes/auth.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "postRegister",
+        "file": "server/src/controllers/auth/auth-register.controller.ts",
+        "line": 21
+      },
+      "sinks": [
+        "RENDER",
+        "REDIRECT"
+      ],
+      "exits": [
+        "render",
+        "redirect"
+      ]
+    },
+    {
+      "id": "GET__board",
+      "method": "GET",
+      "path": "/board",
+      "routeFile": "server/src/routes/board.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "getBoardIndex",
+        "file": "server/src/controllers/board.controller.ts",
+        "line": 102
+      },
+      "sinks": [
+        "RENDER"
+      ],
+      "exits": [
+        "render"
+      ]
+    },
+    {
+      "id": "GET__board_slug",
+      "method": "GET",
+      "path": "/board/:slug",
+      "routeFile": "server/src/routes/board.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "getBoardBySlug",
+        "file": "server/src/controllers/board.controller.ts",
+        "line": 121
+      },
+      "sinks": [
+        "RENDER",
+        "SESSION"
+      ],
+      "exits": [
+        "render"
+      ]
+    },
+    {
+      "id": "POST__board_slug",
+      "method": "POST",
+      "path": "/board/:slug",
+      "routeFile": "server/src/routes/board.routes.ts",
+      "middlewares": [
+        "requireAuthRedirect"
+      ],
+      "handler": {
+        "name": "postArticleCreate",
+        "file": "server/src/controllers/article/article-create.controller.ts",
+        "line": 39
+      },
+      "sinks": [
+        "REDIRECT"
+      ],
+      "exits": [
+        "redirect"
+      ]
+    },
+    {
+      "id": "GET__board_slug_displayId",
+      "method": "GET",
+      "path": "/board/:slug/:displayId",
+      "routeFile": "server/src/routes/board.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "getArticleShow",
+        "file": "server/src/controllers/article/article-show.controller.ts",
+        "line": 21
+      },
+      "sinks": [
+        "RENDER"
+      ],
+      "exits": [
+        "render"
+      ]
+    },
+    {
+      "id": "DELETE__board_slug_displayId",
+      "method": "DELETE",
+      "path": "/board/:slug/:displayId",
+      "routeFile": "server/src/routes/board.routes.ts",
+      "middlewares": [
+        "requireAuth"
+      ],
+      "handler": {
+        "name": "deleteArticle",
+        "file": "server/src/controllers/article/article-delete.controller.ts",
+        "line": 12
+      },
+      "sinks": [
+        "SEND",
+        "REDIRECT"
+      ],
+      "exits": [
+        "send",
+        "redirect"
+      ]
+    },
+    {
+      "id": "POST__board_slug_displayId_delete",
+      "method": "POST",
+      "path": "/board/:slug/:displayId/delete",
+      "routeFile": "server/src/routes/board.routes.ts",
+      "middlewares": [
+        "requireAuthRedirect"
+      ],
+      "handler": {
+        "name": "deleteArticle",
+        "file": "server/src/controllers/article/article-delete.controller.ts",
+        "line": 12
+      },
+      "sinks": [
+        "SEND",
+        "REDIRECT"
+      ],
+      "exits": [
+        "send",
+        "redirect"
+      ]
+    },
+    {
+      "id": "GET__board_slug_displayId_edit",
+      "method": "GET",
+      "path": "/board/:slug/:displayId/edit",
+      "routeFile": "server/src/routes/board.routes.ts",
+      "middlewares": [
+        "requireAuthRedirect"
+      ],
+      "handler": {
+        "name": "getArticleEditForm",
+        "file": "server/src/controllers/article/article-edit.controller.ts",
+        "line": 25
+      },
+      "sinks": [],
+      "exits": []
+    },
+    {
+      "id": "POST__board_slug_displayId_edit",
+      "method": "POST",
+      "path": "/board/:slug/:displayId/edit",
+      "routeFile": "server/src/routes/board.routes.ts",
+      "middlewares": [
+        "requireAuthRedirect"
+      ],
+      "handler": {
+        "name": "postArticleEdit",
+        "file": "server/src/controllers/article/article-edit.controller.ts",
+        "line": 41
+      },
+      "sinks": [
+        "REDIRECT"
+      ],
+      "exits": [
+        "redirect"
+      ]
+    },
+    {
+      "id": "GET__board_slug_new",
+      "method": "GET",
+      "path": "/board/:slug/new",
+      "routeFile": "server/src/routes/board.routes.ts",
+      "middlewares": [
+        "requireAuthRedirect"
+      ],
+      "handler": {
+        "name": "getArticleCreateForm",
+        "file": "server/src/controllers/article/article-create.controller.ts",
+        "line": 26
+      },
+      "sinks": [],
+      "exits": []
+    },
+    {
+      "id": "GET__labs",
+      "method": "GET",
+      "path": "/labs",
+      "routeFile": "server/src/routes/lab-ssti.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "INLINE_HANDLER@server/src/routes/lab-ssti.routes.ts:13"
+      },
+      "sinks": [
+        "RENDER"
+      ],
+      "exits": [
+        "render"
+      ]
+    },
+    {
+      "id": "GET__labs_ssti",
+      "method": "GET",
+      "path": "/labs/ssti",
+      "routeFile": "server/src/routes/lab-ssti.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "INLINE_HANDLER@server/src/routes/lab-ssti.routes.ts:19"
+      },
+      "sinks": [
+        "RENDER"
+      ],
+      "exits": [
+        "render"
+      ]
+    },
+    {
+      "id": "POST__labs_ssti",
+      "method": "POST",
+      "path": "/labs/ssti",
+      "routeFile": "server/src/routes/lab-ssti.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "INLINE_HANDLER@server/src/routes/lab-ssti.routes.ts:40"
+      },
+      "sinks": [
+        "RENDER",
+        "SESSION"
+      ],
+      "exits": [
+        "render"
+      ]
+    },
+    {
+      "id": "GET__occur_ssr_code",
+      "method": "GET",
+      "path": "/occur/ssr/:code",
+      "routeFile": "server/src/routes/occur.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "INLINE_HANDLER@server/src/routes/occur.routes.ts:18"
+      },
+      "sinks": [],
+      "exits": [
+        "next_err"
+      ]
+    },
+    {
+      "id": "GET__root",
+      "method": "GET",
+      "path": "/",
+      "routeFile": "server/src/routes/root.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "getRootPage",
+        "file": "server/src/controllers/root.controller.ts",
+        "line": 9
+      },
+      "sinks": [
+        "RENDER"
+      ],
+      "exits": [
+        "render"
+      ]
+    },
+    {
+      "id": "GET__healthz",
+      "method": "GET",
+      "path": "/healthz",
+      "routeFile": "server/src/routes/root.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "INLINE_HANDLER@server/src/routes/root.routes.ts:6"
+      },
+      "sinks": [
+        "SEND"
+      ],
+      "exits": [
+        "send"
+      ]
+    },
+    {
+      "id": "GET__username",
+      "method": "GET",
+      "path": "/@:username",
+      "routeFile": "server/src/routes/user.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "getUserProfile",
+        "file": "server/src/controllers/user.controller.ts",
+        "line": 43
+      },
+      "sinks": [
+        "RENDER",
+        "SESSION"
+      ],
+      "exits": [
+        "render"
+      ]
+    },
+    {
+      "id": "GET__setting_profile",
+      "method": "GET",
+      "path": "/setting/profile",
+      "routeFile": "server/src/routes/user.routes.ts",
+      "middlewares": [
+        "requireAuthRedirect"
+      ],
+      "handler": {
+        "name": "getProfileEditForm",
+        "file": "server/src/controllers/user.controller.ts",
+        "line": 89
+      },
+      "sinks": [
+        "RENDER",
+        "REDIRECT",
+        "SESSION"
+      ],
+      "exits": [
+        "render",
+        "redirect"
+      ]
+    },
+    {
+      "id": "POST__setting_profile",
+      "method": "POST",
+      "path": "/setting/profile",
+      "routeFile": "server/src/routes/user.routes.ts",
+      "middlewares": [
+        "requireAuthRedirect"
+      ],
+      "handler": {
+        "name": "postProfileEdit",
+        "file": "server/src/controllers/user.controller.ts",
+        "line": 117
+      },
+      "sinks": [
+        "RENDER",
+        "REDIRECT",
+        "SESSION"
+      ],
+      "exits": [
+        "render",
+        "redirect"
+      ]
+    },
+    {
+      "id": "GET__settings_profile",
+      "method": "GET",
+      "path": "/settings/profile",
+      "routeFile": "server/src/routes/user.routes.ts",
+      "middlewares": [
+        "requireAuthRedirect"
+      ],
+      "handler": {
+        "name": "getProfileEditForm",
+        "file": "server/src/controllers/user.controller.ts",
+        "line": 89
+      },
+      "sinks": [
+        "RENDER",
+        "REDIRECT",
+        "SESSION"
+      ],
+      "exits": [
+        "render",
+        "redirect"
+      ]
+    },
+    {
+      "id": "POST__settings_profile",
+      "method": "POST",
+      "path": "/settings/profile",
+      "routeFile": "server/src/routes/user.routes.ts",
+      "middlewares": [
+        "requireAuthRedirect"
+      ],
+      "handler": {
+        "name": "postProfileEdit",
+        "file": "server/src/controllers/user.controller.ts",
+        "line": 117
+      },
+      "sinks": [
+        "RENDER",
+        "REDIRECT",
+        "SESSION"
+      ],
+      "exits": [
+        "render",
+        "redirect"
+      ]
+    },
+    {
+      "id": "POST__users_avatar",
+      "method": "POST",
+      "path": "/users/avatar",
+      "routeFile": "server/src/routes/user.routes.ts",
+      "middlewares": [
+        "requireAuthRedirect"
+      ],
+      "handler": {
+        "name": "postAvatarUpload",
+        "file": "server/src/controllers/avatar.controller.ts",
+        "line": 83
+      },
+      "sinks": [
+        "REDIRECT",
+        "SESSION",
+        "UPLOAD",
+        "IMAGE"
+      ],
+      "exits": [
+        "redirect"
+      ]
+    },
+    {
+      "id": "POST__users_avatar_delete",
+      "method": "POST",
+      "path": "/users/avatar/delete",
+      "routeFile": "server/src/routes/user.routes.ts",
+      "middlewares": [
+        "requireAuthRedirect"
+      ],
+      "handler": {
+        "name": "postAvatarDelete",
+        "file": "server/src/controllers/avatar.controller.ts",
+        "line": 172
+      },
+      "sinks": [
+        "REDIRECT",
+        "SESSION"
+      ],
+      "exits": [
+        "redirect"
+      ]
+    }
+  ]
+}

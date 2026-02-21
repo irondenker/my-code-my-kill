@@ -1,0 +1,20 @@
+flowchart TD
+ENTRY["ENTRY\nPOST /admin/boards/:boardId/edit"]
+ENTRY --> MW1["MW: createCspMiddleware()"]
+MW1 --> MW2["MW: createPublicStaticMiddleware()"]
+MW2 --> MW3["MW: /errors/common: createErrorCommonStaticMiddleware()"]
+MW3 --> MW4["MW: express.urlencoded()"]
+MW4 --> MW5["MW: createSessionMiddleware()"]
+MW5 --> MW6["MW: createRequestLogger()"]
+MW6 --> MW7["MW: ...globalCsrfMiddlewares"]
+MW7 --> MW8["MW: createViewLocalsMiddleware()"]
+MW8 --> MW9["MW: requireAdminRedirect"]
+MW9 --> HANDLER["HANDLER: postAdminBoardEdit"]
+HANDLER --> SINK1["SINK: RENDER"]
+HANDLER --> SINK2["SINK: REDIRECT"]
+HANDLER --> EXIT1["EXIT: render"]
+HANDLER --> EXIT2["EXIT: redirect"]
+classDef sink stroke-width:2;
+classDef exit stroke-dasharray: 4 2;
+class SINK1,SINK2 sink;
+class EXIT1,EXIT2 exit;

@@ -1,0 +1,37 @@
+{
+  "id": "GET__healthz",
+  "method": "GET",
+  "path": "/healthz",
+  "routeFile": "server/src/routes/root.routes.ts",
+  "globalMiddlewares": [
+    "createCspMiddleware()",
+    "createPublicStaticMiddleware()",
+    "/errors/common: createErrorCommonStaticMiddleware()",
+    "express.urlencoded()",
+    "createSessionMiddleware()",
+    "createRequestLogger()",
+    "...globalCsrfMiddlewares",
+    "createViewLocalsMiddleware()"
+  ],
+  "middlewares": [],
+  "middlewareChain": [
+    "createCspMiddleware()",
+    "createPublicStaticMiddleware()",
+    "/errors/common: createErrorCommonStaticMiddleware()",
+    "express.urlencoded()",
+    "createSessionMiddleware()",
+    "createRequestLogger()",
+    "...globalCsrfMiddlewares",
+    "createViewLocalsMiddleware()"
+  ],
+  "handler": {
+    "name": "INLINE_HANDLER@server/src/routes/root.routes.ts:6"
+  },
+  "sinks": [
+    "SEND"
+  ],
+  "exits": [
+    "send"
+  ],
+  "warnings": []
+}

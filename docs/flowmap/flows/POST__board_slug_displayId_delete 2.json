@@ -1,0 +1,44 @@
+{
+  "id": "POST__board_slug_displayId_delete",
+  "method": "POST",
+  "path": "/board/:slug/:displayId/delete",
+  "routeFile": "server/src/routes/board.routes.ts",
+  "globalMiddlewares": [
+    "createCspMiddleware()",
+    "createPublicStaticMiddleware()",
+    "/errors/common: createErrorCommonStaticMiddleware()",
+    "express.urlencoded()",
+    "createSessionMiddleware()",
+    "createRequestLogger()",
+    "...globalCsrfMiddlewares",
+    "createViewLocalsMiddleware()"
+  ],
+  "middlewares": [
+    "requireAuthRedirect"
+  ],
+  "middlewareChain": [
+    "createCspMiddleware()",
+    "createPublicStaticMiddleware()",
+    "/errors/common: createErrorCommonStaticMiddleware()",
+    "express.urlencoded()",
+    "createSessionMiddleware()",
+    "createRequestLogger()",
+    "...globalCsrfMiddlewares",
+    "createViewLocalsMiddleware()",
+    "requireAuthRedirect"
+  ],
+  "handler": {
+    "name": "deleteArticle",
+    "file": "server/src/controllers/article/article-delete.controller.ts",
+    "line": 12
+  },
+  "sinks": [
+    "SEND",
+    "REDIRECT"
+  ],
+  "exits": [
+    "send",
+    "redirect"
+  ],
+  "warnings": []
+}

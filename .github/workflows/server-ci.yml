@@ -95,6 +95,11 @@ jobs:
         run: npm run check:openapi-drift
         working-directory: server
 
+      # 라우트/컨트롤러 기준 Flowmap 문서 생성 결과가 커밋과 일치하는지 검증한다.
+      - name: Check Flowmap drift
+        run: npm run flowmap:check
+        working-directory: server
+
       # PR에서는 자동 동기화 결과가 있으면 실패시켜 문서 반영을 강제한다.
       - name: Detect OpenAPI doc changes
         id: openapi_changes

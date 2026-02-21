@@ -1,0 +1,45 @@
+{
+  "id": "POST__setting_profile",
+  "method": "POST",
+  "path": "/setting/profile",
+  "routeFile": "server/src/routes/user.routes.ts",
+  "globalMiddlewares": [
+    "createCspMiddleware()",
+    "createPublicStaticMiddleware()",
+    "/errors/common: createErrorCommonStaticMiddleware()",
+    "express.urlencoded()",
+    "createSessionMiddleware()",
+    "createRequestLogger()",
+    "...globalCsrfMiddlewares",
+    "createViewLocalsMiddleware()"
+  ],
+  "middlewares": [
+    "requireAuthRedirect"
+  ],
+  "middlewareChain": [
+    "createCspMiddleware()",
+    "createPublicStaticMiddleware()",
+    "/errors/common: createErrorCommonStaticMiddleware()",
+    "express.urlencoded()",
+    "createSessionMiddleware()",
+    "createRequestLogger()",
+    "...globalCsrfMiddlewares",
+    "createViewLocalsMiddleware()",
+    "requireAuthRedirect"
+  ],
+  "handler": {
+    "name": "postProfileEdit",
+    "file": "server/src/controllers/user.controller.ts",
+    "line": 117
+  },
+  "sinks": [
+    "RENDER",
+    "REDIRECT",
+    "SESSION"
+  ],
+  "exits": [
+    "render",
+    "redirect"
+  ],
+  "warnings": []
+}
