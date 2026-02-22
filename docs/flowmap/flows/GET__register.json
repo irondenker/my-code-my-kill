@@ -11,5 +11,11 @@
   },
   "sinks": [],
   "exits": [],
+  "sessionAccess": {
+    "read": false,
+    "write": false,
+    "readKeys": [],
+    "writeKeys": []
+  },
   "warnings": []
 }

@@ -11,7 +11,18 @@
     "file": "server/src/controllers/article/article-create.controller.ts",
     "line": 26
   },
-  "sinks": [],
+  "sinks": [
+    "req.session.read()"
+  ],
   "exits": [],
+  "sessionAccess": {
+    "read": true,
+    "write": false,
+    "readKeys": [
+      "userId",
+      "userRole"
+    ],
+    "writeKeys": []
+  },
   "warnings": []
 }

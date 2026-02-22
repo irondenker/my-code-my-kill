@@ -9,9 +9,20 @@
     "file": "server/src/controllers/board.controller.ts",
     "line": 102
   },
-  "sinks": [],
+  "sinks": [
+    "req.session.read()"
+  ],
   "exits": [
     "res.render()"
   ],
+  "sessionAccess": {
+    "read": true,
+    "write": false,
+    "readKeys": [
+      "userId",
+      "userRole"
+    ],
+    "writeKeys": []
+  },
   "warnings": []
 }

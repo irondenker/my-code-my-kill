@@ -11,5 +11,11 @@
   "exits": [
     "res.send()"
   ],
+  "sessionAccess": {
+    "read": false,
+    "write": false,
+    "readKeys": [],
+    "writeKeys": []
+  },
   "warnings": []
 }

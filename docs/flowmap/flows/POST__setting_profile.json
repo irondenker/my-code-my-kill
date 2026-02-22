@@ -12,12 +12,20 @@
     "line": 117
   },
   "sinks": [
-    "req.session()"
+    "req.session.read()"
   ],
   "exits": [
     "res.render()",
     "res.redirect()"
   ],
+  "sessionAccess": {
+    "read": true,
+    "write": false,
+    "readKeys": [
+      "userId"
+    ],
+    "writeKeys": []
+  },
   "redirectTargets": [
     "/login",
     "`/@${profile.username}`"

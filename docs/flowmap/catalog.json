@@ -1,6 +1,225 @@
 {
-  "generatedAt": "2026-02-21T14:12:52.883Z",
   "project": "my-code-my-kill/server",
+  "domains": [
+    {
+      "domain": "admin.routes.ts",
+      "routeFiles": [
+        "server/src/routes/admin.routes.ts"
+      ],
+      "endpointCount": 8,
+      "endpointIds": [
+        "GET__admin",
+        "GET__admin_boards",
+        "POST__admin_boards",
+        "GET__admin_boards_boardId_edit",
+        "POST__admin_boards_boardId_edit",
+        "GET__admin_users",
+        "POST__admin_users_userId_role",
+        "POST__admin_users_userId_status"
+      ],
+      "sessionReadKeys": [
+        "adminBoardsFlashMessage",
+        "adminUsersFlashMessage",
+        "userId",
+        "username"
+      ],
+      "sessionWriteKeys": [
+        "adminBoardsFlashMessage",
+        "adminUsersFlashMessage"
+      ],
+      "sessionReadKeyLabels": [
+        "session.adminBoardsFlashMessage",
+        "session.adminUsersFlashMessage",
+        "session.userId",
+        "session.username"
+      ],
+      "sessionWriteKeyLabels": [
+        "session.adminBoardsFlashMessage",
+        "session.adminUsersFlashMessage"
+      ]
+    },
+    {
+      "domain": "api-docs.routes.ts",
+      "routeFiles": [
+        "server/src/routes/api-docs.routes.ts"
+      ],
+      "endpointCount": 1,
+      "endpointIds": [
+        "GET__api_docs"
+      ],
+      "sessionReadKeys": [],
+      "sessionWriteKeys": [],
+      "sessionReadKeyLabels": [],
+      "sessionWriteKeyLabels": []
+    },
+    {
+      "domain": "audit.routes.ts",
+      "routeFiles": [
+        "server/src/routes/audit.routes.ts"
+      ],
+      "endpointCount": 1,
+      "endpointIds": [
+        "GET__admin_audit_logs"
+      ],
+      "sessionReadKeys": [],
+      "sessionWriteKeys": [],
+      "sessionReadKeyLabels": [],
+      "sessionWriteKeyLabels": []
+    },
+    {
+      "domain": "auth.routes.ts",
+      "routeFiles": [
+        "server/src/routes/auth.routes.ts"
+      ],
+      "endpointCount": 5,
+      "endpointIds": [
+        "GET__login",
+        "POST__login",
+        "POST__logout",
+        "GET__register",
+        "POST__register"
+      ],
+      "sessionReadKeys": [
+        "userId",
+        "username",
+        "userRole"
+      ],
+      "sessionWriteKeys": [
+        "<session>",
+        "profileImageUrl",
+        "userId",
+        "username",
+        "userRole"
+      ],
+      "sessionReadKeyLabels": [
+        "session.userId",
+        "session.username",
+        "session.userRole"
+      ],
+      "sessionWriteKeyLabels": [
+        "session (root)",
+        "session.profileImageUrl",
+        "session.userId",
+        "session.username",
+        "session.userRole"
+      ]
+    },
+    {
+      "domain": "board.routes.ts",
+      "routeFiles": [
+        "server/src/routes/board.routes.ts"
+      ],
+      "endpointCount": 9,
+      "endpointIds": [
+        "GET__board",
+        "GET__board_slug",
+        "POST__board_slug",
+        "GET__board_slug_displayId",
+        "DELETE__board_slug_displayId",
+        "POST__board_slug_displayId_delete",
+        "GET__board_slug_displayId_edit",
+        "POST__board_slug_displayId_edit",
+        "GET__board_slug_new"
+      ],
+      "sessionReadKeys": [
+        "boardFlashMessage",
+        "userId",
+        "userRole"
+      ],
+      "sessionWriteKeys": [
+        "boardFlashMessage"
+      ],
+      "sessionReadKeyLabels": [
+        "session.boardFlashMessage",
+        "session.userId",
+        "session.userRole"
+      ],
+      "sessionWriteKeyLabels": [
+        "session.boardFlashMessage"
+      ]
+    },
+    {
+      "domain": "lab-ssti.routes.ts",
+      "routeFiles": [
+        "server/src/routes/lab-ssti.routes.ts"
+      ],
+      "endpointCount": 3,
+      "endpointIds": [
+        "GET__labs",
+        "GET__labs_ssti",
+        "POST__labs_ssti"
+      ],
+      "sessionReadKeys": [
+        "username"
+      ],
+      "sessionWriteKeys": [],
+      "sessionReadKeyLabels": [
+        "session.username"
+      ],
+      "sessionWriteKeyLabels": []
+    },
+    {
+      "domain": "occur.routes.ts",
+      "routeFiles": [
+        "server/src/routes/occur.routes.ts"
+      ],
+      "endpointCount": 1,
+      "endpointIds": [
+        "GET__occur_ssr_code"
+      ],
+      "sessionReadKeys": [],
+      "sessionWriteKeys": [],
+      "sessionReadKeyLabels": [],
+      "sessionWriteKeyLabels": []
+    },
+    {
+      "domain": "root.routes.ts",
+      "routeFiles": [
+        "server/src/routes/root.routes.ts"
+      ],
+      "endpointCount": 2,
+      "endpointIds": [
+        "GET__root",
+        "GET__healthz"
+      ],
+      "sessionReadKeys": [],
+      "sessionWriteKeys": [],
+      "sessionReadKeyLabels": [],
+      "sessionWriteKeyLabels": []
+    },
+    {
+      "domain": "user.routes.ts",
+      "routeFiles": [
+        "server/src/routes/user.routes.ts"
+      ],
+      "endpointCount": 7,
+      "endpointIds": [
+        "GET__username",
+        "GET__setting_profile",
+        "POST__setting_profile",
+        "GET__settings_profile",
+        "POST__settings_profile",
+        "POST__users_avatar",
+        "POST__users_avatar_delete"
+      ],
+      "sessionReadKeys": [
+        "userId",
+        "username",
+        "userRole"
+      ],
+      "sessionWriteKeys": [
+        "profileImageUrl"
+      ],
+      "sessionReadKeyLabels": [
+        "session.userId",
+        "session.username",
+        "session.userRole"
+      ],
+      "sessionWriteKeyLabels": [
+        "session.profileImageUrl"
+      ]
+    }
+  ],
   "endpoints": [
     {
       "id": "GET__admin",
@@ -18,7 +237,13 @@
       "sinks": [],
       "exits": [
         "res.render()"
-      ]
+      ],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      }
     },
     {
       "id": "GET__admin_boards",
@@ -33,8 +258,21 @@
         "file": "server/src/controllers/admin/admin-boards.controller.ts",
         "line": 49
       },
-      "sinks": [],
-      "exits": []
+      "sinks": [
+        "req.session.read()",
+        "req.session.write()"
+      ],
+      "exits": [],
+      "sessionAccess": {
+        "read": true,
+        "write": true,
+        "readKeys": [
+          "adminBoardsFlashMessage"
+        ],
+        "writeKeys": [
+          "adminBoardsFlashMessage"
+        ]
+      }
     },
     {
       "id": "POST__admin_boards",
@@ -49,10 +287,23 @@
         "file": "server/src/controllers/admin/admin-boards.controller.ts",
         "line": 57
       },
-      "sinks": [],
+      "sinks": [
+        "req.session.read()",
+        "req.session.write()"
+      ],
       "exits": [
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": true,
+        "readKeys": [
+          "adminBoardsFlashMessage"
+        ],
+        "writeKeys": [
+          "adminBoardsFlashMessage"
+        ]
+      },
       "redirectTargets": [
         "/admin/boards"
       ]
@@ -73,7 +324,13 @@
       "sinks": [],
       "exits": [
         "res.render()"
-      ]
+      ],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      }
     },
     {
       "id": "POST__admin_boards_boardId_edit",
@@ -88,11 +345,21 @@
         "file": "server/src/controllers/admin/admin-boards.controller.ts",
         "line": 187
       },
-      "sinks": [],
+      "sinks": [
+        "req.session.write()"
+      ],
       "exits": [
         "res.render()",
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": false,
+        "write": true,
+        "readKeys": [],
+        "writeKeys": [
+          "adminBoardsFlashMessage"
+        ]
+      },
       "redirectTargets": [
         "/admin/boards"
       ]
@@ -110,8 +377,21 @@
         "file": "server/src/controllers/admin/admin-users.controller.ts",
         "line": 82
       },
-      "sinks": [],
-      "exits": []
+      "sinks": [
+        "req.session.read()",
+        "req.session.write()"
+      ],
+      "exits": [],
+      "sessionAccess": {
+        "read": true,
+        "write": true,
+        "readKeys": [
+          "adminUsersFlashMessage"
+        ],
+        "writeKeys": [
+          "adminUsersFlashMessage"
+        ]
+      }
     },
     {
       "id": "POST__admin_users_userId_role",
@@ -126,10 +406,24 @@
         "file": "server/src/controllers/admin/admin-users.controller.ts",
         "line": 147
       },
-      "sinks": [],
+      "sinks": [
+        "req.session.read()",
+        "req.session.write()"
+      ],
       "exits": [
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": true,
+        "readKeys": [
+          "userId",
+          "username"
+        ],
+        "writeKeys": [
+          "adminUsersFlashMessage"
+        ]
+      },
       "redirectTargets": [
         "/admin/users"
       ]
@@ -147,10 +441,24 @@
         "file": "server/src/controllers/admin/admin-users.controller.ts",
         "line": 90
       },
-      "sinks": [],
+      "sinks": [
+        "req.session.read()",
+        "req.session.write()"
+      ],
       "exits": [
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": true,
+        "readKeys": [
+          "userId",
+          "username"
+        ],
+        "writeKeys": [
+          "adminUsersFlashMessage"
+        ]
+      },
       "redirectTargets": [
         "/admin/users"
       ]
@@ -167,7 +475,13 @@
       "sinks": [],
       "exits": [
         "res.send()"
-      ]
+      ],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      }
     },
     {
       "id": "GET__admin_audit_logs",
@@ -185,7 +499,13 @@
       "sinks": [],
       "exits": [
         "res.render()"
-      ]
+      ],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      }
     },
     {
       "id": "GET__login",
@@ -199,7 +519,13 @@
         "line": 26
       },
       "sinks": [],
-      "exits": []
+      "exits": [],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      }
     },
     {
       "id": "POST__login",
@@ -212,11 +538,25 @@
         "file": "server/src/controllers/auth/auth-login.controller.ts",
         "line": 28
       },
-      "sinks": [],
+      "sinks": [
+        "req.session.write()"
+      ],
       "exits": [
         "res.render()",
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": false,
+        "write": true,
+        "readKeys": [],
+        "writeKeys": [
+          "userId",
+          "userRole",
+          "username",
+          "profileImageUrl",
+          "<session>"
+        ]
+      },
       "redirectTargets": [
         "nextPath"
       ],
@@ -240,11 +580,24 @@
         "line": 15
       },
       "sinks": [
-        "req.session()"
+        "req.session.read()",
+        "req.session.write()"
       ],
       "exits": [
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": true,
+        "readKeys": [
+          "userRole",
+          "userId",
+          "username"
+        ],
+        "writeKeys": [
+          "<session>"
+        ]
+      },
       "redirectTargets": [
         "/"
       ]
@@ -261,7 +614,13 @@
         "line": 34
       },
       "sinks": [],
-      "exits": []
+      "exits": [],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      }
     },
     {
       "id": "POST__register",
@@ -274,11 +633,25 @@
         "file": "server/src/controllers/auth/auth-register.controller.ts",
         "line": 21
       },
-      "sinks": [],
+      "sinks": [
+        "req.session.write()"
+      ],
       "exits": [
         "res.render()",
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": false,
+        "write": true,
+        "readKeys": [],
+        "writeKeys": [
+          "userId",
+          "userRole",
+          "username",
+          "profileImageUrl",
+          "<session>"
+        ]
+      },
       "redirectTargets": [
         "/board"
       ],
@@ -301,10 +674,21 @@
         "file": "server/src/controllers/board.controller.ts",
         "line": 102
       },
-      "sinks": [],
+      "sinks": [
+        "req.session.read()"
+      ],
       "exits": [
         "res.render()"
-      ]
+      ],
+      "sessionAccess": {
+        "read": true,
+        "write": false,
+        "readKeys": [
+          "userId",
+          "userRole"
+        ],
+        "writeKeys": []
+      }
     },
     {
       "id": "GET__board_slug",
@@ -318,11 +702,24 @@
         "line": 121
       },
       "sinks": [
-        "req.session()"
+        "req.session.read()",
+        "req.session.write()"
       ],
       "exits": [
         "res.render()"
-      ]
+      ],
+      "sessionAccess": {
+        "read": true,
+        "write": true,
+        "readKeys": [
+          "userId",
+          "userRole",
+          "boardFlashMessage"
+        ],
+        "writeKeys": [
+          "boardFlashMessage"
+        ]
+      }
     },
     {
       "id": "POST__board_slug",
@@ -337,10 +734,21 @@
         "file": "server/src/controllers/article/article-create.controller.ts",
         "line": 39
       },
-      "sinks": [],
+      "sinks": [
+        "req.session.read()"
+      ],
       "exits": [
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": false,
+        "readKeys": [
+          "userId",
+          "userRole"
+        ],
+        "writeKeys": []
+      },
       "redirectTargets": [
         "`/board/${board.slug}/${created.displayId}`"
       ]
@@ -356,10 +764,21 @@
         "file": "server/src/controllers/article/article-show.controller.ts",
         "line": 21
       },
-      "sinks": [],
+      "sinks": [
+        "req.session.read()"
+      ],
       "exits": [
         "res.render()"
-      ]
+      ],
+      "sessionAccess": {
+        "read": true,
+        "write": false,
+        "readKeys": [
+          "userId",
+          "userRole"
+        ],
+        "writeKeys": []
+      }
     },
     {
       "id": "DELETE__board_slug_displayId",
@@ -374,11 +793,25 @@
         "file": "server/src/controllers/article/article-delete.controller.ts",
         "line": 12
       },
-      "sinks": [],
+      "sinks": [
+        "req.session.read()",
+        "req.session.write()"
+      ],
       "exits": [
         "res.send()",
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": true,
+        "readKeys": [
+          "userId",
+          "userRole"
+        ],
+        "writeKeys": [
+          "boardFlashMessage"
+        ]
+      },
       "redirectTargets": [
         "`/board/${encodeURIComponent(slug)}`"
       ]
@@ -396,11 +829,25 @@
         "file": "server/src/controllers/article/article-delete.controller.ts",
         "line": 12
       },
-      "sinks": [],
+      "sinks": [
+        "req.session.read()",
+        "req.session.write()"
+      ],
       "exits": [
         "res.send()",
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": true,
+        "readKeys": [
+          "userId",
+          "userRole"
+        ],
+        "writeKeys": [
+          "boardFlashMessage"
+        ]
+      },
       "redirectTargets": [
         "`/board/${encodeURIComponent(slug)}`"
       ]
@@ -418,8 +865,19 @@
         "file": "server/src/controllers/article/article-edit.controller.ts",
         "line": 25
       },
-      "sinks": [],
-      "exits": []
+      "sinks": [
+        "req.session.read()"
+      ],
+      "exits": [],
+      "sessionAccess": {
+        "read": true,
+        "write": false,
+        "readKeys": [
+          "userId",
+          "userRole"
+        ],
+        "writeKeys": []
+      }
     },
     {
       "id": "POST__board_slug_displayId_edit",
@@ -434,10 +892,21 @@
         "file": "server/src/controllers/article/article-edit.controller.ts",
         "line": 41
       },
-      "sinks": [],
+      "sinks": [
+        "req.session.read()"
+      ],
       "exits": [
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": false,
+        "readKeys": [
+          "userId",
+          "userRole"
+        ],
+        "writeKeys": []
+      },
       "redirectTargets": [
         "`/board/${post.boardSlug}/${post.displayId}`"
       ]
@@ -455,8 +924,19 @@
         "file": "server/src/controllers/article/article-create.controller.ts",
         "line": 26
       },
-      "sinks": [],
-      "exits": []
+      "sinks": [
+        "req.session.read()"
+      ],
+      "exits": [],
+      "sessionAccess": {
+        "read": true,
+        "write": false,
+        "readKeys": [
+          "userId",
+          "userRole"
+        ],
+        "writeKeys": []
+      }
     },
     {
       "id": "GET__labs",
@@ -470,7 +950,13 @@
       "sinks": [],
       "exits": [
         "res.render()"
-      ]
+      ],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      }
     },
     {
       "id": "GET__labs_ssti",
@@ -484,7 +970,13 @@
       "sinks": [],
       "exits": [
         "res.render()"
-      ]
+      ],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      }
     },
     {
       "id": "POST__labs_ssti",
@@ -496,11 +988,19 @@
         "name": "INLINE_HANDLER@server/src/routes/lab-ssti.routes.ts:40"
       },
       "sinks": [
-        "req.session()"
+        "req.session.read()"
       ],
       "exits": [
         "res.render()"
-      ]
+      ],
+      "sessionAccess": {
+        "read": true,
+        "write": false,
+        "readKeys": [
+          "username"
+        ],
+        "writeKeys": []
+      }
     },
     {
       "id": "GET__occur_ssr_code",
@@ -514,7 +1014,13 @@
       "sinks": [],
       "exits": [
         "next(err)"
-      ]
+      ],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      }
     },
     {
       "id": "GET__root",
@@ -530,7 +1036,13 @@
       "sinks": [],
       "exits": [
         "res.render()"
-      ]
+      ],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      }
     },
     {
       "id": "GET__healthz",
@@ -544,7 +1056,13 @@
       "sinks": [],
       "exits": [
         "res.send()"
-      ]
+      ],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      }
     },
     {
       "id": "GET__username",
@@ -558,11 +1076,20 @@
         "line": 43
       },
       "sinks": [
-        "req.session()"
+        "req.session.read()"
       ],
       "exits": [
         "res.render()"
-      ]
+      ],
+      "sessionAccess": {
+        "read": true,
+        "write": false,
+        "readKeys": [
+          "userId",
+          "userRole"
+        ],
+        "writeKeys": []
+      }
     },
     {
       "id": "GET__setting_profile",
@@ -578,12 +1105,20 @@
         "line": 89
       },
       "sinks": [
-        "req.session()"
+        "req.session.read()"
       ],
       "exits": [
         "res.render()",
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": false,
+        "readKeys": [
+          "userId"
+        ],
+        "writeKeys": []
+      },
       "redirectTargets": [
         "/login"
       ]
@@ -602,12 +1137,20 @@
         "line": 117
       },
       "sinks": [
-        "req.session()"
+        "req.session.read()"
       ],
       "exits": [
         "res.render()",
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": false,
+        "readKeys": [
+          "userId"
+        ],
+        "writeKeys": []
+      },
       "redirectTargets": [
         "/login",
         "`/@${profile.username}`"
@@ -632,12 +1175,20 @@
         "line": 89
       },
       "sinks": [
-        "req.session()"
+        "req.session.read()"
       ],
       "exits": [
         "res.render()",
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": false,
+        "readKeys": [
+          "userId"
+        ],
+        "writeKeys": []
+      },
       "redirectTargets": [
         "/login"
       ]
@@ -656,12 +1207,20 @@
         "line": 117
       },
       "sinks": [
-        "req.session()"
+        "req.session.read()"
       ],
       "exits": [
         "res.render()",
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": false,
+        "readKeys": [
+          "userId"
+        ],
+        "writeKeys": []
+      },
       "redirectTargets": [
         "/login",
         "`/@${profile.username}`"
@@ -686,13 +1245,25 @@
         "line": 83
       },
       "sinks": [
-        "req.session()",
         "File Upload",
-        "Image Upload"
+        "Image Upload",
+        "req.session.read()",
+        "req.session.write()"
       ],
       "exits": [
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": true,
+        "readKeys": [
+          "userId",
+          "username"
+        ],
+        "writeKeys": [
+          "profileImageUrl"
+        ]
+      },
       "redirectTargets": [
         "redirectTarget"
       ]
@@ -711,11 +1282,23 @@
         "line": 172
       },
       "sinks": [
-        "req.session()"
+        "req.session.read()",
+        "req.session.write()"
       ],
       "exits": [
         "res.redirect()"
       ],
+      "sessionAccess": {
+        "read": true,
+        "write": true,
+        "readKeys": [
+          "userId",
+          "username"
+        ],
+        "writeKeys": [
+          "profileImageUrl"
+        ]
+      },
       "redirectTargets": [
         "redirectTarget"
       ]

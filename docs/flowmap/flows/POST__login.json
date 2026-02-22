@@ -9,11 +9,25 @@
     "file": "server/src/controllers/auth/auth-login.controller.ts",
     "line": 28
   },
-  "sinks": [],
+  "sinks": [
+    "req.session.write()"
+  ],
   "exits": [
     "res.render()",
     "res.redirect()"
   ],
+  "sessionAccess": {
+    "read": false,
+    "write": true,
+    "readKeys": [],
+    "writeKeys": [
+      "userId",
+      "userRole",
+      "username",
+      "profileImageUrl",
+      "<session>"
+    ]
+  },
   "redirectTargets": [
     "nextPath"
   ],

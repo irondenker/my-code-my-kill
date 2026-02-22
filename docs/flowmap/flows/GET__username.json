@@ -10,10 +10,19 @@
     "line": 43
   },
   "sinks": [
-    "req.session()"
+    "req.session.read()"
   ],
   "exits": [
     "res.render()"
   ],
+  "sessionAccess": {
+    "read": true,
+    "write": false,
+    "readKeys": [
+      "userId",
+      "userRole"
+    ],
+    "writeKeys": []
+  },
   "warnings": []
 }

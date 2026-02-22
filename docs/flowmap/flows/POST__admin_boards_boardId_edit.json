@@ -11,11 +11,21 @@
     "file": "server/src/controllers/admin/admin-boards.controller.ts",
     "line": 187
   },
-  "sinks": [],
+  "sinks": [
+    "req.session.write()"
+  ],
   "exits": [
     "res.render()",
     "res.redirect()"
   ],
+  "sessionAccess": {
+    "read": false,
+    "write": true,
+    "readKeys": [],
+    "writeKeys": [
+      "adminBoardsFlashMessage"
+    ]
+  },
   "redirectTargets": [
     "/admin/boards"
   ],

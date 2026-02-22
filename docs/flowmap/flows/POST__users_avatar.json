@@ -12,13 +12,25 @@
     "line": 83
   },
   "sinks": [
-    "req.session()",
     "File Upload",
-    "Image Upload"
+    "Image Upload",
+    "req.session.read()",
+    "req.session.write()"
   ],
   "exits": [
     "res.redirect()"
   ],
+  "sessionAccess": {
+    "read": true,
+    "write": true,
+    "readKeys": [
+      "userId",
+      "username"
+    ],
+    "writeKeys": [
+      "profileImageUrl"
+    ]
+  },
   "redirectTargets": [
     "redirectTarget"
   ],

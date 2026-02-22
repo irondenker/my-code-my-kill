@@ -10,11 +10,24 @@
     "line": 15
   },
   "sinks": [
-    "req.session()"
+    "req.session.read()",
+    "req.session.write()"
   ],
   "exits": [
     "res.redirect()"
   ],
+  "sessionAccess": {
+    "read": true,
+    "write": true,
+    "readKeys": [
+      "userRole",
+      "userId",
+      "username"
+    ],
+    "writeKeys": [
+      "<session>"
+    ]
+  },
   "redirectTargets": [
     "/"
   ],

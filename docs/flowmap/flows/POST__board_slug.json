@@ -11,10 +11,21 @@
     "file": "server/src/controllers/article/article-create.controller.ts",
     "line": 39
   },
-  "sinks": [],
+  "sinks": [
+    "req.session.read()"
+  ],
   "exits": [
     "res.redirect()"
   ],
+  "sessionAccess": {
+    "read": true,
+    "write": false,
+    "readKeys": [
+      "userId",
+      "userRole"
+    ],
+    "writeKeys": []
+  },
   "redirectTargets": [
     "`/board/${board.slug}/${created.displayId}`"
   ],

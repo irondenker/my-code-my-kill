@@ -11,10 +11,24 @@
     "file": "server/src/controllers/admin/admin-users.controller.ts",
     "line": 147
   },
-  "sinks": [],
+  "sinks": [
+    "req.session.read()",
+    "req.session.write()"
+  ],
   "exits": [
     "res.redirect()"
   ],
+  "sessionAccess": {
+    "read": true,
+    "write": true,
+    "readKeys": [
+      "userId",
+      "username"
+    ],
+    "writeKeys": [
+      "adminUsersFlashMessage"
+    ]
+  },
   "redirectTargets": [
     "/admin/users"
   ],

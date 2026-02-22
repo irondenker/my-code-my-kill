@@ -8,10 +8,18 @@
     "name": "INLINE_HANDLER@server/src/routes/lab-ssti.routes.ts:40"
   },
   "sinks": [
-    "req.session()"
+    "req.session.read()"
   ],
   "exits": [
     "res.render()"
   ],
+  "sessionAccess": {
+    "read": true,
+    "write": false,
+    "readKeys": [
+      "username"
+    ],
+    "writeKeys": []
+  },
   "warnings": []
 }

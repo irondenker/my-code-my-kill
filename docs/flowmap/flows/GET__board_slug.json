@@ -10,10 +10,23 @@
     "line": 121
   },
   "sinks": [
-    "req.session()"
+    "req.session.read()",
+    "req.session.write()"
   ],
   "exits": [
     "res.render()"
   ],
+  "sessionAccess": {
+    "read": true,
+    "write": true,
+    "readKeys": [
+      "userId",
+      "userRole",
+      "boardFlashMessage"
+    ],
+    "writeKeys": [
+      "boardFlashMessage"
+    ]
+  },
   "warnings": []
 }

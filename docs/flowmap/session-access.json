@@ -1,0 +1,1050 @@
+{
+  "project": "my-code-my-kill/server",
+  "groups": {
+    "root": {
+      "key": "<session>",
+      "category": "root",
+      "readCount": 0,
+      "writeCount": 3,
+      "readEndpoints": [],
+      "writeEndpoints": [
+        "POST /login",
+        "POST /logout",
+        "POST /register"
+      ]
+    },
+    "flash": [
+      {
+        "key": "adminBoardsFlashMessage",
+        "category": "flash",
+        "readCount": 2,
+        "writeCount": 3,
+        "readEndpoints": [
+          "GET /admin/boards",
+          "POST /admin/boards"
+        ],
+        "writeEndpoints": [
+          "GET /admin/boards",
+          "POST /admin/boards",
+          "POST /admin/boards/:boardId/edit"
+        ]
+      },
+      {
+        "key": "adminUsersFlashMessage",
+        "category": "flash",
+        "readCount": 1,
+        "writeCount": 3,
+        "readEndpoints": [
+          "GET /admin/users"
+        ],
+        "writeEndpoints": [
+          "GET /admin/users",
+          "POST /admin/users/:userId/role",
+          "POST /admin/users/:userId/status"
+        ]
+      },
+      {
+        "key": "boardFlashMessage",
+        "category": "flash",
+        "readCount": 1,
+        "writeCount": 3,
+        "readEndpoints": [
+          "GET /board/:slug"
+        ],
+        "writeEndpoints": [
+          "DELETE /board/:slug/:displayId",
+          "GET /board/:slug",
+          "POST /board/:slug/:displayId/delete"
+        ]
+      }
+    ],
+    "auth": [
+      {
+        "key": "profileImageUrl",
+        "category": "auth",
+        "readCount": 0,
+        "writeCount": 4,
+        "readEndpoints": [],
+        "writeEndpoints": [
+          "POST /login",
+          "POST /register",
+          "POST /users/avatar",
+          "POST /users/avatar/delete"
+        ]
+      },
+      {
+        "key": "userId",
+        "category": "auth",
+        "readCount": 19,
+        "writeCount": 2,
+        "readEndpoints": [
+          "DELETE /board/:slug/:displayId",
+          "GET /@:username",
+          "GET /board",
+          "GET /board/:slug",
+          "GET /board/:slug/:displayId",
+          "GET /board/:slug/:displayId/edit",
+          "GET /board/:slug/new",
+          "GET /setting/profile",
+          "GET /settings/profile",
+          "POST /admin/users/:userId/role",
+          "POST /admin/users/:userId/status",
+          "POST /board/:slug",
+          "POST /board/:slug/:displayId/delete",
+          "POST /board/:slug/:displayId/edit",
+          "POST /logout",
+          "POST /setting/profile",
+          "POST /settings/profile",
+          "POST /users/avatar",
+          "POST /users/avatar/delete"
+        ],
+        "writeEndpoints": [
+          "POST /login",
+          "POST /register"
+        ]
+      },
+      {
+        "key": "username",
+        "category": "auth",
+        "readCount": 6,
+        "writeCount": 2,
+        "readEndpoints": [
+          "POST /admin/users/:userId/role",
+          "POST /admin/users/:userId/status",
+          "POST /labs/ssti",
+          "POST /logout",
+          "POST /users/avatar",
+          "POST /users/avatar/delete"
+        ],
+        "writeEndpoints": [
+          "POST /login",
+          "POST /register"
+        ]
+      },
+      {
+        "key": "userRole",
+        "category": "auth",
+        "readCount": 11,
+        "writeCount": 2,
+        "readEndpoints": [
+          "DELETE /board/:slug/:displayId",
+          "GET /@:username",
+          "GET /board",
+          "GET /board/:slug",
+          "GET /board/:slug/:displayId",
+          "GET /board/:slug/:displayId/edit",
+          "GET /board/:slug/new",
+          "POST /board/:slug",
+          "POST /board/:slug/:displayId/delete",
+          "POST /board/:slug/:displayId/edit",
+          "POST /logout"
+        ],
+        "writeEndpoints": [
+          "POST /login",
+          "POST /register"
+        ]
+      }
+    ],
+    "other": []
+  },
+  "keys": [
+    {
+      "key": "<session>",
+      "category": "root",
+      "readCount": 0,
+      "writeCount": 3,
+      "readEndpoints": [],
+      "writeEndpoints": [
+        "POST /login",
+        "POST /logout",
+        "POST /register"
+      ]
+    },
+    {
+      "key": "adminBoardsFlashMessage",
+      "category": "flash",
+      "readCount": 2,
+      "writeCount": 3,
+      "readEndpoints": [
+        "GET /admin/boards",
+        "POST /admin/boards"
+      ],
+      "writeEndpoints": [
+        "GET /admin/boards",
+        "POST /admin/boards",
+        "POST /admin/boards/:boardId/edit"
+      ]
+    },
+    {
+      "key": "adminUsersFlashMessage",
+      "category": "flash",
+      "readCount": 1,
+      "writeCount": 3,
+      "readEndpoints": [
+        "GET /admin/users"
+      ],
+      "writeEndpoints": [
+        "GET /admin/users",
+        "POST /admin/users/:userId/role",
+        "POST /admin/users/:userId/status"
+      ]
+    },
+    {
+      "key": "boardFlashMessage",
+      "category": "flash",
+      "readCount": 1,
+      "writeCount": 3,
+      "readEndpoints": [
+        "GET /board/:slug"
+      ],
+      "writeEndpoints": [
+        "DELETE /board/:slug/:displayId",
+        "GET /board/:slug",
+        "POST /board/:slug/:displayId/delete"
+      ]
+    },
+    {
+      "key": "profileImageUrl",
+      "category": "auth",
+      "readCount": 0,
+      "writeCount": 4,
+      "readEndpoints": [],
+      "writeEndpoints": [
+        "POST /login",
+        "POST /register",
+        "POST /users/avatar",
+        "POST /users/avatar/delete"
+      ]
+    },
+    {
+      "key": "userId",
+      "category": "auth",
+      "readCount": 19,
+      "writeCount": 2,
+      "readEndpoints": [
+        "DELETE /board/:slug/:displayId",
+        "GET /@:username",
+        "GET /board",
+        "GET /board/:slug",
+        "GET /board/:slug/:displayId",
+        "GET /board/:slug/:displayId/edit",
+        "GET /board/:slug/new",
+        "GET /setting/profile",
+        "GET /settings/profile",
+        "POST /admin/users/:userId/role",
+        "POST /admin/users/:userId/status",
+        "POST /board/:slug",
+        "POST /board/:slug/:displayId/delete",
+        "POST /board/:slug/:displayId/edit",
+        "POST /logout",
+        "POST /setting/profile",
+        "POST /settings/profile",
+        "POST /users/avatar",
+        "POST /users/avatar/delete"
+      ],
+      "writeEndpoints": [
+        "POST /login",
+        "POST /register"
+      ]
+    },
+    {
+      "key": "username",
+      "category": "auth",
+      "readCount": 6,
+      "writeCount": 2,
+      "readEndpoints": [
+        "POST /admin/users/:userId/role",
+        "POST /admin/users/:userId/status",
+        "POST /labs/ssti",
+        "POST /logout",
+        "POST /users/avatar",
+        "POST /users/avatar/delete"
+      ],
+      "writeEndpoints": [
+        "POST /login",
+        "POST /register"
+      ]
+    },
+    {
+      "key": "userRole",
+      "category": "auth",
+      "readCount": 11,
+      "writeCount": 2,
+      "readEndpoints": [
+        "DELETE /board/:slug/:displayId",
+        "GET /@:username",
+        "GET /board",
+        "GET /board/:slug",
+        "GET /board/:slug/:displayId",
+        "GET /board/:slug/:displayId/edit",
+        "GET /board/:slug/new",
+        "POST /board/:slug",
+        "POST /board/:slug/:displayId/delete",
+        "POST /board/:slug/:displayId/edit",
+        "POST /logout"
+      ],
+      "writeEndpoints": [
+        "POST /login",
+        "POST /register"
+      ]
+    }
+  ],
+  "endpoints": [
+    {
+      "id": "GET__admin",
+      "method": "GET",
+      "path": "/admin",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__admin_boards",
+      "method": "GET",
+      "path": "/admin/boards",
+      "readKeys": [
+        "adminBoardsFlashMessage"
+      ],
+      "writeKeys": [
+        "adminBoardsFlashMessage"
+      ],
+      "readAuthKeys": [],
+      "readFlashKeys": [
+        "adminBoardsFlashMessage"
+      ],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [
+        "adminBoardsFlashMessage"
+      ],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__admin_boards",
+      "method": "POST",
+      "path": "/admin/boards",
+      "readKeys": [
+        "adminBoardsFlashMessage"
+      ],
+      "writeKeys": [
+        "adminBoardsFlashMessage"
+      ],
+      "readAuthKeys": [],
+      "readFlashKeys": [
+        "adminBoardsFlashMessage"
+      ],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [
+        "adminBoardsFlashMessage"
+      ],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__admin_boards_boardId_edit",
+      "method": "GET",
+      "path": "/admin/boards/:boardId/edit",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__admin_boards_boardId_edit",
+      "method": "POST",
+      "path": "/admin/boards/:boardId/edit",
+      "readKeys": [],
+      "writeKeys": [
+        "adminBoardsFlashMessage"
+      ],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [
+        "adminBoardsFlashMessage"
+      ],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__admin_users",
+      "method": "GET",
+      "path": "/admin/users",
+      "readKeys": [
+        "adminUsersFlashMessage"
+      ],
+      "writeKeys": [
+        "adminUsersFlashMessage"
+      ],
+      "readAuthKeys": [],
+      "readFlashKeys": [
+        "adminUsersFlashMessage"
+      ],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [
+        "adminUsersFlashMessage"
+      ],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__admin_users_userId_role",
+      "method": "POST",
+      "path": "/admin/users/:userId/role",
+      "readKeys": [
+        "userId",
+        "username"
+      ],
+      "writeKeys": [
+        "adminUsersFlashMessage"
+      ],
+      "readAuthKeys": [
+        "userId",
+        "username"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [
+        "adminUsersFlashMessage"
+      ],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__admin_users_userId_status",
+      "method": "POST",
+      "path": "/admin/users/:userId/status",
+      "readKeys": [
+        "userId",
+        "username"
+      ],
+      "writeKeys": [
+        "adminUsersFlashMessage"
+      ],
+      "readAuthKeys": [
+        "userId",
+        "username"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [
+        "adminUsersFlashMessage"
+      ],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__api_docs",
+      "method": "GET",
+      "path": "/api-docs",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__admin_audit_logs",
+      "method": "GET",
+      "path": "/admin/audit-logs",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__login",
+      "method": "GET",
+      "path": "/login",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__login",
+      "method": "POST",
+      "path": "/login",
+      "readKeys": [],
+      "writeKeys": [
+        "userId",
+        "userRole",
+        "username",
+        "profileImageUrl",
+        "<session>"
+      ],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [
+        "userId",
+        "userRole",
+        "username",
+        "profileImageUrl"
+      ],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": [
+        "<session>"
+      ]
+    },
+    {
+      "id": "POST__logout",
+      "method": "POST",
+      "path": "/logout",
+      "readKeys": [
+        "userRole",
+        "userId",
+        "username"
+      ],
+      "writeKeys": [
+        "<session>"
+      ],
+      "readAuthKeys": [
+        "userRole",
+        "userId",
+        "username"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": [
+        "<session>"
+      ]
+    },
+    {
+      "id": "GET__register",
+      "method": "GET",
+      "path": "/register",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__register",
+      "method": "POST",
+      "path": "/register",
+      "readKeys": [],
+      "writeKeys": [
+        "userId",
+        "userRole",
+        "username",
+        "profileImageUrl",
+        "<session>"
+      ],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [
+        "userId",
+        "userRole",
+        "username",
+        "profileImageUrl"
+      ],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": [
+        "<session>"
+      ]
+    },
+    {
+      "id": "GET__board",
+      "method": "GET",
+      "path": "/board",
+      "readKeys": [
+        "userId",
+        "userRole"
+      ],
+      "writeKeys": [],
+      "readAuthKeys": [
+        "userId",
+        "userRole"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__board_slug",
+      "method": "GET",
+      "path": "/board/:slug",
+      "readKeys": [
+        "userId",
+        "userRole",
+        "boardFlashMessage"
+      ],
+      "writeKeys": [
+        "boardFlashMessage"
+      ],
+      "readAuthKeys": [
+        "userId",
+        "userRole"
+      ],
+      "readFlashKeys": [
+        "boardFlashMessage"
+      ],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [
+        "boardFlashMessage"
+      ],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__board_slug",
+      "method": "POST",
+      "path": "/board/:slug",
+      "readKeys": [
+        "userId",
+        "userRole"
+      ],
+      "writeKeys": [],
+      "readAuthKeys": [
+        "userId",
+        "userRole"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__board_slug_displayId",
+      "method": "GET",
+      "path": "/board/:slug/:displayId",
+      "readKeys": [
+        "userId",
+        "userRole"
+      ],
+      "writeKeys": [],
+      "readAuthKeys": [
+        "userId",
+        "userRole"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "DELETE__board_slug_displayId",
+      "method": "DELETE",
+      "path": "/board/:slug/:displayId",
+      "readKeys": [
+        "userId",
+        "userRole"
+      ],
+      "writeKeys": [
+        "boardFlashMessage"
+      ],
+      "readAuthKeys": [
+        "userId",
+        "userRole"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [
+        "boardFlashMessage"
+      ],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__board_slug_displayId_delete",
+      "method": "POST",
+      "path": "/board/:slug/:displayId/delete",
+      "readKeys": [
+        "userId",
+        "userRole"
+      ],
+      "writeKeys": [
+        "boardFlashMessage"
+      ],
+      "readAuthKeys": [
+        "userId",
+        "userRole"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [
+        "boardFlashMessage"
+      ],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__board_slug_displayId_edit",
+      "method": "GET",
+      "path": "/board/:slug/:displayId/edit",
+      "readKeys": [
+        "userId",
+        "userRole"
+      ],
+      "writeKeys": [],
+      "readAuthKeys": [
+        "userId",
+        "userRole"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__board_slug_displayId_edit",
+      "method": "POST",
+      "path": "/board/:slug/:displayId/edit",
+      "readKeys": [
+        "userId",
+        "userRole"
+      ],
+      "writeKeys": [],
+      "readAuthKeys": [
+        "userId",
+        "userRole"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__board_slug_new",
+      "method": "GET",
+      "path": "/board/:slug/new",
+      "readKeys": [
+        "userId",
+        "userRole"
+      ],
+      "writeKeys": [],
+      "readAuthKeys": [
+        "userId",
+        "userRole"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__labs",
+      "method": "GET",
+      "path": "/labs",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__labs_ssti",
+      "method": "GET",
+      "path": "/labs/ssti",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__labs_ssti",
+      "method": "POST",
+      "path": "/labs/ssti",
+      "readKeys": [
+        "username"
+      ],
+      "writeKeys": [],
+      "readAuthKeys": [
+        "username"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__occur_ssr_code",
+      "method": "GET",
+      "path": "/occur/ssr/:code",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__root",
+      "method": "GET",
+      "path": "/",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__healthz",
+      "method": "GET",
+      "path": "/healthz",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__username",
+      "method": "GET",
+      "path": "/@:username",
+      "readKeys": [
+        "userId",
+        "userRole"
+      ],
+      "writeKeys": [],
+      "readAuthKeys": [
+        "userId",
+        "userRole"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__setting_profile",
+      "method": "GET",
+      "path": "/setting/profile",
+      "readKeys": [
+        "userId"
+      ],
+      "writeKeys": [],
+      "readAuthKeys": [
+        "userId"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__setting_profile",
+      "method": "POST",
+      "path": "/setting/profile",
+      "readKeys": [
+        "userId"
+      ],
+      "writeKeys": [],
+      "readAuthKeys": [
+        "userId"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "GET__settings_profile",
+      "method": "GET",
+      "path": "/settings/profile",
+      "readKeys": [
+        "userId"
+      ],
+      "writeKeys": [],
+      "readAuthKeys": [
+        "userId"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__settings_profile",
+      "method": "POST",
+      "path": "/settings/profile",
+      "readKeys": [
+        "userId"
+      ],
+      "writeKeys": [],
+      "readAuthKeys": [
+        "userId"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__users_avatar",
+      "method": "POST",
+      "path": "/users/avatar",
+      "readKeys": [
+        "userId",
+        "username"
+      ],
+      "writeKeys": [
+        "profileImageUrl"
+      ],
+      "readAuthKeys": [
+        "userId",
+        "username"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [
+        "profileImageUrl"
+      ],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__users_avatar_delete",
+      "method": "POST",
+      "path": "/users/avatar/delete",
+      "readKeys": [
+        "userId",
+        "username"
+      ],
+      "writeKeys": [
+        "profileImageUrl"
+      ],
+      "readAuthKeys": [
+        "userId",
+        "username"
+      ],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [
+        "profileImageUrl"
+      ],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    }
+  ]
+}

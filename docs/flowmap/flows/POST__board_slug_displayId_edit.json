@@ -11,10 +11,21 @@
     "file": "server/src/controllers/article/article-edit.controller.ts",
     "line": 41
   },
-  "sinks": [],
+  "sinks": [
+    "req.session.read()"
+  ],
   "exits": [
     "res.redirect()"
   ],
+  "sessionAccess": {
+    "read": true,
+    "write": false,
+    "readKeys": [
+      "userId",
+      "userRole"
+    ],
+    "writeKeys": []
+  },
   "redirectTargets": [
     "`/board/${post.boardSlug}/${post.displayId}`"
   ],

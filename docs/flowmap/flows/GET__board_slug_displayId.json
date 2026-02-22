@@ -9,9 +9,20 @@
     "file": "server/src/controllers/article/article-show.controller.ts",
     "line": 21
   },
-  "sinks": [],
+  "sinks": [
+    "req.session.read()"
+  ],
   "exits": [
     "res.render()"
   ],
+  "sessionAccess": {
+    "read": true,
+    "write": false,
+    "readKeys": [
+      "userId",
+      "userRole"
+    ],
+    "writeKeys": []
+  },
   "warnings": []
 }
