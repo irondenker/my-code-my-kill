@@ -15,8 +15,27 @@ direction TB
 HANDLER["getAdminBoardsPage()"]
 end
 MIDDLEWARE2 --> HANDLER
+subgraph SINKS["[SINKS]"]
+direction TB
+SINK1["Session<br/>(Read)"]
+SINK2["Session<br/>(Write)"]
+end
+HANDLER --> SINK1
+HANDLER --> SINK2
+SINK_READ_KEY1["session.adminBoardsFlashMessage"]
+SINK1 --> SINK_READ_KEY1
+SINK_WRITE_KEY1["session.adminBoardsFlashMessage"]
+SINK2 --> SINK_WRITE_KEY1
 classDef middleware font-size:10px,padding:2px,stroke-width:1;
 classDef diagnostics stroke-dasharray: 2 2;
 classDef sink stroke-width:2;
+classDef sessionKey font-size:10px,padding:2px;
+classDef flash stroke-dasharray: 5 3,stroke-width:1.5;
+classDef auth stroke-dasharray: 0,stroke-width:1.5;
+classDef other stroke:#6b7280;
 classDef exit stroke-dasharray: 4 2;
 class MIDDLEWARE1,MIDDLEWARE2 middleware;
+class SINK1,SINK2 sink;
+class SINK_READ_KEY1 sessionKey;
+class SINK_WRITE_KEY1 sessionKey;
+class SINK_READ_KEY1,SINK_WRITE_KEY1 flash;

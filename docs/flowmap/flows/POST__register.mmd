@@ -19,10 +19,25 @@ RDIAG1["400"]
 RDIAG2["422"]
 RDIAG3["409"]
 end
+subgraph SINKS["[SINKS]"]
+direction TB
+SINK1["Session<br/>(Write)"]
+end
+HANDLER --> SINK1
+SINK_WRITE_KEY1["session.userId"]
+SINK_WRITE_KEY2["session.userRole"]
+SINK_WRITE_KEY3["session.username"]
+SINK_WRITE_KEY4["session.profileImageUrl"]
+SINK_WRITE_KEY5["session (root)"]
+SINK1 --> SINK_WRITE_KEY1
+SINK1 --> SINK_WRITE_KEY2
+SINK1 --> SINK_WRITE_KEY3
+SINK1 --> SINK_WRITE_KEY4
+SINK1 --> SINK_WRITE_KEY5
 subgraph EXITS["[EXITS]"]
 direction TB
 EXIT1["res.render()"]
-EXIT2["res.redirect()"]
+EXIT2["REDIRECT"]
 end
 HANDLER --> EXIT1
 HANDLER --> EXIT2
@@ -37,7 +52,15 @@ EXIT2 --> NEXT_ENTRY1
 classDef middleware font-size:10px,padding:2px,stroke-width:1;
 classDef diagnostics stroke-dasharray: 2 2;
 classDef sink stroke-width:2;
+classDef sessionKey font-size:10px,padding:2px;
+classDef flash stroke-dasharray: 5 3,stroke-width:1.5;
+classDef auth stroke-dasharray: 0,stroke-width:1.5;
+classDef other stroke:#6b7280;
 classDef exit stroke-dasharray: 4 2;
 class MIDDLEWARE1 middleware;
 class RDIAG1,RDIAG2,RDIAG3 diagnostics;
+class SINK1 sink;
+class SINK_WRITE_KEY1,SINK_WRITE_KEY2,SINK_WRITE_KEY3,SINK_WRITE_KEY4,SINK_WRITE_KEY5 sessionKey;
+class SINK_WRITE_KEY1,SINK_WRITE_KEY2,SINK_WRITE_KEY3,SINK_WRITE_KEY4 auth;
+class SINK_WRITE_KEY5 other;
 class EXIT1,EXIT2 exit;

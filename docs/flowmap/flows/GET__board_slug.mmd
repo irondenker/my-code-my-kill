@@ -15,9 +15,19 @@ end
 MIDDLEWARE1 --> HANDLER
 subgraph SINKS["[SINKS]"]
 direction TB
-SINK1["req.session()"]
+SINK1["Session<br/>(Read)"]
+SINK2["Session<br/>(Write)"]
 end
 HANDLER --> SINK1
+HANDLER --> SINK2
+SINK_READ_KEY1["session.userId"]
+SINK_READ_KEY2["session.userRole"]
+SINK_READ_KEY3["session.boardFlashMessage"]
+SINK1 --> SINK_READ_KEY1
+SINK1 --> SINK_READ_KEY2
+SINK1 --> SINK_READ_KEY3
+SINK_WRITE_KEY1["session.boardFlashMessage"]
+SINK2 --> SINK_WRITE_KEY1
 subgraph EXITS["[EXITS]"]
 direction TB
 EXIT1["res.render()"]
@@ -26,7 +36,15 @@ HANDLER --> EXIT1
 classDef middleware font-size:10px,padding:2px,stroke-width:1;
 classDef diagnostics stroke-dasharray: 2 2;
 classDef sink stroke-width:2;
+classDef sessionKey font-size:10px,padding:2px;
+classDef flash stroke-dasharray: 5 3,stroke-width:1.5;
+classDef auth stroke-dasharray: 0,stroke-width:1.5;
+classDef other stroke:#6b7280;
 classDef exit stroke-dasharray: 4 2;
 class MIDDLEWARE1 middleware;
-class SINK1 sink;
+class SINK1,SINK2 sink;
+class SINK_READ_KEY1,SINK_READ_KEY2,SINK_READ_KEY3 sessionKey;
+class SINK_WRITE_KEY1 sessionKey;
+class SINK_READ_KEY3,SINK_WRITE_KEY1 flash;
+class SINK_READ_KEY1,SINK_READ_KEY2 auth;
 class EXIT1 exit;

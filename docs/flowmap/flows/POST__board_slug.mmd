@@ -15,9 +15,18 @@ direction TB
 HANDLER["postArticleCreate()"]
 end
 MIDDLEWARE2 --> HANDLER
+subgraph SINKS["[SINKS]"]
+direction TB
+SINK1["Session<br/>(Read)"]
+end
+HANDLER --> SINK1
+SINK_READ_KEY1["session.userId"]
+SINK_READ_KEY2["session.userRole"]
+SINK1 --> SINK_READ_KEY1
+SINK1 --> SINK_READ_KEY2
 subgraph EXITS["[EXITS]"]
 direction TB
-EXIT1["res.redirect()"]
+EXIT1["REDIRECT"]
 end
 HANDLER --> EXIT1
 subgraph NEXT_ENTRY["[NEXT ENTRY]"]
@@ -28,6 +37,13 @@ EXIT1 --> NEXT_ENTRY1
 classDef middleware font-size:10px,padding:2px,stroke-width:1;
 classDef diagnostics stroke-dasharray: 2 2;
 classDef sink stroke-width:2;
+classDef sessionKey font-size:10px,padding:2px;
+classDef flash stroke-dasharray: 5 3,stroke-width:1.5;
+classDef auth stroke-dasharray: 0,stroke-width:1.5;
+classDef other stroke:#6b7280;
 classDef exit stroke-dasharray: 4 2;
 class MIDDLEWARE1,MIDDLEWARE2 middleware;
+class SINK1 sink;
+class SINK_READ_KEY1,SINK_READ_KEY2 sessionKey;
+class SINK_READ_KEY1,SINK_READ_KEY2 auth;
 class EXIT1 exit;
