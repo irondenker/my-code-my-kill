@@ -25,7 +25,7 @@
     * `docs/troubleshoot` 경로 추가
         * **목적:** 개발 중 문제해결 기록 목적
         * **문서 추가** (총 1건)
-            * [nodenext-import-extension](../../troubleshoot-log/nodenext-import-extension.md)
+            * [nodenext-import-extension](../../learn/nodenext-import-extension.md)
 
 6. **Minor Fixes**
     * **디렉터리 제거:** `mocks`, `_graveyard`

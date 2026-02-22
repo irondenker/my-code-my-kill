@@ -9,10 +9,43 @@ git config core.hooksPath .githooks
 ```
 
 - `pre-commit`: `npm run test`
-- `pre-push`: `npm run test && npm run build && npm run check:openapi-drift`
+- `pre-push`: `npm run test && npm run build && npm run check:openapi-drift && npm run flowmap:check`
 - `RUN_DB_TESTS=1`일 때만 `pre-push`에서 `npm run test:db`를 실행
 
-## 2) hook 실행 제어 변수
+## 2) pre-commit / pre-push 동작 원리
+
+로컬 hook은 "원격 CI에 올리기 전에 같은 성격의 실패를 로컬에서 먼저 막는 장치"입니다.
+
+- `pre-commit` 트리거: `git commit` 직전
+  - 실행: `npm run test`
+  - 목적: 가장 빠른 단위 검증으로 기본 회귀를 즉시 차단
+- `pre-push` 트리거: `git push` 직전
+  - 실행: `npm run test && npm run build && npm run check:openapi-drift && npm run flowmap:check`
+  - 목적: CI의 `server` job 핵심 검증과 최대한 유사한 상태를 로컬에서 선검증
+  - 선택 실행: `RUN_DB_TESTS=1`일 때만 `npm run test:db` 추가
+
+실행 흐름(기본):
+
+```text
+git commit
+  -> pre-commit
+  -> npm run test
+  -> 성공 시 커밋 생성 / 실패 시 커밋 중단
+
+git push
+  -> pre-push
+  -> test/build/docs drift check(+optional DB test)
+  -> 성공 시 push 진행 / 실패 시 push 중단
+  -> GitHub Actions(server, server-db) 실행
+```
+
+원칙:
+
+- hook/CI 모두 "명령의 exit code != 0"이면 실패로 간주합니다.
+- 로컬 hook은 빠른 피드백용, 최종 머지 게이트는 CI입니다.
+- `--no-verify`로 로컬 hook을 건너뛸 수 있어도 CI는 건너뛰지 못합니다.
+
+## 3) hook 실행 제어 변수
 
 ### `RUN_DB_TESTS`
 
@@ -52,7 +85,7 @@ USE_DOCKER_HOOKS=1 DOCKER_COMPOSE_FILE=docker-compose.prod.yml git commit
 - Docker hook 모드에서 DB 테스트를 실행할 때(`RUN_DB_TESTS=1`)는 `db` 컨테이너도 실행 중이어야 합니다.
 - Docker daemon이 내려가 있으면 hook이 실패합니다.
 
-## 3) GitHub Actions 품질 게이트
+## 4) GitHub Actions 품질 게이트
 
 워크플로 파일: `.github/workflows/server-ci.yml`
 
@@ -70,6 +103,7 @@ USE_DOCKER_HOOKS=1 DOCKER_COMPOSE_FILE=docker-compose.prod.yml git commit
   - `npm run test`
   - `npm run fix:openapi-drift`
   - `npm run check:openapi-drift`
+  - `npm run flowmap:check`
 - `server-db` job
   - postgres service 기동
   - `npm run db:migrate`
@@ -85,7 +119,7 @@ OpenAPI 드리프트 처리:
 - PR 이벤트: `fix:openapi-drift` 결과로 `server/src/docs/openapi.ts` 변경이 생기면 CI를 실패시켜 수동 커밋을 요구합니다.
 - push 이벤트: 동일 변경이 생기면 `github-actions[bot]`이 자동 커밋으로 문서를 동기화합니다.
 
-## 4) DB 마이그레이션 관련 주의점
+## 5) DB 마이그레이션 관련 주의점
 
 CI에서 `NODE_ENV=test`일 때 `sequelize-cli`는 기본적으로 테스트 DB 이름을 사용합니다.
 이 저장소 워크플로는 `DB_NAME_TEST=mcmk`를 명시해 postgres service DB(`mcmk`)와 맞춥니다.

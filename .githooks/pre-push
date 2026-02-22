@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-echo "[pre-push] Running tests, build and OpenAPI drift checks..."
+echo "[pre-push] Running tests, build and docs drift checks (OpenAPI/Flowmap)..."
 
 RUN_DB_TESTS_FLAG="${RUN_DB_TESTS:-0}"
 SHOULD_RUN_DB_TESTS=0
@@ -30,6 +30,7 @@ if [ "${USE_DOCKER_HOOKS:-0}" = "1" ]; then
     docker compose -f "${COMPOSE_FILE}" exec -T server npm run test
     docker compose -f "${COMPOSE_FILE}" exec -T server npm run build
     docker compose -f "${COMPOSE_FILE}" exec -T server npm run check:openapi-drift
+    docker compose -f "${COMPOSE_FILE}" exec -T server npm run flowmap:check
 
     if [ "${SHOULD_RUN_DB_TESTS}" = "1" ]; then
         echo "[pre-push] Running DB integration tests in Docker (${DB_TEST_REASON})..."
@@ -44,6 +45,7 @@ cd server
 npm run test
 npm run build
 npm run check:openapi-drift
+npm run flowmap:check
 
 if [ "${SHOULD_RUN_DB_TESTS}" = "1" ]; then
     echo "[pre-push] Running DB integration tests (${DB_TEST_REASON})..."
