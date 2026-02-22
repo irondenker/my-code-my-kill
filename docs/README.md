@@ -29,7 +29,8 @@
 | [`guide/qa-gate-and-ci.md`](./guide/qa-gate-and-ci.md) | 개발/운영 품질 게이트(pre-commit, pre-push, CI) |
 | [`guide/how-to-docker.md`](./guide/how-to-docker.md) | Docker 개발/운영 명령 모음 |
 | [`guide/flowmap-guide.md`](./guide/flowmap-guide.md) | Flowmap 생성/검증/리뷰 운영 가이드 |
-| [`flowmap/README.md`](./flowmap/README.md) | 자동 생성 Flowmap 인덱스 |
+| [`flowmap/README.md`](./flowmap/README.md) | Flowmap 빠른 조회(엔드포인트 인덱스) |
+| [`flowmap/session-access.mmd`](./flowmap/session-access.mmd) | Flowmap 빠른 조회(Session Access 맵) |
 | [`guide/lab/xss-filter-guide.md`](./guide/lab/xss-filter-guide.md) | XSS 실습 설정 가이드 |
 | [`guide/lab/sqli-lab-guide.md`](./guide/lab/sqli-lab-guide.md) | SQLi 실습 설정 가이드 |
 | [`guide/lab/upload-validation-guide.md`](./guide/lab/upload-validation-guide.md) | 업로드 검증 실습 설정 가이드 |

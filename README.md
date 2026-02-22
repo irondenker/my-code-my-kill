@@ -20,6 +20,11 @@
 - [Docker 첫 실행](./docs/guide/first-run/first-run-docker.md)
 - [VM 첫 실행](./docs/guide/first-run/first-run-vm.md)
 
+### 🗺️ Flowmap
+
+- [Flowmap 인덱스 조회](./docs/flowmap/README.md)
+- [Session Access 맵 조회](./docs/flowmap/session-access.mmd)
+
 ### 📝 How To Commit
 
 - [커밋 이모지 가이드](./docs/guide/commit-emoji-guide.md)
