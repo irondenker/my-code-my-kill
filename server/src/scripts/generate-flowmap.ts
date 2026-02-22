@@ -1604,17 +1604,6 @@ function formatSessionKeyForDisplay(key: string): string {
     return `session.${key}`;
 }
 
-function formatSessionKeyListInline(keys: string[]): string {
-    const deduped = dedupePreserveOrder(keys);
-    if (deduped.length === 0) {
-        return "none";
-    }
-    const sorted = [...deduped].sort((left, right) => {
-        return formatSessionKeyForDisplay(left).localeCompare(formatSessionKeyForDisplay(right));
-    });
-    return sorted.map((key) => formatSessionKeyForDisplay(key)).join(", ");
-}
-
 function isFlashSessionKey(key: string): boolean {
     return /FlashMessage$/i.test(key);
 }
@@ -1706,8 +1695,6 @@ function buildSessionAccessMermaid(summary: SessionUsageGroups): string {
     const otherNodeIds: string[] = [];
     const sessionRootNodeId = "SESSION_ROOT";
     const rootUsage = summary.root;
-    const rootReadCount = rootUsage?.readEndpoints.length ?? 0;
-    const rootWriteCount = rootUsage?.writeEndpoints.length ?? 0;
     const rootLabel = "session (root)";
     const readNodeDefinitions: string[] = [];
     const writeNodeDefinitions: string[] = [];
@@ -2283,11 +2270,6 @@ async function writeFlowmapArtifacts(params: {
             }
             return compareMethods(left.method, right.method);
         });
-        const sectionReadKeys = items.flatMap((item) => item.sessionAccess.readKeys);
-        const sectionWriteKeys = items.flatMap((item) => item.sessionAccess.writeKeys);
-        indexLines.push(`- Session Read Keys: ${formatSessionKeyListInline(sectionReadKeys)}`);
-        indexLines.push(`- Session Write Keys: ${formatSessionKeyListInline(sectionWriteKeys)}`);
-        indexLines.push("");
         for (const item of items) {
             const sinksLabel = item.sinks.length > 0 ? item.sinks.join(", ") : "none";
             indexLines.push(`- [${item.method} ${item.path}](flows/${item.id}.mmd) — sinks: ${sinksLabel}`);

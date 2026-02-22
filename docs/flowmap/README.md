@@ -10,9 +10,6 @@ Flowmap은 서버 엔드포인트 중심으로 요청 흐름을 빠르게 파악
 
 ## admin.routes.ts
 
-- Session Read Keys: session.adminBoardsFlashMessage, session.adminUsersFlashMessage, session.userId, session.username
-- Session Write Keys: session.adminBoardsFlashMessage, session.adminUsersFlashMessage
-
 - [GET /admin](flows/GET__admin.mmd) — sinks: none
 - [GET /admin/boards](flows/GET__admin_boards.mmd) — sinks: req.session.read(), req.session.write()
 - [POST /admin/boards](flows/POST__admin_boards.mmd) — sinks: req.session.read(), req.session.write()
@@ -24,22 +21,13 @@ Flowmap은 서버 엔드포인트 중심으로 요청 흐름을 빠르게 파악
 
 ## api-docs.routes.ts
 
-- Session Read Keys: none
-- Session Write Keys: none
-
 - [GET /api-docs](flows/GET__api_docs.mmd) — sinks: none
 
 ## audit.routes.ts
 
-- Session Read Keys: none
-- Session Write Keys: none
-
 - [GET /admin/audit-logs](flows/GET__admin_audit_logs.mmd) — sinks: none
 
 ## auth.routes.ts
-
-- Session Read Keys: session.userId, session.username, session.userRole
-- Session Write Keys: session (root), session.profileImageUrl, session.userId, session.username, session.userRole
 
 - [GET /login](flows/GET__login.mmd) — sinks: none
 - [POST /login](flows/POST__login.mmd) — sinks: req.session.write()
@@ -48,9 +36,6 @@ Flowmap은 서버 엔드포인트 중심으로 요청 흐름을 빠르게 파악
 - [POST /register](flows/POST__register.mmd) — sinks: req.session.write()
 
 ## board.routes.ts
-
-- Session Read Keys: session.boardFlashMessage, session.userId, session.userRole
-- Session Write Keys: session.boardFlashMessage
 
 - [GET /board](flows/GET__board.mmd) — sinks: req.session.read()
 - [GET /board/:slug](flows/GET__board_slug.mmd) — sinks: req.session.read(), req.session.write()
@@ -64,32 +49,20 @@ Flowmap은 서버 엔드포인트 중심으로 요청 흐름을 빠르게 파악
 
 ## lab-ssti.routes.ts
 
-- Session Read Keys: session.username
-- Session Write Keys: none
-
 - [GET /labs](flows/GET__labs.mmd) — sinks: none
 - [GET /labs/ssti](flows/GET__labs_ssti.mmd) — sinks: none
 - [POST /labs/ssti](flows/POST__labs_ssti.mmd) — sinks: req.session.read()
 
 ## occur.routes.ts
 
-- Session Read Keys: none
-- Session Write Keys: none
-
 - [GET /occur/ssr/:code](flows/GET__occur_ssr_code.mmd) — sinks: none
 
 ## root.routes.ts
-
-- Session Read Keys: none
-- Session Write Keys: none
 
 - [GET /](flows/GET__root.mmd) — sinks: none
 - [GET /healthz](flows/GET__healthz.mmd) — sinks: none
 
 ## user.routes.ts
-
-- Session Read Keys: session.userId, session.username, session.userRole
-- Session Write Keys: session.profileImageUrl
 
 - [GET /@:username](flows/GET__username.mmd) — sinks: req.session.read()
 - [GET /setting/profile](flows/GET__setting_profile.mmd) — sinks: req.session.read()
