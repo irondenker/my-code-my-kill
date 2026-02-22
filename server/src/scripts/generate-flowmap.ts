@@ -1112,10 +1112,6 @@ async function scanSinksAndExits(params: {
     };
 }
 
-function buildRedirectSinkLabel(params: { sink: Sink }): string {
-    return params.sink;
-}
-
 function buildPathMethodIndex(endpoints: FlowEndpoint[]): Map<string, Set<string>> {
     const index = new Map<string, Set<string>>();
     for (const endpoint of endpoints) {
@@ -1243,6 +1239,44 @@ function buildEndpointId(method: string, routePath: string): string {
     return `${method.toUpperCase()}__${normalizedPath}`;
 }
 
+function buildSessionKeyNodesForSinks(params: {
+    lines: string[];
+    sinkNodeIds: string[];
+    keys: string[];
+    nodePrefix: string;
+    flashSessionKeyNodeIds: string[];
+    authSessionKeyNodeIds: string[];
+    otherSessionKeyNodeIds: string[];
+}): string[] {
+    const keyNodeIds: string[] = [];
+    if (params.sinkNodeIds.length === 0 || params.keys.length === 0) {
+        return keyNodeIds;
+    }
+
+    for (const [index, key] of params.keys.entries()) {
+        const nodeId = `${params.nodePrefix}${index + 1}`;
+        const keyLabel = formatSessionKeyForDisplay(key).replace(/"/g, "'");
+        keyNodeIds.push(nodeId);
+        const category = classifySessionKey(key);
+        if (category === "flash") {
+            params.flashSessionKeyNodeIds.push(nodeId);
+        } else if (category === "auth") {
+            params.authSessionKeyNodeIds.push(nodeId);
+        } else {
+            params.otherSessionKeyNodeIds.push(nodeId);
+        }
+        params.lines.push(`${nodeId}["${keyLabel}"]`);
+    }
+
+    for (const sinkNodeId of params.sinkNodeIds) {
+        for (const keyNodeId of keyNodeIds) {
+            params.lines.push(`${sinkNodeId} --> ${keyNodeId}`);
+        }
+    }
+
+    return keyNodeIds;
+}
+
 function buildMermaid(params: {
     method: string;
     path: string;
@@ -1261,8 +1295,8 @@ function buildMermaid(params: {
     const sinkNodeIds: string[] = [];
     const sessionReadSinkNodeIds: string[] = [];
     const sessionWriteSinkNodeIds: string[] = [];
-    const sessionReadKeyNodeIds: string[] = [];
-    const sessionWriteKeyNodeIds: string[] = [];
+    let sessionReadKeyNodeIds: string[] = [];
+    let sessionWriteKeyNodeIds: string[] = [];
     const flashSessionKeyNodeIds: string[] = [];
     const authSessionKeyNodeIds: string[] = [];
     const otherSessionKeyNodeIds: string[] = [];
@@ -1362,7 +1396,7 @@ function buildMermaid(params: {
         for (const [index, sink] of params.sinks.entries()) {
             const nodeId = `SINK${index + 1}`;
             sinkNodeIds.push(nodeId);
-            let sinkLabelRaw = buildRedirectSinkLabel({ sink });
+            let sinkLabelRaw: string = sink;
             if (sink === SESSION_READ_SINK) {
                 sinkLabelRaw = "Session<br/>(Read)";
                 sessionReadSinkNodeIds.push(nodeId);
@@ -1380,48 +1414,24 @@ function buildMermaid(params: {
         }
     }
 
-    if (sessionReadSinkNodeIds.length > 0 && sessionReadKeys.length > 0) {
-        for (const [index, key] of sessionReadKeys.entries()) {
-            const nodeId = `SINK_READ_KEY${index + 1}`;
-            const keyLabel = formatSessionKeyForDisplay(key).replace(/"/g, "'");
-            sessionReadKeyNodeIds.push(nodeId);
-            const category = classifySessionKey(key);
-            if (category === "flash") {
-                flashSessionKeyNodeIds.push(nodeId);
-            } else if (category === "auth") {
-                authSessionKeyNodeIds.push(nodeId);
-            } else {
-                otherSessionKeyNodeIds.push(nodeId);
-            }
-            lines.push(`${nodeId}["${keyLabel}"]`);
-        }
-        for (const sinkNodeId of sessionReadSinkNodeIds) {
-            for (const keyNodeId of sessionReadKeyNodeIds) {
-                lines.push(`${sinkNodeId} --> ${keyNodeId}`);
-            }
-        }
-    }
-    if (sessionWriteSinkNodeIds.length > 0 && sessionWriteKeys.length > 0) {
-        for (const [index, key] of sessionWriteKeys.entries()) {
-            const nodeId = `SINK_WRITE_KEY${index + 1}`;
-            const keyLabel = formatSessionKeyForDisplay(key).replace(/"/g, "'");
-            sessionWriteKeyNodeIds.push(nodeId);
-            const category = classifySessionKey(key);
-            if (category === "flash") {
-                flashSessionKeyNodeIds.push(nodeId);
-            } else if (category === "auth") {
-                authSessionKeyNodeIds.push(nodeId);
-            } else {
-                otherSessionKeyNodeIds.push(nodeId);
-            }
-            lines.push(`${nodeId}["${keyLabel}"]`);
-        }
-        for (const sinkNodeId of sessionWriteSinkNodeIds) {
-            for (const keyNodeId of sessionWriteKeyNodeIds) {
-                lines.push(`${sinkNodeId} --> ${keyNodeId}`);
-            }
-        }
-    }
+    sessionReadKeyNodeIds = buildSessionKeyNodesForSinks({
+        lines,
+        sinkNodeIds: sessionReadSinkNodeIds,
+        keys: sessionReadKeys,
+        nodePrefix: "SINK_READ_KEY",
+        flashSessionKeyNodeIds,
+        authSessionKeyNodeIds,
+        otherSessionKeyNodeIds,
+    });
+    sessionWriteKeyNodeIds = buildSessionKeyNodesForSinks({
+        lines,
+        sinkNodeIds: sessionWriteSinkNodeIds,
+        keys: sessionWriteKeys,
+        nodePrefix: "SINK_WRITE_KEY",
+        flashSessionKeyNodeIds,
+        authSessionKeyNodeIds,
+        otherSessionKeyNodeIds,
+    });
 
     if (params.exits.length > 0) {
         lines.push(`subgraph EXITS["[EXITS]"]`);
@@ -2250,6 +2260,9 @@ async function writeFlowmapArtifacts(params: {
     const indexLines: string[] = [];
     indexLines.push("# Flowmap");
     indexLines.push("");
+    indexLines.push("> This file is auto-generated by `server/src/scripts/generate-flowmap.ts`.");
+    indexLines.push("> Do not edit this file manually.");
+    indexLines.push("");
     indexLines.push("Flowmap은 서버 엔드포인트 중심으로 요청 흐름을 빠르게 파악하기 위한 문서입니다.");
     indexLines.push("각 문서는 Entry -> Middleware -> Handler -> Sink/Exit 순서로 유스케이스 단위 흐름을 요약합니다.");
     indexLines.push("");
@@ -2271,8 +2284,7 @@ async function writeFlowmapArtifacts(params: {
             return compareMethods(left.method, right.method);
         });
         for (const item of items) {
-            const sinksLabel = item.sinks.length > 0 ? item.sinks.join(", ") : "none";
-            indexLines.push(`- [${item.method} ${item.path}](flows/${item.id}.mmd) — sinks: ${sinksLabel}`);
+            indexLines.push(`- [${item.method} ${item.path}](flows/${item.id}.mmd)`);
         }
         indexLines.push("");
     }
