@@ -28,12 +28,20 @@
 | --- | --- |
 | [`guide/qa-gate-and-ci.md`](./guide/qa-gate-and-ci.md) | 개발/운영 품질 게이트(pre-commit, pre-push, CI) |
 | [`guide/how-to-docker.md`](./guide/how-to-docker.md) | Docker 개발/운영 명령 모음 |
+| [`guide/env-mode-matrix.md`](./guide/env-mode-matrix.md) | 환경변수/실행모드 매트릭스 |
 | [`guide/flowmap-guide.md`](./guide/flowmap-guide.md) | Flowmap 생성/검증/리뷰 운영 가이드 |
 | [`flowmap/README.md`](./flowmap/README.md) | Flowmap 빠른 조회(엔드포인트 인덱스) |
 | [`flowmap/session-access.mmd`](./flowmap/session-access.mmd) | Flowmap 빠른 조회(Session Access 맵) |
+| [`guide/admin-operations-guide.md`](./guide/admin-operations-guide.md) | Admin 기능 운영 가이드 |
+| [`guide/audit-log-operations-guide.md`](./guide/audit-log-operations-guide.md) | 감사로그 저장/조회/운영 가이드 |
+| [`guide/profile-avatar-lifecycle-guide.md`](./guide/profile-avatar-lifecycle-guide.md) | 프로필/아바타 라이프사이클 운영 가이드 |
 | [`guide/lab/xss-filter-guide.md`](./guide/lab/xss-filter-guide.md) | XSS 실습 설정 가이드 |
 | [`guide/lab/sqli-lab-guide.md`](./guide/lab/sqli-lab-guide.md) | SQLi 실습 설정 가이드 |
 | [`guide/lab/upload-validation-guide.md`](./guide/lab/upload-validation-guide.md) | 업로드 검증 실습 설정 가이드 |
+| [`guide/lab/lab-options-reference.md`](./guide/lab/lab-options-reference.md) | lab-options 전체 스키마/파싱 레퍼런스 |
+| [`guide/lab/ssti-lab-guide.md`](./guide/lab/ssti-lab-guide.md) | SSTI 실습 설정 가이드 |
+| [`guide/lab/csrf-lab-guide.md`](./guide/lab/csrf-lab-guide.md) | CSRF 실습 토글/동작 가이드 |
+| [`guide/lab/debug-error-routes-guide.md`](./guide/lab/debug-error-routes-guide.md) | 디버그 에러 라우트 운영 가이드 |
 | [`guide/controller-structure.md`](./guide/controller-structure.md) | 컨트롤러 레이어 구조 정리 |
 | [`guide/commit-emoji-guide.md`](./guide/commit-emoji-guide.md) | 커밋 이모지 작성 규칙 |
 

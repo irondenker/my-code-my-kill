@@ -158,6 +158,7 @@ docker compose -f docker-compose.prod.yml logs -f nginx
 - 기존 체인이 필요하면 `server/migrations/old`와 `--migrations-path` 옵션을 사용하세요.
 - prod 컨테이너에는 `sequelize-cli`가 없으므로 마이그레이션/시드는 dev에서 처리해야 합니다.
 - 로컬 hook/CI 초기 설정은 [`quality-gates.md`](./quality-gates.md)를 참고하세요.
+- 환경변수/실행모드 전체 맵은 [`env-mode-matrix.md`](../env-mode-matrix.md)를 참고하세요.
 
 ## 감사로그 콘솔 출력 설정 (`AUDIT_CLI_LOG_LEVEL`)
 

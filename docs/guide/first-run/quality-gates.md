@@ -32,4 +32,4 @@ git config core.hooksPath .githooks
 동작 원리, Docker hook 모드, 제어 변수, Solo Dev 운영 가이드는 아래 문서를 참고하세요.
 
 - [`docs/guide/qa-gate-and-ci.md`](../qa-gate-and-ci.md)
-
+- [`docs/guide/env-mode-matrix.md`](../env-mode-matrix.md)
