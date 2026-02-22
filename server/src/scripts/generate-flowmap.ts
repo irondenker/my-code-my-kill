@@ -8,7 +8,8 @@ const METHOD_ORDER = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
 const SINK_RULES = [
     { sink: "DB: Raw Query", patterns: [/sequelize\.query\s*\(/] },
     { sink: "DB: ORM", patterns: [/\.(findOne|findAll|create|update|destroy)\s*\(/] },
-    { sink: "req.session()", patterns: [/req\.session\b/, /req\.session\.regenerate\s*\(/] },
+    { sink: "req.session.read()", patterns: [] },
+    { sink: "req.session.write()", patterns: [] },
     { sink: "res.cookie()", patterns: [/res\.cookie\s*\(/] },
     { sink: "File Upload", patterns: [/multer\s*\(/, /req\.(file|files)\b/] },
     { sink: "Image Upload", patterns: [/sharp\s*\(/] },
@@ -29,6 +30,12 @@ type Sink = typeof SINK_RULES[number]["sink"];
 type Exit = typeof EXIT_RULES[number]["exit"];
 type RenderDiagnostics = {
     statuses: string[];
+};
+type SessionAccess = {
+    read: boolean;
+    write: boolean;
+    readKeys: string[];
+    writeKeys: string[];
 };
 
 type RouteImportBinding = {
@@ -69,6 +76,7 @@ type FlowEndpoint = {
     exits: Exit[];
     redirectTargets: string[];
     renderDiagnostics: RenderDiagnostics;
+    sessionAccess: SessionAccess;
     globalMiddlewares: string[];
     warnings: string[];
 };
@@ -83,6 +91,26 @@ type SourceCacheEntry = {
 };
 
 const sourceCache = new Map<string, SourceCacheEntry>();
+const SESSION_READ_SINK = "req.session.read()" as const;
+const SESSION_WRITE_SINK = "req.session.write()" as const;
+const SESSION_ROOT_KEY = "<session>" as const;
+const SESSION_DYNAMIC_KEY = "<dynamic>" as const;
+type KeyBindings = Map<string, string[]>;
+type CallInvocation = {
+    argValuesByIndex: Map<number, string[]>;
+};
+type SessionPathSegment =
+    | {
+          kind: "literal";
+          value: string;
+      }
+    | {
+          kind: "identifier";
+          value: string;
+      }
+    | {
+          kind: "dynamic";
+      };
 
 function toPosixPath(filePath: string): string {
     return filePath.split(path.sep).join("/");
@@ -551,31 +579,536 @@ function extractRenderDiagnostics(handlerText: string): RenderDiagnostics {
     };
 }
 
-function scanSinksAndExits(handlerText: string): {
+function addBindingValues(bindings: KeyBindings, name: string, values: string[]) {
+    if (values.length === 0) {
+        return;
+    }
+    const existing = bindings.get(name) ?? [];
+    bindings.set(name, dedupePreserveOrder([...existing, ...values]));
+}
+
+function resolveExpressionToStringLiterals(
+    expression: ts.Expression,
+    resolveIdentifierValues: (name: string) => string[]
+): string[] {
+    if (ts.isStringLiteral(expression) || ts.isNoSubstitutionTemplateLiteral(expression)) {
+        return [expression.text];
+    }
+    if (ts.isIdentifier(expression)) {
+        return resolveIdentifierValues(expression.text);
+    }
+    if (ts.isConditionalExpression(expression)) {
+        return dedupePreserveOrder([
+            ...resolveExpressionToStringLiterals(expression.whenTrue, resolveIdentifierValues),
+            ...resolveExpressionToStringLiterals(expression.whenFalse, resolveIdentifierValues),
+        ]);
+    }
+    return [];
+}
+
+function collectLocalLiteralBindings(
+    sourceFile: ts.SourceFile,
+    parentKeyBindings: KeyBindings | undefined
+): KeyBindings {
+    const localBindings: KeyBindings = new Map();
+    const resolveIdentifierValues = (name: string): string[] => {
+        const fromLocal = localBindings.get(name);
+        if (fromLocal && fromLocal.length > 0) {
+            return fromLocal;
+        }
+        const fromParent = parentKeyBindings?.get(name);
+        if (fromParent && fromParent.length > 0) {
+            return fromParent;
+        }
+        return [];
+    };
+
+    const visit = (node: ts.Node) => {
+        if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+            const values = resolveExpressionToStringLiterals(node.initializer, resolveIdentifierValues);
+            addBindingValues(localBindings, node.name.text, values);
+        }
+        ts.forEachChild(node, visit);
+    };
+    visit(sourceFile);
+
+    return localBindings;
+}
+
+function collectIdentifierCallInvocations(
+    sourceFile: ts.SourceFile,
+    resolveIdentifierValues: (name: string) => string[]
+): Map<string, CallInvocation[]> {
+    const invocationsByName = new Map<string, CallInvocation[]>();
+    const visit = (node: ts.Node) => {
+        if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+            const invocation: CallInvocation = { argValuesByIndex: new Map<number, string[]>() };
+            for (const [index, arg] of node.arguments.entries()) {
+                const values = resolveExpressionToStringLiterals(arg, resolveIdentifierValues);
+                if (values.length > 0) {
+                    invocation.argValuesByIndex.set(index, dedupePreserveOrder(values));
+                }
+            }
+            const calledName = node.expression.text;
+            const items = invocationsByName.get(calledName) ?? [];
+            items.push(invocation);
+            invocationsByName.set(calledName, items);
+        }
+        ts.forEachChild(node, visit);
+    };
+    visit(sourceFile);
+    return invocationsByName;
+}
+
+function findPrimaryFunctionLikeNode(sourceFile: ts.SourceFile): ts.FunctionLikeDeclarationBase | null {
+    for (const statement of sourceFile.statements) {
+        if (ts.isFunctionDeclaration(statement)) {
+            return statement;
+        }
+        if (ts.isVariableStatement(statement)) {
+            for (const declaration of statement.declarationList.declarations) {
+                const initializer = declaration.initializer;
+                if (initializer && (ts.isArrowFunction(initializer) || ts.isFunctionExpression(initializer))) {
+                    return initializer;
+                }
+            }
+        }
+        if (ts.isExpressionStatement(statement) && ts.isBinaryExpression(statement.expression)) {
+            const right = statement.expression.right;
+            if (ts.isArrowFunction(right) || ts.isFunctionExpression(right)) {
+                return right;
+            }
+        }
+    }
+    return null;
+}
+
+function deriveBindingsForDeclaration(declarationText: string, invocations: CallInvocation[]): KeyBindings {
+    if (invocations.length === 0) {
+        return new Map();
+    }
+    const sourceFile = ts.createSourceFile("decl.ts", declarationText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const functionLike = findPrimaryFunctionLikeNode(sourceFile);
+    if (!functionLike) {
+        return new Map();
+    }
+
+    const bindings: KeyBindings = new Map();
+    for (const [index, parameter] of functionLike.parameters.entries()) {
+        if (!ts.isIdentifier(parameter.name)) {
+            continue;
+        }
+        const values: string[] = [];
+        for (const invocation of invocations) {
+            const currentValues = invocation.argValuesByIndex.get(index);
+            if (!currentValues) {
+                continue;
+            }
+            values.push(...currentValues);
+        }
+        addBindingValues(bindings, parameter.name.text, values);
+    }
+
+    return bindings;
+}
+
+function serializeKeyBindings(bindings: KeyBindings): string {
+    const keys = [...bindings.keys()].sort();
+    const serialized = keys.map((key) => {
+        const values = [...(bindings.get(key) ?? [])].sort();
+        return `${key}=${values.join("|")}`;
+    });
+    return serialized.join(";");
+}
+
+function isAssignmentOperator(kind: ts.SyntaxKind): boolean {
+    return (
+        kind === ts.SyntaxKind.EqualsToken ||
+        kind === ts.SyntaxKind.PlusEqualsToken ||
+        kind === ts.SyntaxKind.MinusEqualsToken ||
+        kind === ts.SyntaxKind.AsteriskEqualsToken ||
+        kind === ts.SyntaxKind.AsteriskAsteriskEqualsToken ||
+        kind === ts.SyntaxKind.SlashEqualsToken ||
+        kind === ts.SyntaxKind.PercentEqualsToken ||
+        kind === ts.SyntaxKind.LessThanLessThanEqualsToken ||
+        kind === ts.SyntaxKind.GreaterThanGreaterThanEqualsToken ||
+        kind === ts.SyntaxKind.GreaterThanGreaterThanGreaterThanEqualsToken ||
+        kind === ts.SyntaxKind.AmpersandEqualsToken ||
+        kind === ts.SyntaxKind.BarEqualsToken ||
+        kind === ts.SyntaxKind.CaretEqualsToken ||
+        kind === ts.SyntaxKind.BarBarEqualsToken ||
+        kind === ts.SyntaxKind.AmpersandAmpersandEqualsToken ||
+        kind === ts.SyntaxKind.QuestionQuestionEqualsToken
+    );
+}
+
+function unwrapExpressionNode(node: ts.Node): ts.Node {
+    if (ts.isParenthesizedExpression(node)) {
+        return unwrapExpressionNode(node.expression);
+    }
+    if (ts.isNonNullExpression(node)) {
+        return unwrapExpressionNode(node.expression);
+    }
+    if (ts.isAsExpression(node)) {
+        return unwrapExpressionNode(node.expression);
+    }
+    if (ts.isTypeAssertionExpression(node)) {
+        return unwrapExpressionNode(node.expression);
+    }
+    return node;
+}
+
+function getElementAccessSegment(node: ts.ElementAccessExpression): SessionPathSegment {
+    const argumentExpression = node.argumentExpression;
+    if (!argumentExpression) {
+        return { kind: "dynamic" };
+    }
+    if (ts.isStringLiteral(argumentExpression) || ts.isNoSubstitutionTemplateLiteral(argumentExpression)) {
+        return { kind: "literal", value: argumentExpression.text };
+    }
+    if (ts.isNumericLiteral(argumentExpression)) {
+        return { kind: "literal", value: argumentExpression.text };
+    }
+    if (ts.isIdentifier(argumentExpression)) {
+        return { kind: "identifier", value: argumentExpression.text };
+    }
+    return { kind: "dynamic" };
+}
+
+function getSessionSegments(node: ts.Node): SessionPathSegment[] | null {
+    const segments: SessionPathSegment[] = [];
+    let current: ts.Node = node;
+
+    while (true) {
+        const unwrapped = unwrapExpressionNode(current);
+        if (isReqSessionObjectExpression(unwrapped)) {
+            return segments.reverse();
+        }
+        if (ts.isPropertyAccessExpression(unwrapped)) {
+            segments.push({ kind: "literal", value: unwrapped.name.text });
+            current = unwrapped.expression;
+            continue;
+        }
+        if (ts.isElementAccessExpression(unwrapped)) {
+            segments.push(getElementAccessSegment(unwrapped));
+            current = unwrapped.expression;
+            continue;
+        }
+        return null;
+    }
+}
+
+function normalizeSessionKey(raw: string | undefined): string {
+    const key = sanitizeInlineLabel(raw ?? "");
+    if (!key) {
+        return SESSION_ROOT_KEY;
+    }
+    return key;
+}
+
+function getSessionKeysFromChain(node: ts.Node, resolveIdentifierValues: (name: string) => string[]): string[] {
+    const segments = getSessionSegments(node);
+    if (!segments) {
+        return [];
+    }
+    const firstSegment = segments[0];
+    if (!firstSegment) {
+        return [SESSION_ROOT_KEY];
+    }
+    if (firstSegment.kind === "literal") {
+        return [normalizeSessionKey(firstSegment.value)];
+    }
+    if (firstSegment.kind === "identifier") {
+        const values = resolveIdentifierValues(firstSegment.value).map((value) => normalizeSessionKey(value));
+        if (values.length > 0) {
+            return dedupePreserveOrder(values);
+        }
+        return [SESSION_DYNAMIC_KEY];
+    }
+    return [SESSION_DYNAMIC_KEY];
+}
+
+function isReqSessionObjectExpression(node: ts.Node): boolean {
+    return (
+        ts.isPropertyAccessExpression(node) &&
+        ts.isIdentifier(node.expression) &&
+        node.expression.text === "req" &&
+        node.name.text === "session"
+    );
+}
+
+function isSessionChainExpression(node: ts.Node): boolean {
+    if (isReqSessionObjectExpression(unwrapExpressionNode(node))) {
+        return true;
+    }
+    if (getSessionSegments(node)) {
+        return true;
+    }
+    return false;
+}
+
+function isSessionWriteMethodCall(node: ts.CallExpression): boolean {
+    if (!ts.isPropertyAccessExpression(node.expression)) {
+        return false;
+    }
+    const method = node.expression.name.text;
+    if (!["regenerate", "save", "destroy"].includes(method)) {
+        return false;
+    }
+    return isSessionChainExpression(node.expression.expression);
+}
+
+function isSessionReadNode(node: ts.PropertyAccessExpression | ts.ElementAccessExpression): boolean {
+    const parent = node.parent;
+    if (!parent) {
+        return true;
+    }
+    if (
+        (ts.isPropertyAccessExpression(parent) || ts.isElementAccessExpression(parent)) &&
+        parent.expression === node
+    ) {
+        return false;
+    }
+    if (ts.isBinaryExpression(parent) && parent.left === node && isAssignmentOperator(parent.operatorToken.kind)) {
+        return false;
+    }
+    if (ts.isDeleteExpression(parent) && parent.expression === node) {
+        return false;
+    }
+    if (ts.isCallExpression(parent) && parent.expression === node && isSessionWriteMethodCall(parent)) {
+        return false;
+    }
+    return true;
+}
+
+function detectSessionAccessInText(codeText: string, options?: { keyBindings?: KeyBindings }): SessionAccess {
+    const sourceFile = ts.createSourceFile("analysis.ts", codeText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const localBindings = collectLocalLiteralBindings(sourceFile, options?.keyBindings);
+    const resolveIdentifierValues = (name: string): string[] => {
+        const fromLocal = localBindings.get(name);
+        if (fromLocal && fromLocal.length > 0) {
+            return fromLocal;
+        }
+        const fromContext = options?.keyBindings?.get(name);
+        if (fromContext && fromContext.length > 0) {
+            return fromContext;
+        }
+        return [];
+    };
+    let read = false;
+    let write = false;
+    const readKeys: string[] = [];
+    const writeKeys: string[] = [];
+
+    const addReadKeys = (keys: string[]) => {
+        if (keys.length === 0) {
+            return;
+        }
+        readKeys.push(...keys);
+    };
+    const addWriteKeys = (keys: string[]) => {
+        if (keys.length === 0) {
+            return;
+        }
+        writeKeys.push(...keys);
+    };
+
+    const visit = (node: ts.Node) => {
+        if (ts.isBinaryExpression(node) && isAssignmentOperator(node.operatorToken.kind) && isSessionChainExpression(node.left)) {
+            write = true;
+            addWriteKeys(getSessionKeysFromChain(node.left, resolveIdentifierValues));
+        }
+        if (ts.isDeleteExpression(node) && isSessionChainExpression(node.expression)) {
+            write = true;
+            addWriteKeys(getSessionKeysFromChain(node.expression, resolveIdentifierValues));
+        }
+        if (ts.isCallExpression(node) && isSessionWriteMethodCall(node)) {
+            write = true;
+            if (ts.isPropertyAccessExpression(node.expression)) {
+                addWriteKeys(getSessionKeysFromChain(node.expression.expression, resolveIdentifierValues));
+            } else {
+                addWriteKeys([SESSION_ROOT_KEY]);
+            }
+        }
+        if ((ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) && isSessionChainExpression(node)) {
+            if (isSessionReadNode(node)) {
+                read = true;
+                addReadKeys(getSessionKeysFromChain(node, resolveIdentifierValues));
+            }
+        }
+        ts.forEachChild(node, visit);
+    };
+    visit(sourceFile);
+
+    if (read && readKeys.length === 0) {
+        readKeys.push(SESSION_ROOT_KEY);
+    }
+    if (write && writeKeys.length === 0) {
+        writeKeys.push(SESSION_ROOT_KEY);
+    }
+
+    return {
+        read,
+        write,
+        readKeys: dedupePreserveOrder(readKeys),
+        writeKeys: dedupePreserveOrder(writeKeys),
+    };
+}
+
+function mergeSessionAccess(base: SessionAccess, incoming: SessionAccess): SessionAccess {
+    return {
+        read: base.read || incoming.read,
+        write: base.write || incoming.write,
+        readKeys: dedupePreserveOrder([...base.readKeys, ...incoming.readKeys]),
+        writeKeys: dedupePreserveOrder([...base.writeKeys, ...incoming.writeKeys]),
+    };
+}
+
+async function detectSessionAccessThroughHelpers(params: {
+    handlerText: string;
+    handlerFileAbs: string | null;
+    repoRoot: string;
+}): Promise<SessionAccess> {
+    let found = detectSessionAccessInText(params.handlerText);
+    if (!params.handlerFileAbs) {
+        return found;
+    }
+
+    const maxDepth = 2;
+    const visited = new Set<string>();
+    const queue: Array<{ fileAbs: string; text: string; depth: number; keyBindings: KeyBindings }> = [
+        { fileAbs: params.handlerFileAbs, text: params.handlerText, depth: 0, keyBindings: new Map() },
+    ];
+
+    while (queue.length > 0) {
+        const current = queue.shift();
+        if (!current) {
+            continue;
+        }
+        const currentAccess = detectSessionAccessInText(current.text, { keyBindings: current.keyBindings });
+        found = mergeSessionAccess(found, currentAccess);
+        if (current.depth >= maxDepth) {
+            continue;
+        }
+
+        const currentSource = ts.createSourceFile("current.ts", current.text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+        const currentLocalBindings = collectLocalLiteralBindings(currentSource, current.keyBindings);
+        const resolveIdentifierValues = (name: string): string[] => {
+            const localValues = currentLocalBindings.get(name);
+            if (localValues && localValues.length > 0) {
+                return localValues;
+            }
+            const contextValues = current.keyBindings.get(name);
+            if (contextValues && contextValues.length > 0) {
+                return contextValues;
+            }
+            return [];
+        };
+        const callsByName = collectIdentifierCallInvocations(currentSource, resolveIdentifierValues);
+        const calledNames = [...callsByName.keys()];
+        if (calledNames.length === 0) {
+            continue;
+        }
+
+        const { sourceFile } = await readSourceFile(current.fileAbs);
+        const importMap = getImportMap(sourceFile);
+
+        for (const calledName of calledNames) {
+            const invocations = callsByName.get(calledName) ?? [];
+            const localDecl = findLocalDeclaration(sourceFile, calledName);
+            if (localDecl) {
+                const nextBindings = deriveBindingsForDeclaration(localDecl.getText(sourceFile), invocations);
+                const localKey = `${current.fileAbs}::local::${calledName}::${serializeKeyBindings(nextBindings)}`;
+                if (!visited.has(localKey)) {
+                    visited.add(localKey);
+                    queue.push({
+                        fileAbs: current.fileAbs,
+                        text: localDecl.getText(sourceFile),
+                        depth: current.depth + 1,
+                        keyBindings: nextBindings,
+                    });
+                }
+            }
+
+            const binding = importMap.get(calledName);
+            if (!binding || binding.importedName === "*") {
+                continue;
+            }
+            const importedFileAbs = await resolveImportToFile(current.fileAbs, binding.moduleSpecifier);
+            if (!importedFileAbs) {
+                continue;
+            }
+
+            const resolvedDecl = await resolveExportedDeclaration({
+                fileAbs: importedFileAbs,
+                exportName: binding.importedName,
+                repoRoot: params.repoRoot,
+                visited: new Set<string>(),
+            });
+            if (!resolvedDecl) {
+                continue;
+            }
+
+            const nextBindings = deriveBindingsForDeclaration(resolvedDecl.text, invocations);
+            const importKey = `${resolvedDecl.fileAbs}::import::${binding.importedName}::${serializeKeyBindings(nextBindings)}`;
+            if (visited.has(importKey)) {
+                continue;
+            }
+            visited.add(importKey);
+            queue.push({
+                fileAbs: resolvedDecl.fileAbs,
+                text: resolvedDecl.text,
+                depth: current.depth + 1,
+                keyBindings: nextBindings,
+            });
+        }
+    }
+
+    return found;
+}
+
+async function scanSinksAndExits(params: {
+    handlerText: string;
+    handlerFileAbs: string | null;
+    repoRoot: string;
+}): Promise<{
     sinks: Sink[];
     exits: Exit[];
     redirectTargets: string[];
     renderDiagnostics: RenderDiagnostics;
-} {
+    sessionAccess: SessionAccess;
+}> {
     const sinks: Sink[] = [];
     const exits: Exit[] = [];
 
     for (const rule of SINK_RULES) {
-        if (rule.patterns.some((pattern) => pattern.test(handlerText))) {
+        if (rule.patterns.some((pattern) => pattern.test(params.handlerText))) {
             sinks.push(rule.sink);
         }
     }
     for (const rule of EXIT_RULES) {
-        if (rule.patterns.some((pattern) => pattern.test(handlerText))) {
+        if (rule.patterns.some((pattern) => pattern.test(params.handlerText))) {
             exits.push(rule.exit);
         }
+    }
+    const sessionAccess = await detectSessionAccessThroughHelpers({
+        handlerText: params.handlerText,
+        handlerFileAbs: params.handlerFileAbs,
+        repoRoot: params.repoRoot,
+    });
+    if (sessionAccess.read) {
+        sinks.push(SESSION_READ_SINK);
+    }
+    if (sessionAccess.write) {
+        sinks.push(SESSION_WRITE_SINK);
     }
 
     return {
         sinks,
         exits,
-        redirectTargets: extractRedirectTargets(handlerText),
-        renderDiagnostics: extractRenderDiagnostics(handlerText),
+        redirectTargets: extractRedirectTargets(params.handlerText),
+        renderDiagnostics: extractRenderDiagnostics(params.handlerText),
+        sessionAccess,
     };
 }
 
@@ -720,17 +1253,27 @@ function buildMermaid(params: {
     exits: Exit[];
     redirectTargets: string[];
     renderDiagnostics: RenderDiagnostics;
+    sessionAccess: SessionAccess;
     pathMethodIndex: Map<string, Set<string>>;
 }): string {
     const lines: string[] = ["flowchart TD"];
     const middlewareNodeIds: string[] = [];
     const sinkNodeIds: string[] = [];
+    const sessionReadSinkNodeIds: string[] = [];
+    const sessionWriteSinkNodeIds: string[] = [];
+    const sessionReadKeyNodeIds: string[] = [];
+    const sessionWriteKeyNodeIds: string[] = [];
+    const flashSessionKeyNodeIds: string[] = [];
+    const authSessionKeyNodeIds: string[] = [];
+    const otherSessionKeyNodeIds: string[] = [];
     const exitNodeIds: string[] = [];
     const renderExitNodeIds: string[] = [];
     const redirectExitNodeIds: string[] = [];
     const renderDiagnosticNodeIds: string[] = [];
     const maxNodes = 30;
     const renderDiagnosticItems = [...params.renderDiagnostics.statuses];
+    const sessionReadKeys = dedupePreserveOrder(params.sessionAccess.readKeys);
+    const sessionWriteKeys = dedupePreserveOrder(params.sessionAccess.writeKeys);
 
     lines.push(`subgraph ENTRY_BLOCK["[ENTRY]"]`);
     lines.push("direction TB");
@@ -743,7 +1286,14 @@ function buildMermaid(params: {
         ...params.routeMiddlewares,
     ];
     const reservedNodes =
-        1 + 1 + params.sinks.length + params.exits.length + renderDiagnosticItems.length + (params.redirectTargets.length > 0 ? 1 : 0);
+        1 +
+        1 +
+        params.sinks.length +
+        params.exits.length +
+        renderDiagnosticItems.length +
+        sessionReadKeys.length +
+        sessionWriteKeys.length +
+        (params.redirectTargets.length > 0 ? 1 : 0);
     const middlewareNodeBudget = Math.max(0, maxNodes - reservedNodes);
     let effectiveMiddlewares = [...middlewareChain];
 
@@ -812,7 +1362,15 @@ function buildMermaid(params: {
         for (const [index, sink] of params.sinks.entries()) {
             const nodeId = `SINK${index + 1}`;
             sinkNodeIds.push(nodeId);
-            const sinkLabelRaw = buildRedirectSinkLabel({ sink });
+            let sinkLabelRaw = buildRedirectSinkLabel({ sink });
+            if (sink === SESSION_READ_SINK) {
+                sinkLabelRaw = "Session<br/>(Read)";
+                sessionReadSinkNodeIds.push(nodeId);
+            }
+            if (sink === SESSION_WRITE_SINK) {
+                sinkLabelRaw = "Session<br/>(Write)";
+                sessionWriteSinkNodeIds.push(nodeId);
+            }
             const sinkLabel = sinkLabelRaw.replace(/"/g, "'");
             lines.push(`${nodeId}["${sinkLabel}"]`);
         }
@@ -821,6 +1379,50 @@ function buildMermaid(params: {
             lines.push(`HANDLER --> ${nodeId}`);
         }
     }
+
+    if (sessionReadSinkNodeIds.length > 0 && sessionReadKeys.length > 0) {
+        for (const [index, key] of sessionReadKeys.entries()) {
+            const nodeId = `SINK_READ_KEY${index + 1}`;
+            const keyLabel = formatSessionKeyForDisplay(key).replace(/"/g, "'");
+            sessionReadKeyNodeIds.push(nodeId);
+            const category = classifySessionKey(key);
+            if (category === "flash") {
+                flashSessionKeyNodeIds.push(nodeId);
+            } else if (category === "auth") {
+                authSessionKeyNodeIds.push(nodeId);
+            } else {
+                otherSessionKeyNodeIds.push(nodeId);
+            }
+            lines.push(`${nodeId}["${keyLabel}"]`);
+        }
+        for (const sinkNodeId of sessionReadSinkNodeIds) {
+            for (const keyNodeId of sessionReadKeyNodeIds) {
+                lines.push(`${sinkNodeId} --> ${keyNodeId}`);
+            }
+        }
+    }
+    if (sessionWriteSinkNodeIds.length > 0 && sessionWriteKeys.length > 0) {
+        for (const [index, key] of sessionWriteKeys.entries()) {
+            const nodeId = `SINK_WRITE_KEY${index + 1}`;
+            const keyLabel = formatSessionKeyForDisplay(key).replace(/"/g, "'");
+            sessionWriteKeyNodeIds.push(nodeId);
+            const category = classifySessionKey(key);
+            if (category === "flash") {
+                flashSessionKeyNodeIds.push(nodeId);
+            } else if (category === "auth") {
+                authSessionKeyNodeIds.push(nodeId);
+            } else {
+                otherSessionKeyNodeIds.push(nodeId);
+            }
+            lines.push(`${nodeId}["${keyLabel}"]`);
+        }
+        for (const sinkNodeId of sessionWriteSinkNodeIds) {
+            for (const keyNodeId of sessionWriteKeyNodeIds) {
+                lines.push(`${sinkNodeId} --> ${keyNodeId}`);
+            }
+        }
+    }
+
     if (params.exits.length > 0) {
         lines.push(`subgraph EXITS["[EXITS]"]`);
         lines.push("direction TB");
@@ -833,7 +1435,8 @@ function buildMermaid(params: {
             if (exitKind === "res.redirect()" && params.redirectTargets.length > 0) {
                 redirectExitNodeIds.push(nodeId);
             }
-            lines.push(`${nodeId}["${exitKind}"]`);
+            const exitLabel = exitKind === "res.redirect()" ? "REDIRECT" : exitKind;
+            lines.push(`${nodeId}["${exitLabel}"]`);
         }
         lines.push("end");
         for (const nodeId of exitNodeIds) {
@@ -881,6 +1484,13 @@ function buildMermaid(params: {
     lines.push("classDef middleware font-size:10px,padding:2px,stroke-width:1;");
     lines.push("classDef diagnostics stroke-dasharray: 2 2;");
     lines.push("classDef sink stroke-width:2;");
+    const hasSessionKeyNodes = sessionReadKeyNodeIds.length > 0 || sessionWriteKeyNodeIds.length > 0;
+    if (hasSessionKeyNodes) {
+        lines.push("classDef sessionKey font-size:10px,padding:2px;");
+        lines.push("classDef flash stroke-dasharray: 5 3,stroke-width:1.5;");
+        lines.push("classDef auth stroke-dasharray: 0,stroke-width:1.5;");
+        lines.push("classDef other stroke:#6b7280;");
+    }
     lines.push("classDef exit stroke-dasharray: 4 2;");
 
     if (middlewareNodeIds.length > 0) {
@@ -891,6 +1501,21 @@ function buildMermaid(params: {
     }
     if (sinkNodeIds.length > 0) {
         lines.push(`class ${sinkNodeIds.join(",")} sink;`);
+    }
+    if (hasSessionKeyNodes && sessionReadKeyNodeIds.length > 0) {
+        lines.push(`class ${sessionReadKeyNodeIds.join(",")} sessionKey;`);
+    }
+    if (hasSessionKeyNodes && sessionWriteKeyNodeIds.length > 0) {
+        lines.push(`class ${sessionWriteKeyNodeIds.join(",")} sessionKey;`);
+    }
+    if (hasSessionKeyNodes && flashSessionKeyNodeIds.length > 0) {
+        lines.push(`class ${dedupePreserveOrder(flashSessionKeyNodeIds).join(",")} flash;`);
+    }
+    if (hasSessionKeyNodes && authSessionKeyNodeIds.length > 0) {
+        lines.push(`class ${dedupePreserveOrder(authSessionKeyNodeIds).join(",")} auth;`);
+    }
+    if (hasSessionKeyNodes && otherSessionKeyNodeIds.length > 0) {
+        lines.push(`class ${dedupePreserveOrder(otherSessionKeyNodeIds).join(",")} other;`);
     }
     if (exitNodeIds.length > 0) {
         lines.push(`class ${exitNodeIds.join(",")} exit;`);
@@ -942,6 +1567,365 @@ function buildGlobalMiddlewaresMermaid(globalMiddlewares: string[]): string {
     }
 
     return `${lines.join("\n")}\n`;
+}
+
+type SessionKeyUsage = {
+    key: string;
+    readEndpoints: string[];
+    writeEndpoints: string[];
+};
+
+type SessionUsageGroups = {
+    root: SessionKeyUsage | null;
+    flash: SessionKeyUsage[];
+    auth: SessionKeyUsage[];
+    other: SessionKeyUsage[];
+    all: SessionKeyUsage[];
+};
+
+type DomainSummary = {
+    domain: string;
+    routeFiles: string[];
+    endpointCount: number;
+    endpointIds: string[];
+    sessionReadKeys: string[];
+    sessionWriteKeys: string[];
+    sessionReadKeyLabels: string[];
+    sessionWriteKeyLabels: string[];
+};
+
+function formatSessionKeyForDisplay(key: string): string {
+    if (key === SESSION_ROOT_KEY) {
+        return "session (root)";
+    }
+    if (key === SESSION_DYNAMIC_KEY) {
+        return "session[dynamic]";
+    }
+    return `session.${key}`;
+}
+
+function formatSessionKeyListInline(keys: string[]): string {
+    const deduped = dedupePreserveOrder(keys);
+    if (deduped.length === 0) {
+        return "none";
+    }
+    const sorted = [...deduped].sort((left, right) => {
+        return formatSessionKeyForDisplay(left).localeCompare(formatSessionKeyForDisplay(right));
+    });
+    return sorted.map((key) => formatSessionKeyForDisplay(key)).join(", ");
+}
+
+function isFlashSessionKey(key: string): boolean {
+    return /FlashMessage$/i.test(key);
+}
+
+function classifySessionKey(key: string): "root" | "flash" | "auth" | "other" {
+    if (key === SESSION_ROOT_KEY) {
+        return "root";
+    }
+    if (key === SESSION_DYNAMIC_KEY) {
+        return "other";
+    }
+    if (isFlashSessionKey(key)) {
+        return "flash";
+    }
+    return "auth";
+}
+
+function buildEndpointLabel(endpoint: FlowEndpoint): string {
+    return `${endpoint.method} ${endpoint.path}`;
+}
+
+function buildSessionAccessDetailLabel(kind: "READ" | "WRITE", endpoints: string[]): string {
+    if (endpoints.length === 0) {
+        return `${kind}: 0`;
+    }
+    return `${kind}: ${endpoints.length}<br/>${endpoints.join("<br/>")}`;
+}
+
+function buildSessionAccessSummary(flowEndpoints: FlowEndpoint[]): SessionKeyUsage[] {
+    const byKey = new Map<string, { reads: Set<string>; writes: Set<string> }>();
+
+    for (const endpoint of flowEndpoints) {
+        const endpointLabel = buildEndpointLabel(endpoint);
+        for (const key of endpoint.sessionAccess.readKeys) {
+            const slot = byKey.get(key) ?? { reads: new Set<string>(), writes: new Set<string>() };
+            slot.reads.add(endpointLabel);
+            byKey.set(key, slot);
+        }
+        for (const key of endpoint.sessionAccess.writeKeys) {
+            const slot = byKey.get(key) ?? { reads: new Set<string>(), writes: new Set<string>() };
+            slot.writes.add(endpointLabel);
+            byKey.set(key, slot);
+        }
+    }
+
+    return [...byKey.entries()]
+        .map(([key, access]) => {
+            const readEndpoints = [...access.reads].sort();
+            const writeEndpoints = [...access.writes].sort();
+            return { key, readEndpoints, writeEndpoints };
+        })
+        .sort((left, right) => left.key.localeCompare(right.key));
+}
+
+function groupSessionUsage(summary: SessionKeyUsage[]): SessionUsageGroups {
+    const groups: SessionUsageGroups = {
+        root: null,
+        flash: [],
+        auth: [],
+        other: [],
+        all: summary,
+    };
+    for (const item of summary) {
+        const category = classifySessionKey(item.key);
+        if (category === "root") {
+            groups.root = item;
+            continue;
+        }
+        if (category === "flash") {
+            groups.flash.push(item);
+            continue;
+        }
+        if (category === "auth") {
+            groups.auth.push(item);
+            continue;
+        }
+        groups.other.push(item);
+    }
+    return groups;
+}
+
+function buildSessionAccessMermaid(summary: SessionUsageGroups): string {
+    const lines: string[] = ["flowchart TD"];
+    const sessionKeyNodeIds: string[] = [];
+    const readNodeIds: string[] = [];
+    const writeNodeIds: string[] = [];
+    const flashNodeIds: string[] = [];
+    const authNodeIds: string[] = [];
+    const otherNodeIds: string[] = [];
+    const sessionRootNodeId = "SESSION_ROOT";
+    const rootUsage = summary.root;
+    const rootReadCount = rootUsage?.readEndpoints.length ?? 0;
+    const rootWriteCount = rootUsage?.writeEndpoints.length ?? 0;
+    const rootLabel = "session (root)";
+    const readNodeDefinitions: string[] = [];
+    const writeNodeDefinitions: string[] = [];
+    const rootToKeyEdges: string[] = [];
+    const keyToReadEdges: string[] = [];
+    const keyToWriteEdges: string[] = [];
+    const rootToReadEdges: string[] = [];
+    const rootToWriteEdges: string[] = [];
+
+    lines.push(`subgraph SESSION_ACCESS["[SESSION ACCESS]"]`);
+    lines.push("direction TB");
+    lines.push(`ENTRY["Session Access"]`);
+    lines.push("end");
+
+    lines.push(`subgraph SESSION["[SESSION]"]`);
+    lines.push("direction TB");
+    lines.push(`${sessionRootNodeId}["${rootLabel.replace(/"/g, "'")}"]`);
+    lines.push("end");
+
+    if (rootUsage && rootUsage.readEndpoints.length > 0) {
+        const rootReadNodeId = "SESSION_ROOT_READ";
+        const rootReadLabel = buildSessionAccessDetailLabel("READ", rootUsage.readEndpoints).replace(/"/g, "'");
+        readNodeIds.push(rootReadNodeId);
+        readNodeDefinitions.push(`${rootReadNodeId}["${rootReadLabel}"]`);
+        rootToReadEdges.push(`${sessionRootNodeId} --> ${rootReadNodeId}`);
+    }
+    if (rootUsage && rootUsage.writeEndpoints.length > 0) {
+        const rootWriteNodeId = "SESSION_ROOT_WRITE";
+        const rootWriteLabel = buildSessionAccessDetailLabel("WRITE", rootUsage.writeEndpoints).replace(/"/g, "'");
+        writeNodeIds.push(rootWriteNodeId);
+        writeNodeDefinitions.push(`${rootWriteNodeId}["${rootWriteLabel}"]`);
+        rootToWriteEdges.push(`${sessionRootNodeId} --> ${rootWriteNodeId}`);
+    }
+
+    const keyGroups = [
+        {
+            subgraphId: "SESSION_FLASH_KEYS",
+            title: "[FLASH KEYS]",
+            category: "FLASH" as const,
+            items: summary.flash,
+        },
+        {
+            subgraphId: "SESSION_AUTH_KEYS",
+            title: "[AUTH KEYS]",
+            category: "AUTH" as const,
+            items: summary.auth,
+        },
+        {
+            subgraphId: "SESSION_OTHER_KEYS",
+            title: "[OTHER KEYS]",
+            category: "OTHER" as const,
+            items: summary.other,
+        },
+    ];
+    const totalKeyCount = keyGroups.reduce((acc, group) => acc + group.items.length, 0);
+
+    if (totalKeyCount === 0) {
+        lines.push(`ENTRY --> ${sessionRootNodeId}`);
+        lines.push(...readNodeDefinitions);
+        lines.push(...writeNodeDefinitions);
+        lines.push(...rootToReadEdges);
+        lines.push(...rootToWriteEdges);
+        lines.push("classDef session font-size:10px,padding:2px,stroke-width:1;");
+        lines.push("classDef readBlock stroke-dasharray: 4 2;");
+        lines.push("classDef writeBlock stroke-dasharray: 2 2;");
+        lines.push(`class ${sessionRootNodeId} session;`);
+        if (readNodeIds.length > 0) {
+            lines.push(`class ${readNodeIds.join(",")} readBlock;`);
+        }
+        if (writeNodeIds.length > 0) {
+            lines.push(`class ${writeNodeIds.join(",")} writeBlock;`);
+        }
+        return `${lines.join("\n")}\n`;
+    }
+
+    lines.push(`ENTRY --> ${sessionRootNodeId}`);
+    let keyIndex = 0;
+    for (const group of keyGroups) {
+        if (group.items.length === 0) {
+            continue;
+        }
+        lines.push(`subgraph ${group.subgraphId}["${group.title}"]`);
+        lines.push("direction TB");
+        for (const item of group.items) {
+            keyIndex += 1;
+            const nodeId = `SESSION_KEY${keyIndex}`;
+            const label = `${formatSessionKeyForDisplay(item.key)}`.replace(/"/g, "'");
+            const readNodeId = `SESSION_KEY_READ${keyIndex}`;
+            const writeNodeId = `SESSION_KEY_WRITE${keyIndex}`;
+            sessionKeyNodeIds.push(nodeId);
+            lines.push(`${nodeId}["${label}"]`);
+            rootToKeyEdges.push(`${sessionRootNodeId} --> ${nodeId}`);
+            if (item.readEndpoints.length > 0) {
+                const readLabel = buildSessionAccessDetailLabel("READ", item.readEndpoints).replace(/"/g, "'");
+                readNodeIds.push(readNodeId);
+                readNodeDefinitions.push(`${readNodeId}["${readLabel}"]`);
+                keyToReadEdges.push(`${nodeId} --> ${readNodeId}`);
+            }
+            if (item.writeEndpoints.length > 0) {
+                const writeLabel = buildSessionAccessDetailLabel("WRITE", item.writeEndpoints).replace(/"/g, "'");
+                writeNodeIds.push(writeNodeId);
+                writeNodeDefinitions.push(`${writeNodeId}["${writeLabel}"]`);
+                keyToWriteEdges.push(`${nodeId} --> ${writeNodeId}`);
+            }
+            if (group.category === "FLASH") {
+                flashNodeIds.push(nodeId);
+            } else if (group.category === "AUTH") {
+                authNodeIds.push(nodeId);
+            } else {
+                otherNodeIds.push(nodeId);
+            }
+        }
+        lines.push("end");
+    }
+    lines.push(...readNodeDefinitions);
+    lines.push(...writeNodeDefinitions);
+    lines.push(...rootToReadEdges);
+    lines.push(...rootToWriteEdges);
+    lines.push(...rootToKeyEdges);
+    lines.push(...keyToReadEdges);
+    lines.push(...keyToWriteEdges);
+
+    lines.push("classDef session font-size:10px,padding:2px,stroke-width:1;");
+    lines.push("classDef sessionKey stroke-width:1;");
+    lines.push("classDef readBlock stroke-dasharray: 4 2,fill:#dbeafe,stroke:#1d4ed8,color:#0f172a;");
+    lines.push("classDef writeBlock stroke-dasharray: 2 2,fill:#ffedd5,stroke:#c2410c,color:#0f172a;");
+    lines.push("classDef flash stroke-dasharray: 5 3,stroke-width:1.5;");
+    lines.push("classDef auth stroke-dasharray: 0,stroke-width:1.5;");
+    lines.push("classDef other stroke:#6b7280;");
+    lines.push(`class ${sessionRootNodeId} session;`);
+    if (sessionKeyNodeIds.length > 0) {
+        lines.push(`class ${sessionKeyNodeIds.join(",")} sessionKey;`);
+    }
+    if (readNodeIds.length > 0) {
+        lines.push(`class ${readNodeIds.join(",")} readBlock;`);
+    }
+    if (writeNodeIds.length > 0) {
+        lines.push(`class ${writeNodeIds.join(",")} writeBlock;`);
+    }
+    if (flashNodeIds.length > 0) {
+        lines.push(`class ${flashNodeIds.join(",")} flash;`);
+    }
+    if (authNodeIds.length > 0) {
+        lines.push(`class ${authNodeIds.join(",")} auth;`);
+    }
+    if (otherNodeIds.length > 0) {
+        lines.push(`class ${otherNodeIds.join(",")} other;`);
+    }
+
+    return `${lines.join("\n")}\n`;
+}
+
+function splitSessionKeysByCategory(keys: string[]): {
+    rootKeys: string[];
+    flashKeys: string[];
+    authKeys: string[];
+    otherKeys: string[];
+} {
+    const rootKeys: string[] = [];
+    const flashKeys: string[] = [];
+    const authKeys: string[] = [];
+    const otherKeys: string[] = [];
+
+    for (const key of keys) {
+        const category = classifySessionKey(key);
+        if (category === "root") {
+            rootKeys.push(key);
+            continue;
+        }
+        if (category === "flash") {
+            flashKeys.push(key);
+            continue;
+        }
+        if (category === "auth") {
+            authKeys.push(key);
+            continue;
+        }
+        otherKeys.push(key);
+    }
+
+    return {
+        rootKeys: dedupePreserveOrder(rootKeys),
+        flashKeys: dedupePreserveOrder(flashKeys),
+        authKeys: dedupePreserveOrder(authKeys),
+        otherKeys: dedupePreserveOrder(otherKeys),
+    };
+}
+
+function buildSessionKeyUsagePayload(item: SessionKeyUsage) {
+    return {
+        key: item.key,
+        category: classifySessionKey(item.key),
+        readCount: item.readEndpoints.length,
+        writeCount: item.writeEndpoints.length,
+        readEndpoints: item.readEndpoints,
+        writeEndpoints: item.writeEndpoints,
+    };
+}
+
+function buildSessionEndpointCategoryPayload(endpoint: FlowEndpoint) {
+    const readSplit = splitSessionKeysByCategory(endpoint.sessionAccess.readKeys);
+    const writeSplit = splitSessionKeysByCategory(endpoint.sessionAccess.writeKeys);
+
+    return {
+        id: endpoint.id,
+        method: endpoint.method,
+        path: endpoint.path,
+        readKeys: endpoint.sessionAccess.readKeys,
+        writeKeys: endpoint.sessionAccess.writeKeys,
+        readAuthKeys: readSplit.authKeys,
+        readFlashKeys: readSplit.flashKeys,
+        readOtherKeys: readSplit.otherKeys,
+        readRootKeys: readSplit.rootKeys,
+        writeAuthKeys: writeSplit.authKeys,
+        writeFlashKeys: writeSplit.flashKeys,
+        writeOtherKeys: writeSplit.otherKeys,
+        writeRootKeys: writeSplit.rootKeys,
+    };
 }
 
 function compareMethods(left: string, right: string): number {
@@ -1064,6 +2048,7 @@ async function buildFlowEndpoints(params: {
     for (const endpoint of params.routeExtraction.endpoints) {
         const warnings: string[] = [];
         let handlerFile: string | undefined;
+        let handlerFileAbs: string | null = endpoint.inlineHandlerText ? endpoint.routeFileAbs : null;
         let handlerLine: number | undefined;
         let handlerText = endpoint.inlineHandlerText ?? "";
 
@@ -1093,6 +2078,7 @@ async function buildFlowEndpoints(params: {
                         );
                     } else {
                         handlerFile = resolvedDecl.fileRel;
+                        handlerFileAbs = resolvedDecl.fileAbs;
                         handlerLine = resolvedDecl.line;
                         handlerText = resolvedDecl.text;
                     }
@@ -1100,7 +2086,11 @@ async function buildFlowEndpoints(params: {
             }
         }
 
-        const scanned = scanSinksAndExits(handlerText);
+        const scanned = await scanSinksAndExits({
+            handlerText,
+            handlerFileAbs,
+            repoRoot: params.repoRoot,
+        });
         const mergedSinks = dedupePreserveOrder(scanned.sinks) as Sink[];
         const mergedExits = dedupePreserveOrder(scanned.exits) as Exit[];
         const redirectTargets = dedupePreserveOrder(scanned.redirectTargets);
@@ -1120,6 +2110,12 @@ async function buildFlowEndpoints(params: {
             exits: mergedExits,
             redirectTargets,
             renderDiagnostics: scanned.renderDiagnostics,
+            sessionAccess: {
+                read: scanned.sessionAccess.read,
+                write: scanned.sessionAccess.write,
+                readKeys: dedupePreserveOrder(scanned.sessionAccess.readKeys),
+                writeKeys: dedupePreserveOrder(scanned.sessionAccess.writeKeys),
+            },
             globalMiddlewares: params.appFlowContext.globalMiddlewares,
             warnings,
         });
@@ -1140,20 +2136,6 @@ async function buildFlowEndpoints(params: {
     return flows;
 }
 
-async function readExistingGeneratedAt(flowmapDir: string): Promise<string | null> {
-    const catalogPath = path.join(flowmapDir, "catalog.json");
-    try {
-        const raw = await fs.readFile(catalogPath, "utf8");
-        const parsed = JSON.parse(raw) as { generatedAt?: unknown };
-        if (typeof parsed.generatedAt === "string" && parsed.generatedAt.trim().length > 0) {
-            return parsed.generatedAt;
-        }
-    } catch {
-        return null;
-    }
-    return null;
-}
-
 async function writeFlowmapArtifacts(params: {
     repoRoot: string;
     flowEndpoints: FlowEndpoint[];
@@ -1163,11 +2145,46 @@ async function writeFlowmapArtifacts(params: {
     const flowDir = path.join(flowmapDir, "flows");
     await fs.mkdir(flowmapDir, { recursive: true });
     await fs.mkdir(flowDir, { recursive: true });
-    const generatedAt = (await readExistingGeneratedAt(flowmapDir)) ?? new Date().toISOString();
+
+    const groups = new Map<string, FlowEndpoint[]>();
+    for (const endpoint of params.flowEndpoints) {
+        const section = path.basename(endpoint.routeFile);
+        const items = groups.get(section) ?? [];
+        items.push(endpoint);
+        groups.set(section, items);
+    }
+
+    const domainSummaries: DomainSummary[] = [...groups.entries()]
+        .sort((left, right) => left[0].localeCompare(right[0]))
+        .map(([section, items]) => {
+            const sortedItems = [...items].sort((left, right) => {
+                const byPath = left.path.localeCompare(right.path);
+                if (byPath !== 0) {
+                    return byPath;
+                }
+                return compareMethods(left.method, right.method);
+            });
+            const readKeys = dedupePreserveOrder(sortedItems.flatMap((item) => item.sessionAccess.readKeys)).sort((left, right) =>
+                formatSessionKeyForDisplay(left).localeCompare(formatSessionKeyForDisplay(right))
+            );
+            const writeKeys = dedupePreserveOrder(sortedItems.flatMap((item) => item.sessionAccess.writeKeys)).sort((left, right) =>
+                formatSessionKeyForDisplay(left).localeCompare(formatSessionKeyForDisplay(right))
+            );
+            return {
+                domain: section,
+                routeFiles: dedupePreserveOrder(sortedItems.map((item) => item.routeFile)),
+                endpointCount: sortedItems.length,
+                endpointIds: sortedItems.map((item) => item.id),
+                sessionReadKeys: readKeys,
+                sessionWriteKeys: writeKeys,
+                sessionReadKeyLabels: readKeys.map((key) => formatSessionKeyForDisplay(key)),
+                sessionWriteKeyLabels: writeKeys.map((key) => formatSessionKeyForDisplay(key)),
+            };
+        });
 
     const catalog = {
-        generatedAt,
         project: "my-code-my-kill/server",
+        domains: domainSummaries,
         endpoints: params.flowEndpoints.map((endpoint) => ({
             id: endpoint.id,
             method: endpoint.method,
@@ -1177,6 +2194,7 @@ async function writeFlowmapArtifacts(params: {
             handler: endpoint.handler,
             sinks: endpoint.sinks,
             exits: endpoint.exits,
+            sessionAccess: endpoint.sessionAccess,
             ...(endpoint.redirectTargets.length > 0 ? { redirectTargets: endpoint.redirectTargets } : {}),
             ...(endpoint.renderDiagnostics.statuses.length > 0 ? { renderDiagnostics: endpoint.renderDiagnostics } : {}),
         })),
@@ -1185,6 +2203,21 @@ async function writeFlowmapArtifacts(params: {
     await fs.writeFile(path.join(flowmapDir, "catalog.json"), `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
     const globalMiddlewares = params.flowEndpoints[0]?.globalMiddlewares ?? [];
     await fs.writeFile(path.join(flowmapDir, "global-middlewares.mmd"), buildGlobalMiddlewaresMermaid(globalMiddlewares), "utf8");
+    const sessionSummary = buildSessionAccessSummary(params.flowEndpoints);
+    const sessionGroups = groupSessionUsage(sessionSummary);
+    const sessionCatalog = {
+        project: "my-code-my-kill/server",
+        groups: {
+            root: sessionGroups.root ? buildSessionKeyUsagePayload(sessionGroups.root) : null,
+            flash: sessionGroups.flash.map(buildSessionKeyUsagePayload),
+            auth: sessionGroups.auth.map(buildSessionKeyUsagePayload),
+            other: sessionGroups.other.map(buildSessionKeyUsagePayload),
+        },
+        keys: sessionGroups.all.map(buildSessionKeyUsagePayload),
+        endpoints: params.flowEndpoints.map(buildSessionEndpointCategoryPayload),
+    };
+    await fs.writeFile(path.join(flowmapDir, "session-access.mmd"), buildSessionAccessMermaid(sessionGroups), "utf8");
+    await fs.writeFile(path.join(flowmapDir, "session-access.json"), `${JSON.stringify(sessionCatalog, null, 2)}\n`, "utf8");
     const pathMethodIndex = buildPathMethodIndex(params.flowEndpoints);
 
     const expectedFlowFilenames = new Set<string>();
@@ -1203,6 +2236,7 @@ async function writeFlowmapArtifacts(params: {
             handler: endpoint.handler,
             sinks: endpoint.sinks,
             exits: endpoint.exits,
+            sessionAccess: endpoint.sessionAccess,
             ...(endpoint.redirectTargets.length > 0 ? { redirectTargets: endpoint.redirectTargets } : {}),
             ...(endpoint.renderDiagnostics.statuses.length > 0 ? { renderDiagnostics: endpoint.renderDiagnostics } : {}),
             warnings: endpoint.warnings,
@@ -1218,6 +2252,7 @@ async function writeFlowmapArtifacts(params: {
             exits: endpoint.exits,
             redirectTargets: endpoint.redirectTargets,
             renderDiagnostics: endpoint.renderDiagnostics,
+            sessionAccess: endpoint.sessionAccess,
             pathMethodIndex,
         });
 
@@ -1225,22 +2260,16 @@ async function writeFlowmapArtifacts(params: {
         await fs.writeFile(flowMmdPath, mermaidSource, "utf8");
     }
 
-    const groups = new Map<string, FlowEndpoint[]>();
-    for (const endpoint of params.flowEndpoints) {
-        const section = path.basename(endpoint.routeFile);
-        const items = groups.get(section) ?? [];
-        items.push(endpoint);
-        groups.set(section, items);
-    }
-
     const indexLines: string[] = [];
-    indexLines.push("# Flowmap Index");
+    indexLines.push("# Flowmap");
     indexLines.push("");
-    indexLines.push(`Generated at: ${catalog.generatedAt}`);
+    indexLines.push("Flowmap은 서버 엔드포인트 중심으로 요청 흐름을 빠르게 파악하기 위한 문서입니다.");
+    indexLines.push("각 문서는 Entry -> Middleware -> Handler -> Sink/Exit 순서로 유스케이스 단위 흐름을 요약합니다.");
     indexLines.push("");
     indexLines.push("## Shared");
     indexLines.push("");
     indexLines.push("- [Global Middlewares](global-middlewares.mmd)");
+    indexLines.push("- [Session Access](session-access.mmd)");
     indexLines.push("");
 
     for (const section of [...groups.keys()].sort()) {
@@ -1254,6 +2283,11 @@ async function writeFlowmapArtifacts(params: {
             }
             return compareMethods(left.method, right.method);
         });
+        const sectionReadKeys = items.flatMap((item) => item.sessionAccess.readKeys);
+        const sectionWriteKeys = items.flatMap((item) => item.sessionAccess.writeKeys);
+        indexLines.push(`- Session Read Keys: ${formatSessionKeyListInline(sectionReadKeys)}`);
+        indexLines.push(`- Session Write Keys: ${formatSessionKeyListInline(sectionWriteKeys)}`);
+        indexLines.push("");
         for (const item of items) {
             const sinksLabel = item.sinks.length > 0 ? item.sinks.join(", ") : "none";
             indexLines.push(`- [${item.method} ${item.path}](flows/${item.id}.mmd) — sinks: ${sinksLabel}`);
@@ -1261,11 +2295,18 @@ async function writeFlowmapArtifacts(params: {
         indexLines.push("");
     }
 
-    await fs.writeFile(path.join(flowmapDir, "index.md"), `${indexLines.join("\n").trimEnd()}\n`, "utf8");
+    await fs.writeFile(path.join(flowmapDir, "README.md"), `${indexLines.join("\n").trimEnd()}\n`, "utf8");
 
     // 생성 산출물 디렉토리는 "정의된 파일만" 유지합니다.
-    // Finder/iCloud 충돌 복사본(e.g. `flows 2`, `index 2.md`)도 여기서 정리합니다.
-    const expectedTopLevelEntries = new Set(["catalog.json", "index.md", "global-middlewares.mmd", "flows"]);
+    // Finder/iCloud 충돌 복사본(e.g. `flows 2`, `README 2.md`)도 여기서 정리합니다.
+    const expectedTopLevelEntries = new Set([
+        "catalog.json",
+        "README.md",
+        "global-middlewares.mmd",
+        "session-access.mmd",
+        "session-access.json",
+        "flows",
+    ]);
     const topLevelEntries = await fs.readdir(flowmapDir, { withFileTypes: true });
     for (const entry of topLevelEntries) {
         if (expectedTopLevelEntries.has(entry.name)) {
