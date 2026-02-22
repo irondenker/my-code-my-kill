@@ -129,6 +129,10 @@ function dedupePreserveOrder(values: string[]): string[] {
     return output;
 }
 
+function parseTypeScriptSource(fileName: string, text: string): ts.SourceFile {
+    return ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+}
+
 async function pathExists(filePath: string): Promise<boolean> {
     try {
         await fs.access(filePath);
@@ -161,7 +165,7 @@ async function readSourceFile(fileAbs: string): Promise<SourceCacheEntry> {
         return cached;
     }
     const text = await fs.readFile(fileAbs, "utf8");
-    const sourceFile = ts.createSourceFile(fileAbs, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const sourceFile = parseTypeScriptSource(fileAbs, text);
     const entry = { text, sourceFile };
     sourceCache.set(fileAbs, entry);
     return entry;
@@ -519,8 +523,7 @@ function formatRedirectTargetExpression(expression: ts.Expression, sourceFile: t
     return sanitizeInlineLabel(expression.getText(sourceFile));
 }
 
-function extractRedirectTargets(handlerText: string): string[] {
-    const sourceFile = ts.createSourceFile("handler.ts", handlerText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+function extractRedirectTargetsFromSourceFile(sourceFile: ts.SourceFile): string[] {
     const targets: string[] = [];
 
     const visit = (node: ts.Node) => {
@@ -543,8 +546,7 @@ function extractRedirectTargets(handlerText: string): string[] {
     return dedupePreserveOrder(targets);
 }
 
-function extractRenderDiagnostics(handlerText: string): RenderDiagnostics {
-    const sourceFile = ts.createSourceFile("handler.ts", handlerText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+function extractRenderDiagnosticsFromSourceFile(sourceFile: ts.SourceFile): RenderDiagnostics {
     const statuses: string[] = [];
 
     const visit = (node: ts.Node) => {
@@ -687,7 +689,7 @@ function deriveBindingsForDeclaration(declarationText: string, invocations: Call
     if (invocations.length === 0) {
         return new Map();
     }
-    const sourceFile = ts.createSourceFile("decl.ts", declarationText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const sourceFile = parseTypeScriptSource("decl.ts", declarationText);
     const functionLike = findPrimaryFunctionLikeNode(sourceFile);
     if (!functionLike) {
         return new Map();
@@ -881,8 +883,7 @@ function isSessionReadNode(node: ts.PropertyAccessExpression | ts.ElementAccessE
     return true;
 }
 
-function detectSessionAccessInText(codeText: string, options?: { keyBindings?: KeyBindings }): SessionAccess {
-    const sourceFile = ts.createSourceFile("analysis.ts", codeText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+function detectSessionAccessInSourceFile(sourceFile: ts.SourceFile, options?: { keyBindings?: KeyBindings }): SessionAccess {
     const localBindings = collectLocalLiteralBindings(sourceFile, options?.keyBindings);
     const resolveIdentifierValues = (name: string): string[] => {
         const fromLocal = localBindings.get(name);
@@ -965,19 +966,24 @@ function mergeSessionAccess(base: SessionAccess, incoming: SessionAccess): Sessi
 }
 
 async function detectSessionAccessThroughHelpers(params: {
-    handlerText: string;
     handlerFileAbs: string | null;
     repoRoot: string;
+    handlerSourceFile: ts.SourceFile;
 }): Promise<SessionAccess> {
-    let found = detectSessionAccessInText(params.handlerText);
     if (!params.handlerFileAbs) {
-        return found;
+        return detectSessionAccessInSourceFile(params.handlerSourceFile);
     }
+    let found: SessionAccess = { read: false, write: false, readKeys: [], writeKeys: [] };
 
     const maxDepth = 2;
     const visited = new Set<string>();
-    const queue: Array<{ fileAbs: string; text: string; depth: number; keyBindings: KeyBindings }> = [
-        { fileAbs: params.handlerFileAbs, text: params.handlerText, depth: 0, keyBindings: new Map() },
+    const queue: Array<{ fileAbs: string; sourceFile: ts.SourceFile; depth: number; keyBindings: KeyBindings }> = [
+        {
+            fileAbs: params.handlerFileAbs,
+            sourceFile: params.handlerSourceFile,
+            depth: 0,
+            keyBindings: new Map(),
+        },
     ];
 
     while (queue.length > 0) {
@@ -985,14 +991,13 @@ async function detectSessionAccessThroughHelpers(params: {
         if (!current) {
             continue;
         }
-        const currentAccess = detectSessionAccessInText(current.text, { keyBindings: current.keyBindings });
+        const currentAccess = detectSessionAccessInSourceFile(current.sourceFile, { keyBindings: current.keyBindings });
         found = mergeSessionAccess(found, currentAccess);
         if (current.depth >= maxDepth) {
             continue;
         }
 
-        const currentSource = ts.createSourceFile("current.ts", current.text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-        const currentLocalBindings = collectLocalLiteralBindings(currentSource, current.keyBindings);
+        const currentLocalBindings = collectLocalLiteralBindings(current.sourceFile, current.keyBindings);
         const resolveIdentifierValues = (name: string): string[] => {
             const localValues = currentLocalBindings.get(name);
             if (localValues && localValues.length > 0) {
@@ -1004,7 +1009,7 @@ async function detectSessionAccessThroughHelpers(params: {
             }
             return [];
         };
-        const callsByName = collectIdentifierCallInvocations(currentSource, resolveIdentifierValues);
+        const callsByName = collectIdentifierCallInvocations(current.sourceFile, resolveIdentifierValues);
         const calledNames = [...callsByName.keys()];
         if (calledNames.length === 0) {
             continue;
@@ -1017,13 +1022,14 @@ async function detectSessionAccessThroughHelpers(params: {
             const invocations = callsByName.get(calledName) ?? [];
             const localDecl = findLocalDeclaration(sourceFile, calledName);
             if (localDecl) {
-                const nextBindings = deriveBindingsForDeclaration(localDecl.getText(sourceFile), invocations);
+                const localDeclText = localDecl.getText(sourceFile);
+                const nextBindings = deriveBindingsForDeclaration(localDeclText, invocations);
                 const localKey = `${current.fileAbs}::local::${calledName}::${serializeKeyBindings(nextBindings)}`;
                 if (!visited.has(localKey)) {
                     visited.add(localKey);
                     queue.push({
                         fileAbs: current.fileAbs,
-                        text: localDecl.getText(sourceFile),
+                        sourceFile: parseTypeScriptSource("decl-local.ts", localDeclText),
                         depth: current.depth + 1,
                         keyBindings: nextBindings,
                     });
@@ -1057,7 +1063,7 @@ async function detectSessionAccessThroughHelpers(params: {
             visited.add(importKey);
             queue.push({
                 fileAbs: resolvedDecl.fileAbs,
-                text: resolvedDecl.text,
+                sourceFile: parseTypeScriptSource("decl-import.ts", resolvedDecl.text),
                 depth: current.depth + 1,
                 keyBindings: nextBindings,
             });
@@ -1080,6 +1086,9 @@ async function scanSinksAndExits(params: {
 }> {
     const sinks: Sink[] = [];
     const exits: Exit[] = [];
+    const handlerSource = parseTypeScriptSource("handler.ts", params.handlerText);
+    const redirectTargets = extractRedirectTargetsFromSourceFile(handlerSource);
+    const renderDiagnostics = extractRenderDiagnosticsFromSourceFile(handlerSource);
 
     for (const rule of SINK_RULES) {
         if (rule.patterns.some((pattern) => pattern.test(params.handlerText))) {
@@ -1092,9 +1101,9 @@ async function scanSinksAndExits(params: {
         }
     }
     const sessionAccess = await detectSessionAccessThroughHelpers({
-        handlerText: params.handlerText,
         handlerFileAbs: params.handlerFileAbs,
         repoRoot: params.repoRoot,
+        handlerSourceFile: handlerSource,
     });
     if (sessionAccess.read) {
         sinks.push(SESSION_READ_SINK);
@@ -1106,8 +1115,8 @@ async function scanSinksAndExits(params: {
     return {
         sinks,
         exits,
-        redirectTargets: extractRedirectTargets(params.handlerText),
-        renderDiagnostics: extractRenderDiagnostics(params.handlerText),
+        redirectTargets,
+        renderDiagnostics,
         sessionAccess,
     };
 }
