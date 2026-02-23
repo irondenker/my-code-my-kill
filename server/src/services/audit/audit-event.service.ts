@@ -1,5 +1,6 @@
 import { summarizeErrorMessage } from "../../utils/http/error-summary.util.js";
 import {
+    buildAccountLockedAuditLogWriteParams,
     buildAccountStatusChangedAuditLogWriteParams,
     buildAdminPageAccessAttemptAuditLogWriteParams,
     buildAdminRoleChangedAuditLogWriteParams,
@@ -8,6 +9,8 @@ import {
     buildLoginFailedAuditLogWriteParams,
     buildLoginSuccessAuditLogWriteParams,
     buildLogoutSuccessAuditLogWriteParams,
+    buildPasswordResetCompletedAuditLogWriteParams,
+    buildPasswordResetRequestedAuditLogWriteParams,
 } from "../../utils/audit/audit-event-mapper.util.js";
 import { writeAuditLog, writeAuditLogSafely } from "./audit-write.service.js";
 
@@ -80,4 +83,16 @@ export async function logAccountStatusChangedSafely(params: Parameters<typeof bu
  */
 export async function logAdminRoleChangedSafely(params: Parameters<typeof buildAdminRoleChangedAuditLogWriteParams>[0]): Promise<void> {
     await writeAuditLogSafely(buildAdminRoleChangedAuditLogWriteParams(params));
+}
+
+export async function logAccountLockedSafely(params: Parameters<typeof buildAccountLockedAuditLogWriteParams>[0]): Promise<void> {
+    await writeAuditLogSafely(buildAccountLockedAuditLogWriteParams(params));
+}
+
+export async function logPasswordResetRequestedSafely(params: Parameters<typeof buildPasswordResetRequestedAuditLogWriteParams>[0]): Promise<void> {
+    await writeAuditLogSafely(buildPasswordResetRequestedAuditLogWriteParams(params));
+}
+
+export async function logPasswordResetCompletedSafely(params: Parameters<typeof buildPasswordResetCompletedAuditLogWriteParams>[0]): Promise<void> {
+    await writeAuditLogSafely(buildPasswordResetCompletedAuditLogWriteParams(params));
 }

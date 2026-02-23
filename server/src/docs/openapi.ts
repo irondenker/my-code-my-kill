@@ -1,6 +1,8 @@
 import {
+    forgotPasswordRequestBodyOpenApiSchema,
     loginRequestBodyOpenApiSchema,
     optionalCsrfFormRequestBodyOpenApiSchema,
+    resetPasswordRequestBodyOpenApiSchema,
     registerRequestBodyOpenApiSchema,
 } from "../schemas/auth.schema.js";
 import {
@@ -182,6 +184,63 @@ export const openApiDocument = {
                 },
                 responses: {
                     302: { $ref: "#/components/responses/Redirect" },
+                },
+            },
+        },
+        "/forgot-password": {
+            get: {
+                tags: ["Auth"],
+                summary: "Forgot-password page",
+                responses: { 200: { $ref: "#/components/responses/HtmlOk" } },
+            },
+            post: {
+                tags: ["Auth"],
+                summary: "Request password reset token",
+                requestBody: {
+                    required: true,
+                    content: {
+                        "application/x-www-form-urlencoded": {
+                            schema: forgotPasswordRequestBodyOpenApiSchema,
+                        },
+                    },
+                },
+                responses: {
+                    200: { $ref: "#/components/responses/HtmlOk" },
+                },
+            },
+        },
+        "/reset-password": {
+            get: {
+                tags: ["Auth"],
+                summary: "Reset-password page",
+                parameters: [
+                    {
+                        name: "token",
+                        in: "query",
+                        required: false,
+                        schema: { type: "string" },
+                    },
+                ],
+                responses: {
+                    200: { $ref: "#/components/responses/HtmlOk" },
+                    400: { $ref: "#/components/responses/HtmlOk" },
+                },
+            },
+            post: {
+                tags: ["Auth"],
+                summary: "Complete password reset",
+                requestBody: {
+                    required: true,
+                    content: {
+                        "application/x-www-form-urlencoded": {
+                            schema: resetPasswordRequestBodyOpenApiSchema,
+                        },
+                    },
+                },
+                responses: {
+                    200: { $ref: "#/components/responses/HtmlOk" },
+                    400: { $ref: "#/components/responses/HtmlOk" },
+                    422: { $ref: "#/components/responses/HtmlOk" },
                 },
             },
         },

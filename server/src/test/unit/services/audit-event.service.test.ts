@@ -125,6 +125,36 @@ if (mode === "login-failed") {
         ipAddress: "127.0.0.1",
         userAgent: "ua",
     });
+} else if (mode === "account-locked") {
+    await auditEvent.logAccountLockedSafely({
+        targetUserId: 21,
+        targetUsername: "bob",
+        failedCount: 5,
+        lockMinutes: 10,
+        ipAddress: "127.0.0.1",
+        userAgent: "ua",
+    });
+} else if (mode === "password-reset-requested") {
+    await auditEvent.logPasswordResetRequestedSafely({
+        targetUserId: 21,
+        targetUsername: "bob",
+        requestedUsername: "bob",
+        issued: true,
+        pseudoVerifyEnabled: true,
+        pseudoVerified: true,
+        tokenExpiresAt: new Date("2026-02-23T12:00:00.000Z"),
+        devResetToken: "raw-token",
+        ipAddress: "127.0.0.1",
+        userAgent: "ua",
+    });
+} else if (mode === "password-reset-completed") {
+    await auditEvent.logPasswordResetCompletedSafely({
+        targetUserId: 21,
+        targetUsername: "bob",
+        result: "success",
+        ipAddress: "127.0.0.1",
+        userAgent: "ua",
+    });
 } else {
     throw new Error("Unknown mode: " + mode);
 }
@@ -182,10 +212,22 @@ test("audit event wrapper maps admin access/authz/csrf payloads", async () => {
 test("audit event wrapper maps account status and admin role payloads", async () => {
     const accountStatus = await runAuditEventProbe("account-status");
     const adminRole = await runAuditEventProbe("admin-role");
+    const accountLocked = await runAuditEventProbe("account-locked");
+    const passwordResetRequested = await runAuditEventProbe("password-reset-requested");
+    const passwordResetCompleted = await runAuditEventProbe("password-reset-completed");
 
     assert.equal(accountStatus.calls[0]?.action, "ACCOUNT_DEACTIVATED");
     assert.equal(accountStatus.calls[0]?.targetUserId, 21);
 
     assert.equal(adminRole.calls[0]?.action, "ADMIN_GRANTED");
     assert.equal(adminRole.calls[0]?.targetUserId, 21);
+
+    assert.equal(accountLocked.calls[0]?.action, "ACCOUNT_LOCKED");
+    assert.equal(accountLocked.calls[0]?.details.failedCount, 5);
+
+    assert.equal(passwordResetRequested.calls[0]?.action, "PASSWORD_RESET_REQUESTED");
+    assert.equal(passwordResetRequested.calls[0]?.details.issued, true);
+
+    assert.equal(passwordResetCompleted.calls[0]?.action, "PASSWORD_RESET_COMPLETED");
+    assert.equal(passwordResetCompleted.calls[0]?.details.result, "success");
 });

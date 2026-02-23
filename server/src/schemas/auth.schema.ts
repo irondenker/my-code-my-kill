@@ -62,6 +62,42 @@ export const registerRequestBodyOpenApiSchema: OpenApiObjectSchema = {
     },
 };
 
+export const forgotPasswordFormSchema = z.object({
+    username: z.preprocess((value) => normalizeString(value), z.string().min(1)),
+    email: z.preprocess((value) => normalizeString(value, null) ?? undefined, z.string().optional()),
+    phoneNumber: z.preprocess((value) => normalizeString(value, null) ?? undefined, z.string().optional()),
+    _csrf: z.preprocess((value) => normalizeString(value, null) ?? undefined, z.string().optional()),
+});
+
+export const forgotPasswordRequestBodyOpenApiSchema: OpenApiObjectSchema = {
+    type: "object",
+    required: ["username"],
+    properties: {
+        username: { type: "string" },
+        email: { type: "string" },
+        phoneNumber: { type: "string" },
+        _csrf: { type: "string" },
+    },
+};
+
+export const resetPasswordFormSchema = z.object({
+    token: z.preprocess((value) => normalizeString(value), z.string().min(1)),
+    password: z.preprocess((value) => (typeof value === "string" ? value : ""), z.string().min(1)),
+    confirmPassword: z.preprocess((value) => (typeof value === "string" ? value : ""), z.string().min(1)),
+    _csrf: z.preprocess((value) => normalizeString(value, null) ?? undefined, z.string().optional()),
+});
+
+export const resetPasswordRequestBodyOpenApiSchema: OpenApiObjectSchema = {
+    type: "object",
+    required: ["token", "password", "confirmPassword"],
+    properties: {
+        token: { type: "string" },
+        password: { type: "string" },
+        confirmPassword: { type: "string" },
+        _csrf: { type: "string" },
+    },
+};
+
 export const optionalCsrfFormRequestBodyOpenApiSchema: Omit<OpenApiObjectSchema, "required"> & {
     required?: string[];
 } = {
@@ -83,4 +119,12 @@ export function parseLoginForm(input: unknown) {
  */
 export function parseRegisterForm(input: unknown) {
     return registerFormSchema.safeParse(input);
+}
+
+export function parseForgotPasswordForm(input: unknown) {
+    return forgotPasswordFormSchema.safeParse(input);
+}
+
+export function parseResetPasswordForm(input: unknown) {
+    return resetPasswordFormSchema.safeParse(input);
 }

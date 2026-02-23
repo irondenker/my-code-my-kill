@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+    buildAccountLockedAuditLogWriteParams,
     buildAccountStatusChangedAuditLogWriteParams,
     buildAdminPageAccessAttemptAuditLogWriteParams,
     buildAdminRoleChangedAuditLogWriteParams,
@@ -9,6 +10,8 @@ import {
     buildLoginFailedAuditLogWriteParams,
     buildLoginSuccessAuditLogWriteParams,
     buildLogoutSuccessAuditLogWriteParams,
+    buildPasswordResetCompletedAuditLogWriteParams,
+    buildPasswordResetRequestedAuditLogWriteParams,
 } from "../../../../utils/audit/audit-event-mapper.util.js";
 
 test("buildLoginFailedAuditLogWriteParams maps action/details", () => {
@@ -18,6 +21,9 @@ test("buildLoginFailedAuditLogWriteParams maps action/details", () => {
         targetUsername: "alice",
         attemptedUsername: "alice",
         reason: "invalid_credentials",
+        failedCount: 3,
+        passwordResetRequired: false,
+        lockedUntil: null,
         ipAddress: "127.0.0.1",
         userAgent: "UA",
     });
@@ -27,6 +33,8 @@ test("buildLoginFailedAuditLogWriteParams maps action/details", () => {
         loginResult: "failure",
         reason: "invalid_credentials",
         attemptedUsername: "alice",
+        failedCount: 3,
+        passwordResetRequired: false,
     });
 });
 
@@ -155,5 +163,66 @@ test("buildAdminRoleChangedAuditLogWriteParams maps action/details", () => {
     assert.deepEqual(payload.details, {
         previousRole: "user",
         currentRole: "admin",
+    });
+});
+
+test("buildAccountLockedAuditLogWriteParams maps action/details", () => {
+    const payload = buildAccountLockedAuditLogWriteParams({
+        targetUserId: 2,
+        targetUsername: "bob",
+        failedCount: 5,
+        lockMinutes: 10,
+        ipAddress: "127.0.0.1",
+        userAgent: "UA",
+    });
+
+    assert.equal(payload.action, "ACCOUNT_LOCKED");
+    assert.deepEqual(payload.details, {
+        failedCount: 5,
+        lockMinutes: 10,
+        passwordResetRequired: true,
+    });
+});
+
+test("buildPasswordResetRequestedAuditLogWriteParams maps action/details", () => {
+    const payload = buildPasswordResetRequestedAuditLogWriteParams({
+        targetUserId: 2,
+        targetUsername: "bob",
+        requestedUsername: "bob",
+        issued: true,
+        pseudoVerifyEnabled: true,
+        pseudoVerified: true,
+        tokenExpiresAt: new Date("2026-02-23T12:00:00.000Z"),
+        devResetToken: "token-raw",
+        ipAddress: "127.0.0.1",
+        userAgent: "UA",
+    });
+
+    assert.equal(payload.action, "PASSWORD_RESET_REQUESTED");
+    assert.equal(payload.targetUserId, 2);
+    assert.deepEqual(payload.details, {
+        requestedUsername: "bob",
+        issued: true,
+        pseudoVerifyEnabled: true,
+        pseudoVerified: true,
+        tokenExpiresAt: "2026-02-23T12:00:00.000Z",
+        devResetToken: "token-raw",
+    });
+});
+
+test("buildPasswordResetCompletedAuditLogWriteParams maps action/details", () => {
+    const payload = buildPasswordResetCompletedAuditLogWriteParams({
+        targetUserId: 2,
+        targetUsername: "bob",
+        result: "success",
+        ipAddress: "127.0.0.1",
+        userAgent: "UA",
+    });
+
+    assert.equal(payload.action, "PASSWORD_RESET_COMPLETED");
+    assert.equal(payload.actorUserId, 2);
+    assert.equal(payload.targetUserId, 2);
+    assert.deepEqual(payload.details, {
+        result: "success",
     });
 });

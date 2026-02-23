@@ -9,4 +9,9 @@
 export {
     findUserByUsername,
     createUserForRegister,
+    recordLoginFailureAndRequirePasswordReset,
+    resetLoginFailureState,
+    savePasswordResetToken,
+    findValidPasswordResetTokenOwner,
+    completePasswordResetByTokenHash,
 } from "./auth/auth-account.service.js";

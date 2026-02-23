@@ -34,3 +34,61 @@ export async function createUserForRegister(params: {
     }
     return normalImplementation.createUserForRegister(params);
 }
+
+export type LoginDefenseState = {
+    loginFailedCount: number;
+    loginLockedUntil: Date | null;
+    passwordResetRequired: boolean;
+};
+
+export type PasswordResetTokenOwner = {
+    userId: number;
+    username: string;
+};
+
+export async function recordLoginFailureAndRequirePasswordReset(params: {
+    userId: number;
+    maxFailures: number;
+    useLoginLockUntil: boolean;
+    lockMinutes: number;
+}): Promise<LoginDefenseState> {
+    if (isSqlInjectionTargetEnabled("authLookup")) {
+        return labImplementation.recordLoginFailureAndRequirePasswordReset(params);
+    }
+    return normalImplementation.recordLoginFailureAndRequirePasswordReset(params);
+}
+
+export async function resetLoginFailureState(userId: number): Promise<void> {
+    if (isSqlInjectionTargetEnabled("authLookup")) {
+        return labImplementation.resetLoginFailureState(userId);
+    }
+    return normalImplementation.resetLoginFailureState(userId);
+}
+
+export async function savePasswordResetToken(params: {
+    userId: number;
+    tokenHash: string;
+    expiresAt: Date;
+}): Promise<void> {
+    if (isSqlInjectionTargetEnabled("authLookup")) {
+        return labImplementation.savePasswordResetToken(params);
+    }
+    return normalImplementation.savePasswordResetToken(params);
+}
+
+export async function findValidPasswordResetTokenOwner(tokenHash: string): Promise<PasswordResetTokenOwner | null> {
+    if (isSqlInjectionTargetEnabled("authLookup")) {
+        return labImplementation.findValidPasswordResetTokenOwner(tokenHash);
+    }
+    return normalImplementation.findValidPasswordResetTokenOwner(tokenHash);
+}
+
+export async function completePasswordResetByTokenHash(params: {
+    tokenHash: string;
+    passwordHash: string;
+}): Promise<PasswordResetTokenOwner | null> {
+    if (isSqlInjectionTargetEnabled("authLookup")) {
+        return labImplementation.completePasswordResetByTokenHash(params);
+    }
+    return normalImplementation.completePasswordResetByTokenHash(params);
+}

@@ -1,4 +1,4 @@
-<main class="form-signin w-100 m-auto">
+﻿<main class="form-signin w-100 m-auto">
     <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 link-body-emphasis text-decoration-none">
         <svg class="bi mb-3" width="72" height="72" aria-hidden="true" aria-label="Logo" role="img">
             <use xlink:href="/assets/icons/logo.svg#logo"></use>
@@ -9,7 +9,7 @@
         <% if (nextPath) { %>
         <input type="hidden" name="next" value="<%= nextPath %>">
         <% } %>
-        <h1 class="h3 mb-3 fw-normal">로그인</h1>
+        <h1 class="h3 mb-3 fw-normal">Sign in</h1>
         <% if (formError) { %>
         <div class="alert alert-danger py-2" role="alert"><%= formError %></div>
         <% } %>
@@ -24,17 +24,20 @@
         <div class="form-check text-start my-3">
             <input class="form-check-input" type="checkbox" value="remember-me" id="checkDefault" />
             <label class="form-check-label" for="checkDefault">
-                Username 기억
+                Remember username
             </label>
         </div>
         <button class="btn btn-primary w-100 py-2" type="submit">
-            로그인
+            Sign in
         </button>
         <hr class="my-4" />
         <div>
             <p class="fs-6 mb-3">
-                처음 방문이신가요?
-                <a href="/register"> 회원가입</a>
+                New here?
+                <a href="/register">Create account</a>
+            </p>
+            <p class="fs-6 mb-3">
+                <a href="/forgot-password">Forgot password?</a>
             </p>
         </div>
         <p class="mt-5 mb-3 text-body-secondary">&copy; 2025-2026. Irondenker&trade; All rights reserved.</p>

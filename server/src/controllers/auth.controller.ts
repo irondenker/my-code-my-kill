@@ -10,3 +10,9 @@ export { getLoginPage, getRegisterPage } from "./auth/auth-pages.controller.js";
 export { postRegister } from "./auth/auth-register.controller.js";
 export { postLogin } from "./auth/auth-login.controller.js";
 export { postLogout } from "./auth/auth-logout.controller.js";
+export {
+    getForgotPasswordPage,
+    postForgotPassword,
+    getResetPasswordPage,
+    postResetPassword,
+} from "./auth/auth-password-reset.controller.js";

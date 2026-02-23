@@ -16,4 +16,7 @@ export {
     logCsrfInvalidSafely,
     logAccountStatusChangedSafely,
     logAdminRoleChangedSafely,
+    logAccountLockedSafely,
+    logPasswordResetRequestedSafely,
+    logPasswordResetCompletedSafely,
 } from "./audit/audit-event.service.js";

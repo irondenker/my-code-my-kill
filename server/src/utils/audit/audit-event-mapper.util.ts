@@ -16,18 +16,33 @@ export function buildLoginFailedAuditLogWriteParams(params: AuditRequestMetaFiel
     targetUsername: string | null;
     attemptedUsername: string | null;
     reason: LoginFailedReason;
+    failedCount?: number | null;
+    passwordResetRequired?: boolean | null;
+    lockedUntil?: Date | null;
 }): AuditLogWriteParams {
+    const details: Record<string, unknown> = {
+        loginResult: "failure",
+        reason: params.reason,
+        attemptedUsername: params.attemptedUsername,
+    };
+
+    if (typeof params.failedCount === "number") {
+        details.failedCount = params.failedCount;
+    }
+    if (typeof params.passwordResetRequired === "boolean") {
+        details.passwordResetRequired = params.passwordResetRequired;
+    }
+    if (params.lockedUntil instanceof Date) {
+        details.lockedUntil = params.lockedUntil.toISOString();
+    }
+
     return {
         action: "LOGIN_FAILED",
         actorUserId: null,
         actorUsername: params.actorUsername,
         targetUserId: params.targetUserId,
         targetUsername: params.targetUsername,
-        details: {
-            loginResult: "failure",
-            reason: params.reason,
-            attemptedUsername: params.attemptedUsername,
-        },
+        details,
         ipAddress: params.ipAddress,
         userAgent: params.userAgent,
     };
@@ -191,6 +206,82 @@ export function buildAdminRoleChangedAuditLogWriteParams(params: AuditRequestMet
         details: {
             previousRole: params.previousRole,
             currentRole: params.currentRole,
+        },
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+    };
+}
+
+export function buildAccountLockedAuditLogWriteParams(params: AuditRequestMetaFields & {
+    targetUserId: number;
+    targetUsername: string;
+    failedCount: number;
+    lockMinutes: number | null;
+}): AuditLogWriteParams {
+    return {
+        action: "ACCOUNT_LOCKED",
+        actorUserId: null,
+        actorUsername: params.targetUsername,
+        targetUserId: params.targetUserId,
+        targetUsername: params.targetUsername,
+        details: {
+            failedCount: params.failedCount,
+            lockMinutes: params.lockMinutes,
+            passwordResetRequired: true,
+        },
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+    };
+}
+
+export function buildPasswordResetRequestedAuditLogWriteParams(params: AuditRequestMetaFields & {
+    targetUserId: number | null;
+    targetUsername: string | null;
+    requestedUsername: string;
+    issued: boolean;
+    pseudoVerifyEnabled: boolean;
+    pseudoVerified: boolean | null;
+    tokenExpiresAt: Date | null;
+    devResetToken: string | null;
+}): AuditLogWriteParams {
+    const details: Record<string, unknown> = {
+        requestedUsername: params.requestedUsername,
+        issued: params.issued,
+        pseudoVerifyEnabled: params.pseudoVerifyEnabled,
+        pseudoVerified: params.pseudoVerified,
+    };
+    if (params.tokenExpiresAt instanceof Date) {
+        details.tokenExpiresAt = params.tokenExpiresAt.toISOString();
+    }
+    if (typeof params.devResetToken === "string" && params.devResetToken.length > 0) {
+        details.devResetToken = params.devResetToken;
+    }
+
+    return {
+        action: "PASSWORD_RESET_REQUESTED",
+        actorUserId: null,
+        actorUsername: params.requestedUsername,
+        targetUserId: params.targetUserId,
+        targetUsername: params.targetUsername,
+        details,
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+    };
+}
+
+export function buildPasswordResetCompletedAuditLogWriteParams(params: AuditRequestMetaFields & {
+    targetUserId: number;
+    targetUsername: string;
+    result: "success";
+}): AuditLogWriteParams {
+    return {
+        action: "PASSWORD_RESET_COMPLETED",
+        actorUserId: params.targetUserId,
+        actorUsername: params.targetUsername,
+        targetUserId: params.targetUserId,
+        targetUsername: params.targetUsername,
+        details: {
+            result: params.result,
         },
         ipAddress: params.ipAddress,
         userAgent: params.userAgent,
