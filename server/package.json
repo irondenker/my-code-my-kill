@@ -34,7 +34,7 @@
     "fix:openapi-drift": "node --import tsx src/scripts/sync-openapi-endpoints.ts",
     "check:openapi-drift": "node --import tsx src/scripts/check-openapi-drift.ts",
     "flowmap:gen": "node --import tsx src/scripts/generate-flowmap.ts",
-    "flowmap:check": "npm run flowmap:gen && cd .. && git diff --exit-code docs/flowmap && test -z \"$(git ls-files --others --exclude-standard docs/flowmap)\"",
+    "flowmap:check": "node --import tsx src/scripts/check-flowmap-drift.ts",
     "start": "node dist/server.js",
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",

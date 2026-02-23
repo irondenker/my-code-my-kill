@@ -16,8 +16,13 @@ if [ "${USE_DOCKER_HOOKS:-0}" = "1" ]; then
         exit 1
     fi
     docker compose -f "${COMPOSE_FILE}" exec -T server npm run test
+    docker compose -f "${COMPOSE_FILE}" exec -T server npm run flowmap:gen
+    git add docs/flowmap
     exit 0
 fi
 
 cd server
 npm run test
+npm run flowmap:gen
+cd ..
+git add docs/flowmap
