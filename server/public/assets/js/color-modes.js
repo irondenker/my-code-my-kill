@@ -7,7 +7,11 @@
 (() => {
   'use strict'
 
-  const getStoredTheme = () => localStorage.getItem('theme')
+  const isValidTheme = theme => theme === 'light' || theme === 'dark' || theme === 'auto'
+  const getStoredTheme = () => {
+    const storedTheme = localStorage.getItem('theme')
+    return isValidTheme(storedTheme) ? storedTheme : null
+  }
   const setStoredTheme = theme => localStorage.setItem('theme', theme)
 
   const getPreferredTheme = () => {
@@ -39,6 +43,9 @@
     const themeSwitcherText = document.querySelector('#bd-theme-text')
     const activeThemeIcon = document.querySelector('.theme-icon-active use')
     const btnToActive = document.querySelector(`[data-bs-theme-value="${theme}"]`)
+    if (!themeSwitcherText || !activeThemeIcon || !btnToActive) {
+      return
+    }
     const svgOfActiveBtn = btnToActive.querySelector('svg use').getAttribute('href')
 
     document.querySelectorAll('[data-bs-theme-value]').forEach(element => {
