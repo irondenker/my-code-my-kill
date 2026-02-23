@@ -36,6 +36,20 @@ if (runDbTests) {
     });
 }
 
+function getAttachmentUploadRejectionExpectation(): RegExp | null {
+    const { extensionCheck, mimeCheck, magicNumberCheck } = getLabOptions().uploadValidation;
+    if (!extensionCheck && !mimeCheck && !magicNumberCheck) {
+        return null;
+    }
+    if (mimeCheck) {
+        return /Unsupported attachment type\./;
+    }
+    if (extensionCheck) {
+        return /Unsupported attachment extension\./;
+    }
+    return /Unsupported attachment type\./;
+}
+
 test("article edit/delete routes enforce ownership and status branches", { skip: skipReason }, async () => {
     const ownerUsername = makeId("mut-owner").slice(0, 32);
     const ownerPassword = "mut-owner-pass-123";
@@ -326,8 +340,7 @@ test("article controller returns 404 for missing board or missing post edit targ
 });
 
 test("article create/edit return 422 when upload validation throws ArticleUploadError", { skip: skipReason }, async () => {
-    const { extensionCheck, mimeCheck, magicNumberCheck } = getLabOptions().uploadValidation;
-    const uploadValidationEnabled = extensionCheck || mimeCheck || magicNumberCheck;
+    const expectedUploadErrorPattern = getAttachmentUploadRejectionExpectation();
     const username = makeId("article-upload-err").slice(0, 32);
     const password = "article-upload-err-pass-123";
     const boardSlug = makeId("upload-err-board").replace(/[^a-z0-9-]/g, "").toLowerCase().slice(0, 24);
@@ -389,9 +402,9 @@ test("article create/edit return 422 when upload validation throws ArticleUpload
                 redirect: "manual",
             });
             const createBody = await createResponse.text();
-            if (uploadValidationEnabled) {
+            if (expectedUploadErrorPattern) {
                 assert.equal(createResponse.status, 422);
-                assert.match(createBody, /Unsupported attachment (type|extension)\./);
+                assert.match(createBody, expectedUploadErrorPattern);
             } else {
                 assert.equal(createResponse.status, 302);
             }
@@ -416,9 +429,9 @@ test("article create/edit return 422 when upload validation throws ArticleUpload
                 redirect: "manual",
             });
             const editBody = await editResponse.text();
-            if (uploadValidationEnabled) {
+            if (expectedUploadErrorPattern) {
                 assert.equal(editResponse.status, 422);
-                assert.match(editBody, /Unsupported attachment (type|extension)\./);
+                assert.match(editBody, expectedUploadErrorPattern);
             } else {
                 assert.equal(editResponse.status, 302);
             }

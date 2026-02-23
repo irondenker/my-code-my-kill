@@ -115,7 +115,13 @@ export async function postAvatarUpload(req: Request, res: Response, next: NextFu
     const image = sharp(file.buffer, {
         limitInputPixels: AVATAR_IMAGE_MAX_DIMENSION * AVATAR_IMAGE_MAX_DIMENSION,
     });
-    const metadata = await image.metadata();
+
+    let metadata: Awaited<ReturnType<typeof image.metadata>>;
+    try {
+        metadata = await image.metadata();
+    } catch {
+        return renderAvatarError(req, res, next, 422, "Invalid image data.");
+    }
 
     const width = metadata.width ?? 0;
     const height = metadata.height ?? 0;

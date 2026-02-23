@@ -43,18 +43,40 @@ function makeUpload(overrides: Partial<Express.Multer.File>): Express.Multer.Fil
     };
 }
 
-test("storeArticleImage rejects unsupported mimetype", async () => {
+test("storeArticleImage enforces mimetype rule only when mimeCheck is enabled", async () => {
+    const { mimeCheck } = getLabOptions().uploadValidation;
+    const pngBuffer = await sharp({
+        create: {
+            width: 24,
+            height: 24,
+            channels: 3,
+            background: { r: 80, g: 120, b: 160 },
+        },
+    })
+        .png()
+        .toBuffer();
+
     const file = makeUpload({
-        originalname: "avatar.txt",
+        originalname: "avatar.png",
         mimetype: "text/plain",
-        buffer: Buffer.from("not-an-image"),
-        size: 12,
+        buffer: pngBuffer,
+        size: pngBuffer.length,
     });
 
-    await assert.rejects(
-        async () => storeArticleImage(file),
-        /Invalid image data|Unsupported image type\./
-    );
+    if (mimeCheck) {
+        await assert.rejects(
+            async () => storeArticleImage(file),
+            /Unsupported image type\./
+        );
+        return;
+    }
+
+    const filename = await storeArticleImage(file);
+    createdImageFiles.add(filename);
+    assert.match(filename, /^article-image-.*\.webp$/);
+
+    await deleteStoredArticleImage(filename);
+    createdImageFiles.delete(filename);
 });
 
 test("storeArticleImage stores webp output and deleteStoredArticleImage removes it", async () => {

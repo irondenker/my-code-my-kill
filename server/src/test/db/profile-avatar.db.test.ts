@@ -172,7 +172,6 @@ test("avatar controller rejects unsupported mime and supports upload/delete flow
 });
 
 test("avatar controller validates missing file, magic number, file size, and image dimensions", { skip: skipReason }, async () => {
-    const { magicNumberCheck } = getLabOptions().uploadValidation;
     const username = makeId("avatar-valid").slice(0, 32);
     const password = "avatar-valid-pass-123";
     let userId: number | null = null;
@@ -223,10 +222,8 @@ test("avatar controller validates missing file, magic number, file size, and ima
                 redirect: "manual",
             });
             const invalidMagicBody = await invalidMagicResponse.text();
-            if (magicNumberCheck) {
-                assert.equal(invalidMagicResponse.status, 422);
-                assert.match(invalidMagicBody, /Invalid image data\./);
-            }
+            assert.equal(invalidMagicResponse.status, 422);
+            assert.match(invalidMagicBody, /Invalid image data\./);
 
             const tooLargePage = await fetchFormPage({
                 baseUrl,
