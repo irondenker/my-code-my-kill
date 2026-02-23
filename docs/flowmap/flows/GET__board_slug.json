@@ -7,7 +7,7 @@
   "handler": {
     "name": "getBoardBySlug",
     "file": "server/src/controllers/board.controller.ts",
-    "line": 121
+    "line": 135
   },
   "sinks": [
     "req.session.read()",

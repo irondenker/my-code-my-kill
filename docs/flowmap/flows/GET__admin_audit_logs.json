@@ -9,7 +9,7 @@
   "handler": {
     "name": "getAuditLogsPage",
     "file": "server/src/controllers/audit.controller.ts",
-    "line": 8
+    "line": 9
   },
   "sinks": [],
   "exits": [

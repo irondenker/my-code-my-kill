@@ -494,7 +494,7 @@
       "handler": {
         "name": "getAuditLogsPage",
         "file": "server/src/controllers/audit.controller.ts",
-        "line": 8
+        "line": 9
       },
       "sinks": [],
       "exits": [
@@ -672,7 +672,7 @@
       "handler": {
         "name": "getBoardIndex",
         "file": "server/src/controllers/board.controller.ts",
-        "line": 102
+        "line": 116
       },
       "sinks": [
         "req.session.read()"
@@ -699,7 +699,7 @@
       "handler": {
         "name": "getBoardBySlug",
         "file": "server/src/controllers/board.controller.ts",
-        "line": 121
+        "line": 135
       },
       "sinks": [
         "req.session.read()",
