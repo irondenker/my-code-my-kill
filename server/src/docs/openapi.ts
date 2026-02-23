@@ -204,6 +204,16 @@ export const openApiDocument = {
                         required: false,
                         schema: { type: "integer", minimum: 1, default: 1 },
                     },
+                    {
+                        name: "limit",
+                        in: "query",
+                        required: false,
+                        schema: {
+                            type: "integer",
+                            enum: [10, 20, 30, 40, 50, 100],
+                            default: 10,
+                        },
+                    },
                 ],
                 responses: {
                     200: { $ref: "#/components/responses/HtmlOk" },

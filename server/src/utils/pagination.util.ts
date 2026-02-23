@@ -13,3 +13,29 @@ export function computeTotalPages(totalCount: number, limit: number): number {
     const totalPages = Math.max(Math.ceil(totalCount / normalizedLimit), 1);
     return totalPages;
 }
+
+/**
+ * 양의 정수 쿼리값을 정규화합니다.
+ * 숫자가 아니거나 1 미만이면 fallback을 반환합니다.
+ */
+export function parsePositiveInt(rawValue: unknown, fallback: number): number {
+    const value = Number(rawValue);
+    return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
+}
+
+/**
+ * 허용 옵션 기반 limit 값을 정규화합니다.
+ * - 숫자가 아니거나 1 미만이면 defaultLimit
+ * - maxLimit 초과면 maxLimit으로 보정
+ * - allowedOptions에 없는 값이면 defaultLimit
+ */
+export function normalizeLimitByOptions(params: {
+    rawValue: unknown;
+    defaultLimit: number;
+    maxLimit: number;
+    allowedOptions: readonly number[];
+}): number {
+    const parsed = parsePositiveInt(params.rawValue, params.defaultLimit);
+    const clamped = Math.min(parsed, params.maxLimit);
+    return params.allowedOptions.includes(clamped) ? clamped : params.defaultLimit;
+}

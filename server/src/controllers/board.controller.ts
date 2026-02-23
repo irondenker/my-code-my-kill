@@ -12,8 +12,16 @@ import {
     countArticlesBySlug,
     listArticleOutlinesBySlug,
 } from "../services/article.service.js";
-import { computeTotalPages } from "../utils/pagination.util.js";
-import { PAGINATION_DEFAULT_LIMIT } from "../constants/board.constants.js";
+import {
+    computeTotalPages,
+    normalizeLimitByOptions,
+    parsePositiveInt,
+} from "../utils/pagination.util.js";
+import {
+    PAGINATION_DEFAULT_LIMIT,
+    PAGINATION_LIMIT_OPTIONS,
+    PAGINATION_MAX_LIMIT,
+} from "../constants/board.constants.js";
 import { getStringParamOrThrow } from "../utils/http/route-param.util.js";
 import { consumeSessionFlashMessage } from "../utils/session/session-flash.util.js";
 
@@ -26,12 +34,18 @@ import { consumeSessionFlashMessage } from "../utils/session/session-flash.util.
  */
 
 /**
- * 양의 정수를 파싱합니다.
- * 숫자가 아니거나 1 미만이면 fallback을 반환합니다.
+ * 페이지당 조회 개수(limit)를 허용 옵션 내 정수로 정규화합니다.
+ * - 숫자가 아니거나 1 미만이면 기본값(10)
+ * - 최대값(100) 초과면 최대값으로 보정
+ * - 허용 옵션(10/20/30/40/50/100) 외 값이면 기본값으로 보정
  */
-function parsePositiveInt(rawValue: unknown, fallback: number): number {
-    const value = Number(rawValue);
-    return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
+function parsePageLimit(rawValue: unknown): number {
+    return normalizeLimitByOptions({
+        rawValue,
+        defaultLimit: PAGINATION_DEFAULT_LIMIT,
+        maxLimit: PAGINATION_MAX_LIMIT,
+        allowedOptions: PAGINATION_LIMIT_OPTIONS,
+    });
 }
 
 /**
@@ -134,12 +148,11 @@ export async function getBoardBySlug(req: Request, res: Response) {
 
     // 2) 페이지네이션 파라미터를 정규화하고, 목록 상단에 노출할 플래시 메시지를 소비합니다.
     const page = parsePositiveInt(req.query.page, 1);
+    const limit = parsePageLimit(req.query.limit);
     const formSuccess = consumeSessionFlashMessage(req, "boardFlashMessage");
 
     // 3) 전체 개수 -> 페이지 메타 계산 -> 현재 페이지 오프셋 계산 순서로 목록을 조회합니다.
     const totalCount = await countArticlesBySlug(slug);
-    const limit = PAGINATION_DEFAULT_LIMIT;
-
     const totalPages = computeTotalPages(totalCount, limit);
     const offset = (page - 1) * limit;
 
@@ -172,6 +185,7 @@ export async function getBoardBySlug(req: Request, res: Response) {
             totalPages,
             totalCount,
             limit,
+            limitOptions: [...PAGINATION_LIMIT_OPTIONS],
         },
     });
 }

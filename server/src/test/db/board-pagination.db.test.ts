@@ -126,3 +126,102 @@ test("board list pagination normalizes invalid page and renders page slices", { 
         }
     }
 });
+
+test("board list pagination supports limit selector and normalizes invalid limit", { skip: skipReason }, async () => {
+    const username = makeId("limit-user").slice(0, 32);
+    const password = "limit-user-pass-123";
+    const boardSlug = makeId("limit-board").replace(/[^a-z0-9-]/g, "").toLowerCase().slice(0, 24);
+
+    let userId: number | null = null;
+    let boardId: number | null = null;
+
+    try {
+        const user = await createUserForRegister({
+            username,
+            passwordHash: hashPassword(password),
+        });
+        userId = user.userId;
+
+        const board = await createBoard({
+            slug: boardSlug,
+            name: "Limit Board",
+            description: "board-limit-db-test",
+            readAccess: "public",
+            createAccess: "auth",
+        });
+        boardId = board.boardId;
+
+        for (let i = 1; i <= 12; i += 1) {
+            await createArticle({
+                boardId: board.boardId,
+                userId: user.userId,
+                title: `LIMIT_POST_${i}`,
+                content: `LIMIT_CONTENT_${i}`,
+            });
+        }
+
+        await withTestServer(async (baseUrl) => {
+            const authCookie = await loginAs({
+                baseUrl,
+                username,
+                password,
+                nextPath: `/board/${boardSlug}`,
+            });
+
+            const defaultLimit = await fetch(`${baseUrl}/board/${boardSlug}`, {
+                headers: { cookie: authCookie },
+            });
+            const defaultLimitBody = await defaultLimit.text();
+            assert.equal(defaultLimit.status, 200);
+            assert.match(defaultLimitBody, /name="limit"/);
+            assert.match(defaultLimitBody, /option value="10" selected/);
+            assert.match(defaultLimitBody, /option value="20"/);
+            assert.match(defaultLimitBody, /option value="30"/);
+            assert.match(defaultLimitBody, /option value="40"/);
+            assert.match(defaultLimitBody, /option value="50"/);
+            assert.match(defaultLimitBody, /option value="100"/);
+            assert.match(defaultLimitBody, /Showing\s+1\s+to\s+10\s+of\s+12 Posts/);
+            assert.match(defaultLimitBody, /href="\?page=2"/);
+
+            const selectedLimit = await fetch(`${baseUrl}/board/${boardSlug}?limit=20`, {
+                headers: { cookie: authCookie },
+            });
+            const selectedLimitBody = await selectedLimit.text();
+            assert.equal(selectedLimit.status, 200);
+            assert.match(selectedLimitBody, /option value="20" selected/);
+            assert.match(selectedLimitBody, /Showing\s+1\s+to\s+12\s+of\s+12 Posts/);
+            assert.match(selectedLimitBody, /href="\?page=2&limit=20"/);
+
+            const maxSelectedLimit = await fetch(`${baseUrl}/board/${boardSlug}?limit=100`, {
+                headers: { cookie: authCookie },
+            });
+            const maxSelectedLimitBody = await maxSelectedLimit.text();
+            assert.equal(maxSelectedLimit.status, 200);
+            assert.match(maxSelectedLimitBody, /option value="100" selected/);
+            assert.match(maxSelectedLimitBody, /href="\?page=2&limit=100"/);
+
+            const invalidLimit = await fetch(`${baseUrl}/board/${boardSlug}?limit=abc`, {
+                headers: { cookie: authCookie },
+            });
+            const invalidLimitBody = await invalidLimit.text();
+            assert.equal(invalidLimit.status, 200);
+            assert.match(invalidLimitBody, /option value="10" selected/);
+
+            const oversizedLimit = await fetch(`${baseUrl}/board/${boardSlug}?limit=9999`, {
+                headers: { cookie: authCookie },
+            });
+            const oversizedLimitBody = await oversizedLimit.text();
+            assert.equal(oversizedLimit.status, 200);
+            assert.match(oversizedLimitBody, /option value="100" selected/);
+        });
+    } finally {
+        if (boardId !== null) {
+            await cleanupBoard(boardId);
+        }
+        if (userId !== null) {
+            await cleanupUserById(userId);
+        } else {
+            await cleanupUserByUsername(username);
+        }
+    }
+});
