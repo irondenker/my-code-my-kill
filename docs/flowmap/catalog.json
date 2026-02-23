@@ -71,13 +71,17 @@
       "routeFiles": [
         "server/src/routes/auth.routes.ts"
       ],
-      "endpointCount": 5,
+      "endpointCount": 9,
       "endpointIds": [
+        "GET__forgot_password",
+        "POST__forgot_password",
         "GET__login",
         "POST__login",
         "POST__logout",
         "GET__register",
-        "POST__register"
+        "POST__register",
+        "GET__reset_password",
+        "POST__reset_password"
       ],
       "sessionReadKeys": [
         "userId",
@@ -508,6 +512,46 @@
       }
     },
     {
+      "id": "GET__forgot_password",
+      "method": "GET",
+      "path": "/forgot-password",
+      "routeFile": "server/src/routes/auth.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "getForgotPasswordPage",
+        "file": "server/src/controllers/auth/auth-password-reset.controller.ts",
+        "line": 99
+      },
+      "sinks": [],
+      "exits": [],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      }
+    },
+    {
+      "id": "POST__forgot_password",
+      "method": "POST",
+      "path": "/forgot-password",
+      "routeFile": "server/src/routes/auth.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "postForgotPassword",
+        "file": "server/src/controllers/auth/auth-password-reset.controller.ts",
+        "line": 103
+      },
+      "sinks": [],
+      "exits": [],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      }
+    },
+    {
       "id": "GET__login",
       "method": "GET",
       "path": "/login",
@@ -536,7 +580,7 @@
       "handler": {
         "name": "postLogin",
         "file": "server/src/controllers/auth/auth-login.controller.ts",
-        "line": 28
+        "line": 47
       },
       "sinks": [
         "req.session.write()"
@@ -563,7 +607,6 @@
       "renderDiagnostics": {
         "statuses": [
           "400",
-          "401",
           "403"
         ]
       }
@@ -660,6 +703,63 @@
           "400",
           "422",
           "409"
+        ]
+      }
+    },
+    {
+      "id": "GET__reset_password",
+      "method": "GET",
+      "path": "/reset-password",
+      "routeFile": "server/src/routes/auth.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "getResetPasswordPage",
+        "file": "server/src/controllers/auth/auth-password-reset.controller.ts",
+        "line": 187
+      },
+      "sinks": [],
+      "exits": [
+        "res.render()"
+      ],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      },
+      "renderDiagnostics": {
+        "statuses": [
+          "404",
+          "400"
+        ]
+      }
+    },
+    {
+      "id": "POST__reset_password",
+      "method": "POST",
+      "path": "/reset-password",
+      "routeFile": "server/src/routes/auth.routes.ts",
+      "middlewares": [],
+      "handler": {
+        "name": "postResetPassword",
+        "file": "server/src/controllers/auth/auth-password-reset.controller.ts",
+        "line": 218
+      },
+      "sinks": [],
+      "exits": [
+        "res.render()"
+      ],
+      "sessionAccess": {
+        "read": false,
+        "write": false,
+        "readKeys": [],
+        "writeKeys": []
+      },
+      "renderDiagnostics": {
+        "statuses": [
+          "404",
+          "400",
+          "422"
         ]
       }
     },

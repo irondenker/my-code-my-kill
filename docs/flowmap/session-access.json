@@ -489,6 +489,36 @@
       "writeRootKeys": []
     },
     {
+      "id": "GET__forgot_password",
+      "method": "GET",
+      "path": "/forgot-password",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__forgot_password",
+      "method": "POST",
+      "path": "/forgot-password",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
       "id": "GET__login",
       "method": "GET",
       "path": "/login",
@@ -600,6 +630,36 @@
       "writeRootKeys": [
         "<session>"
       ]
+    },
+    {
+      "id": "GET__reset_password",
+      "method": "GET",
+      "path": "/reset-password",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
+    },
+    {
+      "id": "POST__reset_password",
+      "method": "POST",
+      "path": "/reset-password",
+      "readKeys": [],
+      "writeKeys": [],
+      "readAuthKeys": [],
+      "readFlashKeys": [],
+      "readOtherKeys": [],
+      "readRootKeys": [],
+      "writeAuthKeys": [],
+      "writeFlashKeys": [],
+      "writeOtherKeys": [],
+      "writeRootKeys": []
     },
     {
       "id": "GET__board",

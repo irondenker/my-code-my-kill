@@ -32,11 +32,15 @@ Flowmap은 서버 엔드포인트 중심으로 요청 흐름을 빠르게 파악
 
 ## auth.routes.ts
 
+- [GET /forgot-password](flows/GET__forgot_password.mmd)
+- [POST /forgot-password](flows/POST__forgot_password.mmd)
 - [GET /login](flows/GET__login.mmd)
 - [POST /login](flows/POST__login.mmd)
 - [POST /logout](flows/POST__logout.mmd)
 - [GET /register](flows/GET__register.mmd)
 - [POST /register](flows/POST__register.mmd)
+- [GET /reset-password](flows/GET__reset_password.mmd)
+- [POST /reset-password](flows/POST__reset_password.mmd)
 
 ## board.routes.ts
 

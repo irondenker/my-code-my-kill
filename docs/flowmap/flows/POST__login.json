@@ -7,7 +7,7 @@
   "handler": {
     "name": "postLogin",
     "file": "server/src/controllers/auth/auth-login.controller.ts",
-    "line": 28
+    "line": 47
   },
   "sinks": [
     "req.session.write()"
@@ -34,7 +34,6 @@
   "renderDiagnostics": {
     "statuses": [
       "400",
-      "401",
       "403"
     ]
   },
