@@ -1,102 +1,85 @@
-# 세션 라이프사이클 정리
+﻿# 세션 라이프사이클
 
-현재 코드 기준으로 로그인 세션이 생성/재생성/파기되는 흐름을 정리한 문서입니다.
+MCMK는 실서비스가 아닌 학습/실습용 프로젝트이다. 따라서 세션과 계정 보호 흐름은 실무 보안 원리를 따르되, 외부 인증 채널 없이도 재현 가능한 흐름으로 설계된 구조이다.
 
-## 1) 세션 기본 설정
+## 범위
 
-코드 위치: `server/src/middlewares/session.middleware.ts`
+이 문서는 다음 흐름의 세션 관점 동작을 설명한다.
 
-- 쿠키 이름: `SESSION_COOKIE_NAME` (`server/src/constants/session.constants.ts`)
-- 저장소: `express-session` 기본 `MemoryStore`
-- 주요 옵션
-  - `resave: false`
-  - `saveUninitialized: false`
-  - `cookie.httpOnly: true`
-  - `cookie.sameSite: "lax"`
-  - `cookie.maxAge: 1000 * 60 * 30` (30분)
-  - `cookie.secure: production에서 "auto", 그 외 false`
+- 회원가입/로그인/로그아웃
+- 로그인 방어(`password_reset_required`, 실패 누적)
+- 비밀번호 재설정(`/forgot-password`, `/reset-password`)
 
-운영(`NODE_ENV=production`)에서는 `SESSION_SECRET`이 없으면 서버가 부팅되지 않습니다.
+## 세션 기본 설정
 
-## 2) 세션에 저장되는 인증 정보
+코드 위치는 `server/src/middlewares/session.middleware.ts`이다.
 
-로그인 성공 시 아래 값이 세션에 저장됩니다.
+- 쿠키 이름은 `SESSION_COOKIE_NAME`이다.
+- 저장소는 기본 `MemoryStore`이다.
+- 운영(`NODE_ENV=production`)에서는 `SESSION_SECRET`이 필수이다.
+
+## 로그인 성공 시 세션 생성
+
+코드 위치는 `server/src/controllers/auth/auth-login.controller.ts`이다.
+
+1. 사용자 검증을 수행한다.
+2. `establishAuthSession`으로 세션 ID를 재생성하고 인증 필드를 저장한다.
+3. `LOGIN` 감사로그를 기록한다.
+4. 안전한 `next` 경로로 리다이렉트한다.
+
+세션에 기록되는 인증 필드는 다음과 같다.
 
 - `userId`
 - `userRole`
 - `username`
 - `profileImageUrl`
 
-코드 위치:
+## 로그인 실패 방어와 세션
 
-- `server/src/utils/auth-session.util.ts`
-- `server/src/types/express-session.d.ts`
+로그인 실패는 세션을 생성하지 않는다. 방어 토글이 켜져 있을 때는 계정 상태만 변경한다.
 
-## 3) 생성/재생성/저장/파기 흐름
+- 실패 누적 시 `login_failed_count`를 증가시킨다.
+- 임계치 도달 시 `password_reset_required=true`로 전환한다.
+- 옵션이 켜져 있으면 `login_locked_until`을 설정한다.
+- `password_reset_required=true` 계정은 로그인 성공 세션을 만들지 않는다.
 
-### 회원가입 성공
+## 로그아웃 시 세션 파기
 
-코드 위치: `server/src/controllers/auth/auth-register.controller.ts` (`postRegister`)
+코드 위치는 `server/src/controllers/auth/auth-logout.controller.ts`이다.
 
-1. 계정 생성
-2. `regenerateSession(req)`로 세션 ID 재발급
-3. 인증 필드 세션에 기록
-4. `saveSession(req)`로 저장
-5. `/board`로 리다이렉트
+1. 로그아웃 감사로그를 기록한다.
+2. `clearAuthSession(req)`로 서버 세션을 파기한다.
+3. `res.clearCookie(SESSION_COOKIE_NAME)`로 쿠키를 정리한다.
+4. 루트(`/`)로 리다이렉트한다.
 
-### 로그인 성공
+## 비밀번호 재설정 플로우와 세션
 
-코드 위치: `server/src/controllers/auth/auth-login.controller.ts` (`postLogin`)
+재설정 플로우는 비로그인 상태에서도 동작한다.
 
-1. 사용자 검증(비밀번호/활성 상태 포함)
-2. `regenerateSession(req)`로 세션 ID 재발급
-3. 인증 필드 세션에 기록
-4. `saveSession(req)`로 저장
-5. 안전한 `next` 경로로 리다이렉트
+- `GET /forgot-password`: 요청 화면 렌더링이다.
+- `POST /forgot-password`: 항상 동일 접수 문구를 응답한다.
+- `GET /reset-password`: 토큰 유효성 확인 후 화면 렌더링이다.
+- `POST /reset-password`: 비밀번호 갱신과 보안 상태 초기화 처리이다.
 
-### 로그아웃
+재설정 성공 시 계정 상태는 다음으로 정리된다.
 
-코드 위치: `server/src/controllers/auth/auth-logout.controller.ts` (`postLogout`)
+- `password_reset_required=false`
+- `login_failed_count=0`
+- `login_locked_until=NULL`
+- 토큰 해시/만료는 무효화
 
-1. 필요 메타를 캡처해 감사로그 기록
-2. `clearAuthSession(req)`로 서버 세션 파기
-3. `res.clearCookie(SESSION_COOKIE_NAME)`로 쿠키 제거
-4. `/`로 리다이렉트
+재설정 성공 직후에도 자동 로그인 세션을 만들지 않는 것이 기준이다. 사용자는 새 비밀번호로 다시 로그인한다.
 
-## 4) 세션 유틸
+## 관련 코드
 
-코드 위치:
+- `server/src/utils/session/auth-session.util.ts`
+- `server/src/utils/session/session.util.ts`
+- `server/src/controllers/auth/auth-login.controller.ts`
+- `server/src/controllers/auth/auth-logout.controller.ts`
+- `server/src/controllers/auth/auth-password-reset.controller.ts`
 
-- `server/src/utils/session.util.ts`
-- `server/src/utils/auth-session.util.ts`
+## 관련 문서
 
-- `regenerateSession(req)`
-  - 콜백 API(`req.session.regenerate`)를 Promise 래핑
-- `saveSession(req)`
-  - 콜백 API(`req.session.save`)를 Promise 래핑
-- `destroySession(req)`
-  - 콜백 API(`req.session.destroy`)를 Promise 래핑
-- `establishAuthSession(req, payload)`
-  - 인증 세션 재발급 + 필드 저장을 일괄 처리
-- `clearAuthSession(req)`
-  - 로그아웃 세션 파기를 일괄 처리
-
-목적은 컨트롤러에서 `async/await`로 세션 처리 순서를 명확히 보장하는 것입니다.
-
-## 5) 인증/권한 미들웨어와 세션 사용
-
-코드 위치: `server/src/middlewares/auth.middleware.ts`
-
-- `requireAuth`
-  - `req.session.userId` 없으면 `401 Unauthorized`
-- `requireAuthRedirect`
-  - `req.session.userId` 없으면 안전한 `next`를 붙여 `/login`으로 `302`
-- `requireAdminRedirect`
-  - 비로그인: `/login` 리다이렉트
-  - 로그인 + 비관리자: `403 Forbidden`
-  - 관리자: 통과
-
-## 6) 운영 시 주의사항
-
-- 현재는 기본 `MemoryStore`이므로 프로세스 재시작 시 세션이 사라집니다.
-- 다중 인스턴스 운영이 필요하면 Redis 같은 외부 session store로 교체가 필요합니다.
+- [Auth Defense and Rate Limit 동작 원리](./auth-defense-and-rate-limit.md)
+- [Security Defense 토글 운영 가이드](../guide/security-defense-toggles.md)
+- [Audit Log 운영 가이드](../guide/audit-log-operations-guide.md)

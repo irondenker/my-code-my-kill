@@ -1,6 +1,6 @@
-# 환경변수 / 실행모드 매트릭스
+﻿# 환경변수 / 실행모드 매트릭스
 
-이 문서는 dev/prod/CI/로컬 hook에서 사용하는 핵심 환경변수를 한 번에 확인하기 위한 레퍼런스입니다.
+MCMK는 실서비스가 아닌 학습/실습용 프로젝트이다. 이 문서는 실무 유사 운영을 위한 설정 위치를 정리하는 문서이며, 실무 배포 시에는 비밀관리 시스템과 별도 운영 정책이 추가되어야 한다.
 
 ## 기준 파일
 
@@ -8,50 +8,61 @@
 - prod 예시: `server/examples/.env.production.example`
 - dev compose: `docker-compose.yml`
 - prod compose: `docker-compose.prod.yml`
-- CI: `.github/workflows/server-ci.yml`
-- DB 런타임 파서: `server/src/db/env.ts`
+- DB 로더: `server/src/db/env.ts`
 
-## 공통 핵심 변수
+## 공통 필수 변수
 
-| 변수 | 설명 | 기본/예시 |
+| 변수 | 설명 |
+| --- | --- |
+| `NODE_ENV` | 실행 모드(`development`, `production`)이다. |
+| `PORT` | 서버 포트이다. |
+| `SESSION_SECRET` | 세션 서명 키이다. |
+| `DB_HOST` | DB 호스트이다. |
+| `DB_PORT` | DB 포트이다. |
+| `DB_NAME` | DB 이름이다. |
+| `DB_USER` | DB 사용자이다. |
+| `DB_PASSWORD` | DB 비밀번호이다. |
+| `DB_LOGGING` | Sequelize SQL 로깅 여부이다. |
+| `AUDIT_CLI_LOG_LEVEL` | 감사로그 콘솔 출력 레벨이다. |
+
+## SECURITY_DEFENSE 변수
+
+| 변수 | 기본값 | 설명 |
 | --- | --- | --- |
-| `NODE_ENV` | 실행 모드 | dev=`development`, prod=`production` |
-| `PORT` | 서버 리슨 포트 | `3000` |
-| `SESSION_SECRET` | 세션 서명 키 | 운영에서는 필수 |
-| `DB_HOST` | DB 호스트 | dev 로컬 `.env`는 `localhost`, compose 내부는 `db` |
-| `DB_PORT` | DB 포트 | 로컬 매핑 `54973`, compose 내부 `5432` |
-| `DB_NAME` | DB 이름 | `mcmk` |
-| `DB_USER` | DB 계정 | `mcmk_app` |
-| `DB_PASSWORD` | DB 비밀번호 | `1234`(예시) |
-| `DB_LOGGING` | Sequelize 로깅 | `false` |
-| `AUDIT_CLI_LOG_LEVEL` | 감사로그 콘솔 출력 레벨 | `none/errors/all` |
+| `SECURITY_DEFENSE_ENABLED` | `false` | 보안 방어 기능 전체 토글이다. |
+| `SECURITY_DEFENSE_ACCOUNT_LOCKOUT_ENABLED` | `false` | 로그인 실패 누적 방어 토글이다. |
+| `SECURITY_DEFENSE_ACCOUNT_LOCKOUT_MAX_FAILURES` | `5` | 실패 임계치이다. |
+| `SECURITY_DEFENSE_ACCOUNT_LOCKOUT_LOCK_MINUTES` | `10` | 임시잠금 기간(분)이다. |
+| `SECURITY_DEFENSE_ACCOUNT_LOCKOUT_USE_LOGIN_LOCK_UNTIL` | `true` | `login_locked_until` 사용 여부이다. |
+| `SECURITY_DEFENSE_PASSWORD_RESET_ENABLED` | `false` | 비밀번호 재설정 플로우 활성화이다. |
+| `SECURITY_DEFENSE_PASSWORD_RESET_TOKEN_TTL_MINUTES` | `20` | 재설정 토큰 TTL(분)이다. |
+| `SECURITY_DEFENSE_PASSWORD_RESET_DEV_REVEAL_TOKEN_ENABLED` | `false` | Dev/Lab 토큰 노출 여부이다. |
+| `SECURITY_DEFENSE_PASSWORD_RESET_PSEUDO_VERIFY_ENABLED` | `false` | profile email/phone 기반 pseudo verification 여부이다. |
 
-## 모드별 값 소스
+## 모드별 체크 포인트
 
-| 컨텍스트 | 설정 소스 | 비고 |
-| --- | --- | --- |
-| 로컬 dev 서버 | `server/.env` | `npm run dev`, `npm run build/test` |
-| Docker dev | `docker-compose.yml` + `server/.env` | compose `environment`가 일부 값 override |
-| Docker prod | `docker-compose.prod.yml` + `server/.env.production` | `NODE_ENV=production`, `DB_HOST=db` override |
-| GitHub Actions `server-db` | `.github/workflows/server-ci.yml` `env` | `DB_NAME_TEST=mcmk` 명시 |
+- 로컬 dev는 `.env` 기반 실행이 기준이다.
+- Docker dev/prod는 compose `environment`가 `.env`를 override할 수 있다.
+- 운영 모드에서는 `SESSION_SECRET` 누락 시 서버가 부팅되지 않는 것이 기준이다.
 
-## CI/테스트 전용 변수
+## Nginx/Express 레이트리밋 범위 메모
 
-| 변수 | 사용 위치 | 설명 |
-| --- | --- | --- |
-| `DB_NAME_TEST` | `server/config/config.cjs` | sequelize-cli test DB 이름 오버라이드 |
-| `RUN_DB_TESTS` | `.githooks/pre-push` | `1`일 때 `npm run test:db` 실행 |
-| `USE_DOCKER_HOOKS` | `.githooks/pre-commit`, `.githooks/pre-push` | hook 명령을 컨테이너에서 실행 |
-| `DOCKER_COMPOSE_FILE` | `.githooks/pre-commit`, `.githooks/pre-push` | Docker hook용 compose 파일 선택 |
+- Nginx는 1차(엣지/IP) 제한 계층으로 운영하는 것이 기준이다.
+- Express는 2차(사용자/리소스) 제한 계층으로 운영하는 것이 기준이다.
+- 현재 `nginx/conf.d/default.conf`에는 `limit_req` 선언이 없으므로, 적용 시 다음 경로를 우선 범위로 잡는 것이 기준이다.
+  - `POST /login`
+  - `POST /forgot-password`
+  - `POST /reset-password`
+  - 게시글 변경 경로(`POST/DELETE /board/*`)
 
-## Lab 옵션 관련 주의
+## Lab Options와의 관계
 
-- `lab-options`는 환경변수가 아니라 `server/lab-options.json` 파일로 제어합니다.
-- 파일 수정 후 서버 재시작/재빌드가 필요합니다.
+- `lab-options.json`은 취약점 실습 토글이다.
+- `SECURITY_DEFENSE_*`는 방어 기능 토글이다.
+- 두 축은 분리해서 운영하는 것이 기준이다.
 
-## 운영 체크리스트
+## 관련 문서
 
-- prod에서 `SESSION_SECRET`이 기본값인지 확인
-- `DB_HOST/DB_PORT`가 실행 위치(호스트 vs 컨테이너 네트워크)와 맞는지 확인
-- `AUDIT_CLI_LOG_LEVEL`을 로그 정책에 맞춰 설정했는지 확인
-- CI에서 DB 테스트가 필요하면 `workflow_dispatch` 시 `run_db_tests=true`로 실행
+- [Security Defense 토글 운영 가이드](./security-defense-toggles.md)
+- [Auth Defense and Rate Limit 동작 원리](../learn/auth-defense-and-rate-limit.md)
+- [Lab Options 레퍼런스](./lab/lab-options-reference.md)
