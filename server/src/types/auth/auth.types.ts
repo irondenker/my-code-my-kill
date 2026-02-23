@@ -4,7 +4,22 @@ import type { UserRole } from "../user/user-role.types.js";
  * 로그인 실패 사유 코드입니다.
  * 감사로그(details.reason)로 저장되어 분석/필터링에 사용됩니다.
  */
-export type LoginFailedReason = "missing_credentials" | "invalid_credentials" | "inactive_account";
+export type LoginFailedReason =
+    | "missing_credentials"
+    | "invalid_credentials"
+    | "inactive_account"
+    | "password_reset_required"
+    | "account_locked";
+
+export type AuthUserSecurityState = {
+    loginFailedCount: number;
+    loginLockedUntil: Date | null;
+    passwordResetRequired: boolean;
+    passwordResetTokenHash: string | null;
+    passwordResetTokenExpiresAt: Date | null;
+    passwordResetRequestedAt: Date | null;
+    passwordResetUsedAt: Date | null;
+};
 
 /**
  * 인증/인가에 사용하는 사용자 엔티티(민감 정보 포함)입니다.
@@ -16,13 +31,13 @@ export type AuthUser = {
     username: string;
     passwordHash: string;
     isActive: boolean;
-};
+} & AuthUserSecurityState;
 
 /**
  * 외부로 노출 가능한 사용자 엔티티입니다.
  * (passwordHash 제거)
  */
-export type AuthUserPublic = Omit<AuthUser, "passwordHash">;
+export type AuthUserPublic = Pick<AuthUser, "userId" | "userRole" | "username" | "isActive">;
 
 /**
  * 사용자 프로필(사적 정보 포함)입니다.

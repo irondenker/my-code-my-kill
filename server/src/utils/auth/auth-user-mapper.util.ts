@@ -11,6 +11,15 @@ export function mapAuthUser(row: UserRow): AuthUser {
         username: row.username,
         passwordHash: row.password_hash,
         isActive: Boolean(row.is_active),
+        loginFailedCount: Number(row.login_failed_count),
+        loginLockedUntil: row.login_locked_until ? new Date(row.login_locked_until) : null,
+        passwordResetRequired: Boolean(row.password_reset_required),
+        passwordResetTokenHash: row.password_reset_token_hash,
+        passwordResetTokenExpiresAt: row.password_reset_token_expires_at
+            ? new Date(row.password_reset_token_expires_at)
+            : null,
+        passwordResetRequestedAt: row.password_reset_requested_at ? new Date(row.password_reset_requested_at) : null,
+        passwordResetUsedAt: row.password_reset_used_at ? new Date(row.password_reset_used_at) : null,
     };
 }
 
