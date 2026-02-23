@@ -57,11 +57,9 @@ jobs:
     if: ${{ needs.changes.outputs.run_ci == 'true' }}
 
     steps:
-      # 빌드/테스트/스펙 드리프트 검증을 위해 리포지토리 소스를 체크아웃한다.
       - name: Checkout
         uses: actions/checkout@v6
 
-      # 재현 가능한 서버 빌드/테스트를 위해 Node 메이저 버전을 고정한다.
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -69,38 +67,14 @@ jobs:
           cache: npm
           cache-dependency-path: server/package-lock.json
 
-      # package-lock.json 기준으로 의존성을 정확히 설치한다.
       - name: Install dependencies
         run: npm ci
         working-directory: server
 
-      # TypeScript를 컴파일하고 타입/빌드 오류를 즉시 실패 처리한다.
-      - name: Build
-        run: npm run build
-        working-directory: server
-
-      # package.json에 정의된 서버 테스트를 실행한다.
-      - name: Test
-        run: npm run test
-        working-directory: server
-
-      # 라우트 기준으로 OpenAPI 문서를 자동 동기화한다.
       - name: Sync OpenAPI docs
         run: npm run fix:openapi-drift
         working-directory: server
 
-      # 라우트 선언과 OpenAPI 문서 간 드리프트를 검증한다.
-      # 한계: 런타임 동작 자체를 실행 검증하지는 않는다.
-      - name: Check OpenAPI drift
-        run: npm run check:openapi-drift
-        working-directory: server
-
-      # 라우트/컨트롤러 기준 Flowmap 문서 생성 결과가 커밋과 일치하는지 검증한다.
-      - name: Check Flowmap drift
-        run: npm run flowmap:check
-        working-directory: server
-
-      # PR에서는 자동 동기화 결과가 있으면 실패시켜 문서 반영을 강제한다.
       - name: Detect OpenAPI doc changes
         id: openapi_changes
         run: |
@@ -111,26 +85,30 @@ jobs:
           fi
         working-directory: server
 
-      - name: Fail pull request on unsynced OpenAPI docs
-        if: github.event_name == 'pull_request' && steps.openapi_changes.outputs.changed == 'true'
+      - name: Fail on unsynced OpenAPI docs
+        if: steps.openapi_changes.outputs.changed == 'true'
         run: |
-          echo "OpenAPI 문서가 라우트 기준으로 자동 보정되었습니다."
-          echo "로컬에서 npm run fix:openapi-drift 실행 후 변경사항을 커밋하세요."
+          echo "OpenAPI docs were auto-synced from routes."
+          echo "Run npm run fix:openapi-drift locally, commit src/docs/openapi.ts, and push again."
           git diff -- src/docs/openapi.ts
           exit 1
         working-directory: server
 
-      # push 이벤트에서는 자동 보정된 OpenAPI 문서를 봇 커밋으로 반영한다.
-      - name: Auto-commit synced OpenAPI docs
-        if: github.event_name == 'push' && github.actor != 'github-actions[bot]' && steps.openapi_changes.outputs.changed == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/docs/openapi.ts
-          git commit -m "📚 Docs: auto-sync OpenAPI endpoints [skip ci]"
-          git push
+      - name: Check OpenAPI drift
+        run: npm run check:openapi-drift
         working-directory: server
 
+      - name: Test
+        run: npm run test
+        working-directory: server
+
+      - name: Build
+        run: npm run build
+        working-directory: server
+
+      - name: Check Flowmap drift
+        run: npm run flowmap:check
+        working-directory: server
   server-db:
     runs-on: ubuntu-latest
     needs: changes

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-echo "[pre-push] Running tests, build and docs drift checks (OpenAPI/Flowmap)..."
+echo "[pre-push] Running docs sync/check, tests, build and flowmap drift checks..."
 
 RUN_DB_TESTS_FLAG="${RUN_DB_TESTS:-0}"
 SHOULD_RUN_DB_TESTS=0
@@ -27,6 +27,12 @@ if [ "${USE_DOCKER_HOOKS:-0}" = "1" ]; then
         echo "docker compose -f ${COMPOSE_FILE} up -d server"
         exit 1
     fi
+    docker compose -f "${COMPOSE_FILE}" exec -T server npm run fix:openapi-drift
+    if ! git diff --quiet -- server/src/docs/openapi.ts; then
+        echo "[pre-push] OpenAPI docs changed by sync. Commit server/src/docs/openapi.ts and push again."
+        git diff -- server/src/docs/openapi.ts
+        exit 1
+    fi
     docker compose -f "${COMPOSE_FILE}" exec -T server npm run test
     docker compose -f "${COMPOSE_FILE}" exec -T server npm run build
     docker compose -f "${COMPOSE_FILE}" exec -T server npm run check:openapi-drift
@@ -41,6 +47,14 @@ if [ "${USE_DOCKER_HOOKS:-0}" = "1" ]; then
     exit 0
 fi
 
+cd server
+npm run fix:openapi-drift
+cd ..
+if ! git diff --quiet -- server/src/docs/openapi.ts; then
+    echo "[pre-push] OpenAPI docs changed by sync. Commit server/src/docs/openapi.ts and push again."
+    git diff -- server/src/docs/openapi.ts
+    exit 1
+fi
 cd server
 npm run test
 npm run build
