@@ -84,24 +84,40 @@
         "POST__reset_password"
       ],
       "sessionReadKeys": [
+        "loginCaptchaAnswer",
+        "loginCaptchaFailureCount",
+        "loginCaptchaQuestion",
+        "loginCaptchaRequired",
         "userId",
         "username",
         "userRole"
       ],
       "sessionWriteKeys": [
         "<session>",
+        "loginCaptchaAnswer",
+        "loginCaptchaFailureCount",
+        "loginCaptchaQuestion",
+        "loginCaptchaRequired",
         "profileImageUrl",
         "userId",
         "username",
         "userRole"
       ],
       "sessionReadKeyLabels": [
+        "session.loginCaptchaAnswer",
+        "session.loginCaptchaFailureCount",
+        "session.loginCaptchaQuestion",
+        "session.loginCaptchaRequired",
         "session.userId",
         "session.username",
         "session.userRole"
       ],
       "sessionWriteKeyLabels": [
         "session (root)",
+        "session.loginCaptchaAnswer",
+        "session.loginCaptchaFailureCount",
+        "session.loginCaptchaQuestion",
+        "session.loginCaptchaRequired",
         "session.profileImageUrl",
         "session.userId",
         "session.username",
@@ -560,15 +576,25 @@
       "handler": {
         "name": "getLoginPage",
         "file": "server/src/controllers/auth/auth-pages.controller.ts",
-        "line": 26
+        "line": 32
       },
-      "sinks": [],
+      "sinks": [
+        "req.session.read()",
+        "req.session.write()"
+      ],
       "exits": [],
       "sessionAccess": {
-        "read": false,
-        "write": false,
-        "readKeys": [],
-        "writeKeys": []
+        "read": true,
+        "write": true,
+        "readKeys": [
+          "loginCaptchaRequired",
+          "loginCaptchaQuestion",
+          "loginCaptchaAnswer"
+        ],
+        "writeKeys": [
+          "loginCaptchaQuestion",
+          "loginCaptchaAnswer"
+        ]
       }
     },
     {
@@ -580,20 +606,29 @@
       "handler": {
         "name": "postLogin",
         "file": "server/src/controllers/auth/auth-login.controller.ts",
-        "line": 47
+        "line": 63
       },
       "sinks": [
+        "req.session.read()",
         "req.session.write()"
       ],
       "exits": [
-        "res.render()",
         "res.redirect()"
       ],
       "sessionAccess": {
-        "read": false,
+        "read": true,
         "write": true,
-        "readKeys": [],
+        "readKeys": [
+          "loginCaptchaRequired",
+          "loginCaptchaAnswer",
+          "loginCaptchaFailureCount",
+          "loginCaptchaQuestion"
+        ],
         "writeKeys": [
+          "loginCaptchaQuestion",
+          "loginCaptchaAnswer",
+          "loginCaptchaFailureCount",
+          "loginCaptchaRequired",
           "userId",
           "userRole",
           "username",
@@ -603,13 +638,7 @@
       },
       "redirectTargets": [
         "nextPath"
-      ],
-      "renderDiagnostics": {
-        "statuses": [
-          "400",
-          "403"
-        ]
-      }
+      ]
     },
     {
       "id": "POST__logout",
@@ -654,7 +683,7 @@
       "handler": {
         "name": "getRegisterPage",
         "file": "server/src/controllers/auth/auth-pages.controller.ts",
-        "line": 34
+        "line": 46
       },
       "sinks": [],
       "exits": [],
@@ -827,7 +856,8 @@
       "path": "/board/:slug",
       "routeFile": "server/src/routes/board.routes.ts",
       "middlewares": [
-        "requireAuthRedirect"
+        "requireAuthRedirect",
+        "enforcePostMutationRateLimit"
       ],
       "handler": {
         "name": "postArticleCreate",
@@ -886,7 +916,8 @@
       "path": "/board/:slug/:displayId",
       "routeFile": "server/src/routes/board.routes.ts",
       "middlewares": [
-        "requireAuth"
+        "requireAuth",
+        "enforcePostMutationRateLimit"
       ],
       "handler": {
         "name": "deleteArticle",
@@ -922,7 +953,8 @@
       "path": "/board/:slug/:displayId/delete",
       "routeFile": "server/src/routes/board.routes.ts",
       "middlewares": [
-        "requireAuthRedirect"
+        "requireAuthRedirect",
+        "enforcePostMutationRateLimit"
       ],
       "handler": {
         "name": "deleteArticle",
@@ -985,7 +1017,8 @@
       "path": "/board/:slug/:displayId/edit",
       "routeFile": "server/src/routes/board.routes.ts",
       "middlewares": [
-        "requireAuthRedirect"
+        "requireAuthRedirect",
+        "enforcePostMutationRateLimit"
       ],
       "handler": {
         "name": "postArticleEdit",

@@ -7,20 +7,29 @@
   "handler": {
     "name": "postLogin",
     "file": "server/src/controllers/auth/auth-login.controller.ts",
-    "line": 47
+    "line": 63
   },
   "sinks": [
+    "req.session.read()",
     "req.session.write()"
   ],
   "exits": [
-    "res.render()",
     "res.redirect()"
   ],
   "sessionAccess": {
-    "read": false,
+    "read": true,
     "write": true,
-    "readKeys": [],
+    "readKeys": [
+      "loginCaptchaRequired",
+      "loginCaptchaAnswer",
+      "loginCaptchaFailureCount",
+      "loginCaptchaQuestion"
+    ],
     "writeKeys": [
+      "loginCaptchaQuestion",
+      "loginCaptchaAnswer",
+      "loginCaptchaFailureCount",
+      "loginCaptchaRequired",
       "userId",
       "userRole",
       "username",
@@ -31,11 +40,5 @@
   "redirectTargets": [
     "nextPath"
   ],
-  "renderDiagnostics": {
-    "statuses": [
-      "400",
-      "403"
-    ]
-  },
   "warnings": []
 }

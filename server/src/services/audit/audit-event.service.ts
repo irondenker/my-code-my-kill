@@ -11,6 +11,7 @@ import {
     buildLogoutSuccessAuditLogWriteParams,
     buildPasswordResetCompletedAuditLogWriteParams,
     buildPasswordResetRequestedAuditLogWriteParams,
+    buildRateLimitedAuditLogWriteParams,
 } from "../../utils/audit/audit-event-mapper.util.js";
 import { writeAuditLog, writeAuditLogSafely } from "./audit-write.service.js";
 
@@ -95,4 +96,8 @@ export async function logPasswordResetRequestedSafely(params: Parameters<typeof 
 
 export async function logPasswordResetCompletedSafely(params: Parameters<typeof buildPasswordResetCompletedAuditLogWriteParams>[0]): Promise<void> {
     await writeAuditLogSafely(buildPasswordResetCompletedAuditLogWriteParams(params));
+}
+
+export async function logRateLimitedSafely(params: Parameters<typeof buildRateLimitedAuditLogWriteParams>[0]): Promise<void> {
+    await writeAuditLogSafely(buildRateLimitedAuditLogWriteParams(params));
 }

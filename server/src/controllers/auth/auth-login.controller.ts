@@ -8,10 +8,18 @@ import { findUserProfileById } from "../../services/profile.service.js";
 import {
     logAccountLockedSafely,
     logLoginFailedSafely,
+    logRateLimitedSafely,
     logLoginSuccessSafely,
 } from "../../services/audit.service.js";
+import { consumeFixedWindowRateLimit } from "../../services/security-defense/rate-limit.service.js";
 import { getSecurityDefenseOptions } from "../../config/security-defense-options.js";
 import { parseLoginForm } from "../../schemas/auth.schema.js";
+import {
+    clearLoginCaptchaState,
+    recordLoginFailureForCaptcha,
+    resolveLoginCaptchaViewModel,
+    verifyLoginCaptchaAnswer,
+} from "../../utils/auth/login-captcha.util.js";
 import { verifyPassword } from "../../utils/password.util.js";
 import { getSafeRedirectPath } from "../../utils/http/redirect.util.js";
 import { normalizeString } from "../../utils/string.util.js";
@@ -20,10 +28,18 @@ import { establishAuthSession } from "../../utils/session/auth-session.util.js";
 
 const GENERIC_LOGIN_FAILURE_MESSAGE = "Invalid username or password. If needed, use password reset.";
 
-function renderLoginFailure(res: Response, params: { status: number; nextPath: string | null }) {
+function renderLoginForm(req: Request, res: Response, params: {
+    status: number;
+    nextPath: string | null;
+    formError: string;
+    loginCaptchaEnabled: boolean;
+}) {
+    const captcha = resolveLoginCaptchaViewModel(req, params.loginCaptchaEnabled);
     return res.status(params.status).render("auth/sign-in", {
-        formError: GENERIC_LOGIN_FAILURE_MESSAGE,
+        formError: params.formError,
         nextPath: params.nextPath,
+        captchaRequired: captcha.required,
+        captchaQuestion: captcha.question,
     });
 }
 
@@ -50,9 +66,72 @@ export async function postLogin(req: Request, res: Response) {
     const safeNextForView = getSafeRedirectPath(rawNextFromBody, "");
     const ipAddress = getRequestIp(req);
     const userAgent = getRequestUserAgent(req);
+    const securityDefense = getSecurityDefenseOptions();
+    const accountLockoutOptions = securityDefense.accountLockout;
+    const accountLockoutEnabled = accountLockoutOptions.enabled;
+    const loginRateLimitOptions = securityDefense.rateLimit.login;
+    const loginSimpleCaptchaOptions = securityDefense.simpleCaptcha.login;
+
+    if (loginRateLimitOptions.enabled) {
+        const rateLimitKey = `${ipAddress ?? "unknown"}:${(rawUsername || "").toLowerCase()}`;
+        const rateLimitDecision = consumeFixedWindowRateLimit({
+            bucket: "login",
+            key: rateLimitKey,
+            maxRequests: loginRateLimitOptions.maxRequests,
+            windowSeconds: loginRateLimitOptions.windowSeconds,
+        });
+
+        if (rateLimitDecision.limited) {
+            await logRateLimitedSafely({
+                actorUserId: null,
+                actorUsername: rawUsername || null,
+                targetUserId: null,
+                targetUsername: rawUsername || null,
+                scope: "login",
+                keyType: "ip",
+                maxRequests: loginRateLimitOptions.maxRequests,
+                windowSeconds: loginRateLimitOptions.windowSeconds,
+                retryAfterSeconds: rateLimitDecision.retryAfterSeconds,
+                method: req.method,
+                path: req.originalUrl,
+                ipAddress,
+                userAgent,
+            });
+
+            return renderLoginForm(req, res, {
+                status: 429,
+                nextPath: safeNextForView || null,
+                formError: "Too many login attempts. Please try again later.",
+                loginCaptchaEnabled: loginSimpleCaptchaOptions.enabled,
+            });
+        }
+    }
 
     const parsedLoginForm = parseLoginForm(req.body ?? {});
+    const captchaPassed = verifyLoginCaptchaAnswer(req, req.body?.captchaAnswer);
+    if (!captchaPassed) {
+        await logLoginFailedSafely({
+            actorUsername: rawUsername || null,
+            targetUserId: null,
+            targetUsername: rawUsername || null,
+            attemptedUsername: rawUsername || null,
+            reason: "captcha_failed",
+            ipAddress,
+            userAgent,
+        });
+        return renderLoginForm(req, res, {
+            status: 401,
+            nextPath: safeNextForView || null,
+            formError: GENERIC_LOGIN_FAILURE_MESSAGE,
+            loginCaptchaEnabled: loginSimpleCaptchaOptions.enabled,
+        });
+    }
+
     if (!parsedLoginForm.success) {
+        recordLoginFailureForCaptcha(req, {
+            enabled: loginSimpleCaptchaOptions.enabled,
+            afterFailures: loginSimpleCaptchaOptions.afterFailures,
+        });
         await logLoginFailedSafely({
             actorUsername: rawUsername || null,
             targetUserId: null,
@@ -62,20 +141,23 @@ export async function postLogin(req: Request, res: Response) {
             ipAddress,
             userAgent,
         });
-        return res.status(400).render("auth/sign-in", {
-            formError: "Username and password are required.",
+        return renderLoginForm(req, res, {
+            status: 400,
             nextPath: safeNextForView || null,
+            formError: "Username and password are required.",
+            loginCaptchaEnabled: loginSimpleCaptchaOptions.enabled,
         });
     }
+
     const { username, password, next } = parsedLoginForm.data;
     const nextPath = getSafeRedirectPath(next, "/board");
-    const securityDefense = getSecurityDefenseOptions();
-    const accountLockoutOptions = securityDefense.accountLockout;
-    const accountLockoutEnabled = accountLockoutOptions.enabled;
-
     const user = await findUserByUsername(username);
 
     if (accountLockoutEnabled && user?.passwordResetRequired) {
+        recordLoginFailureForCaptcha(req, {
+            enabled: loginSimpleCaptchaOptions.enabled,
+            afterFailures: loginSimpleCaptchaOptions.afterFailures,
+        });
         await logLoginFailedSafely({
             actorUsername: username,
             targetUserId: user.userId,
@@ -88,13 +170,19 @@ export async function postLogin(req: Request, res: Response) {
             ipAddress,
             userAgent,
         });
-        return renderLoginFailure(res, {
+        return renderLoginForm(req, res, {
             status: 401,
             nextPath: safeNextForView || null,
+            formError: GENERIC_LOGIN_FAILURE_MESSAGE,
+            loginCaptchaEnabled: loginSimpleCaptchaOptions.enabled,
         });
     }
 
     if (accountLockoutEnabled && user && isLoginTemporarilyLocked(user)) {
+        recordLoginFailureForCaptcha(req, {
+            enabled: loginSimpleCaptchaOptions.enabled,
+            afterFailures: loginSimpleCaptchaOptions.afterFailures,
+        });
         await logLoginFailedSafely({
             actorUsername: username,
             targetUserId: user.userId,
@@ -107,13 +195,19 @@ export async function postLogin(req: Request, res: Response) {
             ipAddress,
             userAgent,
         });
-        return renderLoginFailure(res, {
+        return renderLoginForm(req, res, {
             status: 401,
             nextPath: safeNextForView || null,
+            formError: GENERIC_LOGIN_FAILURE_MESSAGE,
+            loginCaptchaEnabled: loginSimpleCaptchaOptions.enabled,
         });
     }
 
     if (!user || !verifyPassword(password, user.passwordHash)) {
+        recordLoginFailureForCaptcha(req, {
+            enabled: loginSimpleCaptchaOptions.enabled,
+            afterFailures: loginSimpleCaptchaOptions.afterFailures,
+        });
         let failedCount: number | null = null;
         let passwordResetRequired: boolean | null = null;
         let lockedUntil: Date | null = null;
@@ -154,13 +248,19 @@ export async function postLogin(req: Request, res: Response) {
             ipAddress,
             userAgent,
         });
-        return renderLoginFailure(res, {
+        return renderLoginForm(req, res, {
             status: 401,
             nextPath: safeNextForView || null,
+            formError: GENERIC_LOGIN_FAILURE_MESSAGE,
+            loginCaptchaEnabled: loginSimpleCaptchaOptions.enabled,
         });
     }
 
     if (!user.isActive) {
+        recordLoginFailureForCaptcha(req, {
+            enabled: loginSimpleCaptchaOptions.enabled,
+            afterFailures: loginSimpleCaptchaOptions.afterFailures,
+        });
         await logLoginFailedSafely({
             actorUsername: username,
             targetUserId: user.userId,
@@ -170,9 +270,11 @@ export async function postLogin(req: Request, res: Response) {
             ipAddress,
             userAgent,
         });
-        return res.status(403).render("auth/sign-in", {
-            formError: "This account is inactive. Contact an administrator.",
+        return renderLoginForm(req, res, {
+            status: 403,
             nextPath: safeNextForView || null,
+            formError: "This account is inactive. Contact an administrator.",
+            loginCaptchaEnabled: loginSimpleCaptchaOptions.enabled,
         });
     }
 
@@ -187,6 +289,7 @@ export async function postLogin(req: Request, res: Response) {
         username: user.username,
         profileImageUrl: profile?.profileImageUrl ?? null,
     });
+    clearLoginCaptchaState(req);
 
     await logLoginSuccessSafely({
         userId: user.userId,

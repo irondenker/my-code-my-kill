@@ -60,6 +60,59 @@
     ],
     "auth": [
       {
+        "key": "loginCaptchaAnswer",
+        "category": "auth",
+        "readCount": 2,
+        "writeCount": 2,
+        "readEndpoints": [
+          "GET /login",
+          "POST /login"
+        ],
+        "writeEndpoints": [
+          "GET /login",
+          "POST /login"
+        ]
+      },
+      {
+        "key": "loginCaptchaFailureCount",
+        "category": "auth",
+        "readCount": 1,
+        "writeCount": 1,
+        "readEndpoints": [
+          "POST /login"
+        ],
+        "writeEndpoints": [
+          "POST /login"
+        ]
+      },
+      {
+        "key": "loginCaptchaQuestion",
+        "category": "auth",
+        "readCount": 2,
+        "writeCount": 2,
+        "readEndpoints": [
+          "GET /login",
+          "POST /login"
+        ],
+        "writeEndpoints": [
+          "GET /login",
+          "POST /login"
+        ]
+      },
+      {
+        "key": "loginCaptchaRequired",
+        "category": "auth",
+        "readCount": 2,
+        "writeCount": 1,
+        "readEndpoints": [
+          "GET /login",
+          "POST /login"
+        ],
+        "writeEndpoints": [
+          "POST /login"
+        ]
+      },
+      {
         "key": "profileImageUrl",
         "category": "auth",
         "readCount": 0,
@@ -201,6 +254,59 @@
         "DELETE /board/:slug/:displayId",
         "GET /board/:slug",
         "POST /board/:slug/:displayId/delete"
+      ]
+    },
+    {
+      "key": "loginCaptchaAnswer",
+      "category": "auth",
+      "readCount": 2,
+      "writeCount": 2,
+      "readEndpoints": [
+        "GET /login",
+        "POST /login"
+      ],
+      "writeEndpoints": [
+        "GET /login",
+        "POST /login"
+      ]
+    },
+    {
+      "key": "loginCaptchaFailureCount",
+      "category": "auth",
+      "readCount": 1,
+      "writeCount": 1,
+      "readEndpoints": [
+        "POST /login"
+      ],
+      "writeEndpoints": [
+        "POST /login"
+      ]
+    },
+    {
+      "key": "loginCaptchaQuestion",
+      "category": "auth",
+      "readCount": 2,
+      "writeCount": 2,
+      "readEndpoints": [
+        "GET /login",
+        "POST /login"
+      ],
+      "writeEndpoints": [
+        "GET /login",
+        "POST /login"
+      ]
+    },
+    {
+      "key": "loginCaptchaRequired",
+      "category": "auth",
+      "readCount": 2,
+      "writeCount": 1,
+      "readEndpoints": [
+        "GET /login",
+        "POST /login"
+      ],
+      "writeEndpoints": [
+        "POST /login"
       ]
     },
     {
@@ -522,13 +628,27 @@
       "id": "GET__login",
       "method": "GET",
       "path": "/login",
-      "readKeys": [],
-      "writeKeys": [],
-      "readAuthKeys": [],
+      "readKeys": [
+        "loginCaptchaRequired",
+        "loginCaptchaQuestion",
+        "loginCaptchaAnswer"
+      ],
+      "writeKeys": [
+        "loginCaptchaQuestion",
+        "loginCaptchaAnswer"
+      ],
+      "readAuthKeys": [
+        "loginCaptchaRequired",
+        "loginCaptchaQuestion",
+        "loginCaptchaAnswer"
+      ],
       "readFlashKeys": [],
       "readOtherKeys": [],
       "readRootKeys": [],
-      "writeAuthKeys": [],
+      "writeAuthKeys": [
+        "loginCaptchaQuestion",
+        "loginCaptchaAnswer"
+      ],
       "writeFlashKeys": [],
       "writeOtherKeys": [],
       "writeRootKeys": []
@@ -537,19 +657,37 @@
       "id": "POST__login",
       "method": "POST",
       "path": "/login",
-      "readKeys": [],
+      "readKeys": [
+        "loginCaptchaRequired",
+        "loginCaptchaAnswer",
+        "loginCaptchaFailureCount",
+        "loginCaptchaQuestion"
+      ],
       "writeKeys": [
+        "loginCaptchaQuestion",
+        "loginCaptchaAnswer",
+        "loginCaptchaFailureCount",
+        "loginCaptchaRequired",
         "userId",
         "userRole",
         "username",
         "profileImageUrl",
         "<session>"
       ],
-      "readAuthKeys": [],
+      "readAuthKeys": [
+        "loginCaptchaRequired",
+        "loginCaptchaAnswer",
+        "loginCaptchaFailureCount",
+        "loginCaptchaQuestion"
+      ],
       "readFlashKeys": [],
       "readOtherKeys": [],
       "readRootKeys": [],
       "writeAuthKeys": [
+        "loginCaptchaQuestion",
+        "loginCaptchaAnswer",
+        "loginCaptchaFailureCount",
+        "loginCaptchaRequired",
         "userId",
         "userRole",
         "username",

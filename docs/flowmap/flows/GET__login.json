@@ -7,15 +7,25 @@
   "handler": {
     "name": "getLoginPage",
     "file": "server/src/controllers/auth/auth-pages.controller.ts",
-    "line": 26
+    "line": 32
   },
-  "sinks": [],
+  "sinks": [
+    "req.session.read()",
+    "req.session.write()"
+  ],
   "exits": [],
   "sessionAccess": {
-    "read": false,
-    "write": false,
-    "readKeys": [],
-    "writeKeys": []
+    "read": true,
+    "write": true,
+    "readKeys": [
+      "loginCaptchaRequired",
+      "loginCaptchaQuestion",
+      "loginCaptchaAnswer"
+    ],
+    "writeKeys": [
+      "loginCaptchaQuestion",
+      "loginCaptchaAnswer"
+    ]
   },
   "warnings": []
 }

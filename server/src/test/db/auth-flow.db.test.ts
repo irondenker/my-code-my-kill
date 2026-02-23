@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import "dotenv/config";
 import { QueryTypes } from "sequelize";
+import { getLabOptions, type SecurityDefenseLabOptions } from "../../config/lab-options.js";
 import { sequelize } from "../../db/index.js";
 import { createUserForRegister, findUserByUsername } from "../../services/auth.service.js";
 import { findUserProfileById, updateUserProfile } from "../../services/profile.service.js";
@@ -117,36 +118,22 @@ async function findPasswordResetStateByUserId(userId: number): Promise<PasswordR
 }
 
 async function withAccountLockoutEnabled(run: () => Promise<void>): Promise<void> {
-    const keys = [
-        "SECURITY_DEFENSE_ENABLED",
-        "SECURITY_DEFENSE_ACCOUNT_LOCKOUT_ENABLED",
-        "SECURITY_DEFENSE_ACCOUNT_LOCKOUT_MAX_FAILURES",
-        "SECURITY_DEFENSE_ACCOUNT_LOCKOUT_LOCK_MINUTES",
-        "SECURITY_DEFENSE_ACCOUNT_LOCKOUT_USE_LOGIN_LOCK_UNTIL",
-    ] as const;
-
-    const previous = new Map<string, string | undefined>();
-    for (const key of keys) {
-        previous.set(key, process.env[key]);
-    }
-
-    process.env.SECURITY_DEFENSE_ENABLED = "true";
-    process.env.SECURITY_DEFENSE_ACCOUNT_LOCKOUT_ENABLED = "true";
-    process.env.SECURITY_DEFENSE_ACCOUNT_LOCKOUT_MAX_FAILURES = "5";
-    process.env.SECURITY_DEFENSE_ACCOUNT_LOCKOUT_LOCK_MINUTES = "10";
-    process.env.SECURITY_DEFENSE_ACCOUNT_LOCKOUT_USE_LOGIN_LOCK_UNTIL = "true";
+    const labSecurityDefense = getLabOptions().securityDefense;
+    const previous = cloneSecurityDefenseLabOptions(labSecurityDefense);
+    const next = cloneSecurityDefenseLabOptions(labSecurityDefense);
+    next.enabled = true;
+    next.accountLockout = {
+        enabled: true,
+        maxFailures: 5,
+        lockMinutes: 10,
+        useLoginLockUntil: true,
+    };
+    applySecurityDefenseLabOptions(labSecurityDefense, next);
 
     try {
         await run();
     } finally {
-        for (const key of keys) {
-            const value = previous.get(key);
-            if (typeof value === "undefined") {
-                delete process.env[key];
-                continue;
-            }
-            process.env[key] = value;
-        }
+        applySecurityDefenseLabOptions(labSecurityDefense, previous);
     }
 }
 
@@ -157,35 +144,108 @@ async function withPasswordResetEnabled(
     },
     run: () => Promise<void>
 ): Promise<void> {
-    const keys = [
-        "SECURITY_DEFENSE_ENABLED",
-        "SECURITY_DEFENSE_PASSWORD_RESET_ENABLED",
-        "SECURITY_DEFENSE_PASSWORD_RESET_TOKEN_TTL_MINUTES",
-        "SECURITY_DEFENSE_PASSWORD_RESET_DEV_REVEAL_TOKEN_ENABLED",
-        "SECURITY_DEFENSE_PASSWORD_RESET_PSEUDO_VERIFY_ENABLED",
-    ] as const;
-
-    const previous = new Map<string, string | undefined>();
-    for (const key of keys) {
-        previous.set(key, process.env[key]);
-    }
-
-    process.env.SECURITY_DEFENSE_ENABLED = "true";
-    process.env.SECURITY_DEFENSE_PASSWORD_RESET_ENABLED = "true";
-    process.env.SECURITY_DEFENSE_PASSWORD_RESET_TOKEN_TTL_MINUTES = "20";
-    process.env.SECURITY_DEFENSE_PASSWORD_RESET_DEV_REVEAL_TOKEN_ENABLED = params.devRevealTokenEnabled ? "true" : "false";
-    process.env.SECURITY_DEFENSE_PASSWORD_RESET_PSEUDO_VERIFY_ENABLED = params.pseudoVerifyEnabled ? "true" : "false";
+    const labSecurityDefense = getLabOptions().securityDefense;
+    const previous = cloneSecurityDefenseLabOptions(labSecurityDefense);
+    const next = cloneSecurityDefenseLabOptions(labSecurityDefense);
+    next.enabled = true;
+    next.passwordReset = {
+        enabled: true,
+        tokenTtlMinutes: 20,
+        devRevealToken: {
+            enabled: Boolean(params.devRevealTokenEnabled),
+        },
+        pseudoVerify: {
+            enabled: Boolean(params.pseudoVerifyEnabled),
+        },
+    };
+    applySecurityDefenseLabOptions(labSecurityDefense, next);
 
     try {
         await run();
     } finally {
-        for (const key of keys) {
-            const value = previous.get(key);
-            if (typeof value === "undefined") {
-                delete process.env[key];
-                continue;
-            }
-            process.env[key] = value;
+        applySecurityDefenseLabOptions(labSecurityDefense, previous);
+    }
+}
+
+function cloneSecurityDefenseLabOptions(value: SecurityDefenseLabOptions): SecurityDefenseLabOptions {
+    const cloned: SecurityDefenseLabOptions = {};
+    if (typeof value.enabled !== "undefined") {
+        cloned.enabled = value.enabled;
+    }
+
+    if (value.accountLockout) {
+        const accountLockout: NonNullable<SecurityDefenseLabOptions["accountLockout"]> = {};
+        if (typeof value.accountLockout.enabled !== "undefined") {
+            accountLockout.enabled = value.accountLockout.enabled;
+        }
+        if (typeof value.accountLockout.maxFailures !== "undefined") {
+            accountLockout.maxFailures = value.accountLockout.maxFailures;
+        }
+        if (typeof value.accountLockout.lockMinutes !== "undefined") {
+            accountLockout.lockMinutes = value.accountLockout.lockMinutes;
+        }
+        if (typeof value.accountLockout.useLoginLockUntil !== "undefined") {
+            accountLockout.useLoginLockUntil = value.accountLockout.useLoginLockUntil;
+        }
+        if (Object.keys(accountLockout).length > 0) {
+            cloned.accountLockout = accountLockout;
+        }
+    }
+
+    if (value.passwordReset) {
+        const passwordReset: NonNullable<SecurityDefenseLabOptions["passwordReset"]> = {};
+        if (typeof value.passwordReset.enabled !== "undefined") {
+            passwordReset.enabled = value.passwordReset.enabled;
+        }
+        if (typeof value.passwordReset.tokenTtlMinutes !== "undefined") {
+            passwordReset.tokenTtlMinutes = value.passwordReset.tokenTtlMinutes;
+        }
+        if (value.passwordReset.devRevealToken && typeof value.passwordReset.devRevealToken.enabled !== "undefined") {
+            passwordReset.devRevealToken = { enabled: value.passwordReset.devRevealToken.enabled };
+        }
+        if (value.passwordReset.pseudoVerify && typeof value.passwordReset.pseudoVerify.enabled !== "undefined") {
+            passwordReset.pseudoVerify = { enabled: value.passwordReset.pseudoVerify.enabled };
+        }
+        if (Object.keys(passwordReset).length > 0) {
+            cloned.passwordReset = passwordReset;
+        }
+    }
+
+    return cloned;
+}
+
+function applySecurityDefenseLabOptions(
+    target: SecurityDefenseLabOptions,
+    source: SecurityDefenseLabOptions,
+): void {
+    delete target.enabled;
+    delete target.accountLockout;
+    delete target.passwordReset;
+
+    if (typeof source.enabled !== "undefined") {
+        target.enabled = source.enabled;
+    }
+
+    if (source.accountLockout) {
+        target.accountLockout = { ...source.accountLockout };
+    }
+
+    if (source.passwordReset) {
+        const passwordReset: NonNullable<SecurityDefenseLabOptions["passwordReset"]> = {};
+        if (typeof source.passwordReset.enabled !== "undefined") {
+            passwordReset.enabled = source.passwordReset.enabled;
+        }
+        if (typeof source.passwordReset.tokenTtlMinutes !== "undefined") {
+            passwordReset.tokenTtlMinutes = source.passwordReset.tokenTtlMinutes;
+        }
+        if (source.passwordReset.devRevealToken && typeof source.passwordReset.devRevealToken.enabled !== "undefined") {
+            passwordReset.devRevealToken = { enabled: source.passwordReset.devRevealToken.enabled };
+        }
+        if (source.passwordReset.pseudoVerify && typeof source.passwordReset.pseudoVerify.enabled !== "undefined") {
+            passwordReset.pseudoVerify = { enabled: source.passwordReset.pseudoVerify.enabled };
+        }
+        if (Object.keys(passwordReset).length > 0) {
+            target.passwordReset = passwordReset;
         }
     }
 }

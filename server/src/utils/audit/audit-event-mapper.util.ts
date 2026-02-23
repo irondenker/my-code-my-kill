@@ -287,3 +287,36 @@ export function buildPasswordResetCompletedAuditLogWriteParams(params: AuditRequ
         userAgent: params.userAgent,
     };
 }
+
+export function buildRateLimitedAuditLogWriteParams(params: AuditRequestMetaFields & {
+    actorUserId: number | null;
+    actorUsername: string | null;
+    targetUserId: number | null;
+    targetUsername: string | null;
+    scope: "login" | "post_mutation";
+    keyType: "ip" | "user";
+    maxRequests: number;
+    windowSeconds: number;
+    retryAfterSeconds: number;
+    method: string;
+    path: string;
+}): AuditLogWriteParams {
+    return {
+        action: "RATE_LIMITED",
+        actorUserId: params.actorUserId,
+        actorUsername: params.actorUsername,
+        targetUserId: params.targetUserId,
+        targetUsername: params.targetUsername,
+        details: {
+            scope: params.scope,
+            keyType: params.keyType,
+            maxRequests: params.maxRequests,
+            windowSeconds: params.windowSeconds,
+            retryAfterSeconds: params.retryAfterSeconds,
+            method: params.method,
+            path: params.path,
+        },
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+    };
+}

@@ -13,40 +13,49 @@ direction TB
 HANDLER["postLogin()"]
 end
 MIDDLEWARE1 --> HANDLER
-subgraph ERROR_STATUS["[ERROR STATUS]"]
-direction TB
-RDIAG1["400"]
-RDIAG2["403"]
-end
 subgraph SINKS["[SINKS]"]
 direction TB
-SINK1["Session<br/>(Write)"]
+SINK1["Session<br/>(Read)"]
+SINK2["Session<br/>(Write)"]
 end
 HANDLER --> SINK1
-SINK_WRITE_KEY1["session.userId"]
-SINK_WRITE_KEY2["session.userRole"]
-SINK_WRITE_KEY3["session.username"]
-SINK_WRITE_KEY4["session.profileImageUrl"]
-SINK_WRITE_KEY5["session (root)"]
-SINK1 --> SINK_WRITE_KEY1
-SINK1 --> SINK_WRITE_KEY2
-SINK1 --> SINK_WRITE_KEY3
-SINK1 --> SINK_WRITE_KEY4
-SINK1 --> SINK_WRITE_KEY5
+HANDLER --> SINK2
+SINK_READ_KEY1["session.loginCaptchaRequired"]
+SINK_READ_KEY2["session.loginCaptchaAnswer"]
+SINK_READ_KEY3["session.loginCaptchaFailureCount"]
+SINK_READ_KEY4["session.loginCaptchaQuestion"]
+SINK1 --> SINK_READ_KEY1
+SINK1 --> SINK_READ_KEY2
+SINK1 --> SINK_READ_KEY3
+SINK1 --> SINK_READ_KEY4
+SINK_WRITE_KEY1["session.loginCaptchaQuestion"]
+SINK_WRITE_KEY2["session.loginCaptchaAnswer"]
+SINK_WRITE_KEY3["session.loginCaptchaFailureCount"]
+SINK_WRITE_KEY4["session.loginCaptchaRequired"]
+SINK_WRITE_KEY5["session.userId"]
+SINK_WRITE_KEY6["session.userRole"]
+SINK_WRITE_KEY7["session.username"]
+SINK_WRITE_KEY8["session.profileImageUrl"]
+SINK_WRITE_KEY9["session (root)"]
+SINK2 --> SINK_WRITE_KEY1
+SINK2 --> SINK_WRITE_KEY2
+SINK2 --> SINK_WRITE_KEY3
+SINK2 --> SINK_WRITE_KEY4
+SINK2 --> SINK_WRITE_KEY5
+SINK2 --> SINK_WRITE_KEY6
+SINK2 --> SINK_WRITE_KEY7
+SINK2 --> SINK_WRITE_KEY8
+SINK2 --> SINK_WRITE_KEY9
 subgraph EXITS["[EXITS]"]
 direction TB
-EXIT1["res.render()"]
-EXIT2["REDIRECT"]
+EXIT1["REDIRECT"]
 end
 HANDLER --> EXIT1
-HANDLER --> EXIT2
-EXIT1 --> RDIAG1
-EXIT1 --> RDIAG2
 subgraph NEXT_ENTRY["[NEXT ENTRY]"]
 direction TB
 NEXT_ENTRY1["<i>{nextPath}</i>"]
 end
-EXIT2 --> NEXT_ENTRY1
+EXIT1 --> NEXT_ENTRY1
 classDef middleware font-size:10px,padding:2px,stroke-width:1;
 classDef diagnostics stroke-dasharray: 2 2;
 classDef sink stroke-width:2;
@@ -56,9 +65,9 @@ classDef auth stroke-dasharray: 0,stroke-width:1.5;
 classDef other stroke:#6b7280;
 classDef exit stroke-dasharray: 4 2;
 class MIDDLEWARE1 middleware;
-class RDIAG1,RDIAG2 diagnostics;
-class SINK1 sink;
-class SINK_WRITE_KEY1,SINK_WRITE_KEY2,SINK_WRITE_KEY3,SINK_WRITE_KEY4,SINK_WRITE_KEY5 sessionKey;
-class SINK_WRITE_KEY1,SINK_WRITE_KEY2,SINK_WRITE_KEY3,SINK_WRITE_KEY4 auth;
-class SINK_WRITE_KEY5 other;
-class EXIT1,EXIT2 exit;
+class SINK1,SINK2 sink;
+class SINK_READ_KEY1,SINK_READ_KEY2,SINK_READ_KEY3,SINK_READ_KEY4 sessionKey;
+class SINK_WRITE_KEY1,SINK_WRITE_KEY2,SINK_WRITE_KEY3,SINK_WRITE_KEY4,SINK_WRITE_KEY5,SINK_WRITE_KEY6,SINK_WRITE_KEY7,SINK_WRITE_KEY8,SINK_WRITE_KEY9 sessionKey;
+class SINK_READ_KEY1,SINK_READ_KEY2,SINK_READ_KEY3,SINK_READ_KEY4,SINK_WRITE_KEY1,SINK_WRITE_KEY2,SINK_WRITE_KEY3,SINK_WRITE_KEY4,SINK_WRITE_KEY5,SINK_WRITE_KEY6,SINK_WRITE_KEY7,SINK_WRITE_KEY8 auth;
+class SINK_WRITE_KEY9 other;
+class EXIT1 exit;

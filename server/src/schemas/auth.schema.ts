@@ -21,6 +21,7 @@ type OpenApiObjectSchema = {
 export const loginFormSchema = z.object({
     username: z.preprocess((value) => normalizeString(value), z.string().min(1)),
     password: z.preprocess((value) => (typeof value === "string" ? value : ""), z.string().min(1)),
+    captchaAnswer: z.preprocess((value) => normalizeString(value, null) ?? undefined, z.string().optional()),
     next: z.preprocess((value) => normalizeString(value, null) ?? undefined, z.string().optional()),
     _csrf: z.preprocess((value) => normalizeString(value, null) ?? undefined, z.string().optional()),
 });
@@ -37,6 +38,7 @@ export const loginRequestBodyOpenApiSchema: OpenApiObjectSchema = {
     properties: {
         username: { type: "string" },
         password: { type: "string" },
+        captchaAnswer: { type: "string" },
         next: { type: "string" },
         _csrf: { type: "string" },
     },

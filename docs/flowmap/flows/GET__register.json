@@ -7,7 +7,7 @@
   "handler": {
     "name": "getRegisterPage",
     "file": "server/src/controllers/auth/auth-pages.controller.ts",
-    "line": 34
+    "line": 46
   },
   "sinks": [],
   "exits": [],

@@ -9,7 +9,8 @@ export type LoginFailedReason =
     | "invalid_credentials"
     | "inactive_account"
     | "password_reset_required"
-    | "account_locked";
+    | "account_locked"
+    | "captcha_failed";
 
 export type AuthUserSecurityState = {
     loginFailedCount: number;

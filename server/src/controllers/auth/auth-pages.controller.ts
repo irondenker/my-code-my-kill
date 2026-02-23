@@ -1,15 +1,21 @@
 import type { Request, Response } from "express";
+import { getSecurityDefenseOptions } from "../../config/security-defense-options.js";
+import { resolveLoginCaptchaViewModel } from "../../utils/auth/login-captcha.util.js";
 import { getSafeRedirectPath } from "../../utils/http/redirect.util.js";
 
 type AuthRenderOptions = {
     formError?: string | null;
     nextPath?: string | null;
+    captchaRequired?: boolean;
+    captchaQuestion?: string | null;
 };
 
 function renderLogin(res: Response, options: AuthRenderOptions = {}) {
     return res.render("auth/sign-in", {
         formError: options.formError ?? null,
         nextPath: options.nextPath ?? null,
+        captchaRequired: options.captchaRequired ?? false,
+        captchaQuestion: options.captchaQuestion ?? null,
     });
 }
 
@@ -25,7 +31,13 @@ function renderRegister(res: Response, options: AuthRenderOptions = {}) {
  */
 export async function getLoginPage(req: Request, res: Response) {
     const nextPath = getSafeRedirectPath(req.query?.next, "");
-    return renderLogin(res, { nextPath: nextPath || null });
+    const simpleCaptchaOptions = getSecurityDefenseOptions().simpleCaptcha.login;
+    const captcha = resolveLoginCaptchaViewModel(req, simpleCaptchaOptions.enabled);
+    return renderLogin(res, {
+        nextPath: nextPath || null,
+        captchaRequired: captcha.required,
+        captchaQuestion: captcha.question,
+    });
 }
 
 /**

@@ -19,4 +19,5 @@ export {
     logAccountLockedSafely,
     logPasswordResetRequestedSafely,
     logPasswordResetCompletedSafely,
+    logRateLimitedSafely,
 } from "./audit/audit-event.service.js";

@@ -16,25 +16,37 @@ SESSION_KEY3["session.boardFlashMessage"]
 end
 subgraph SESSION_AUTH_KEYS["[AUTH KEYS]"]
 direction TB
-SESSION_KEY4["session.profileImageUrl"]
-SESSION_KEY5["session.userId"]
-SESSION_KEY6["session.username"]
-SESSION_KEY7["session.userRole"]
+SESSION_KEY4["session.loginCaptchaAnswer"]
+SESSION_KEY5["session.loginCaptchaFailureCount"]
+SESSION_KEY6["session.loginCaptchaQuestion"]
+SESSION_KEY7["session.loginCaptchaRequired"]
+SESSION_KEY8["session.profileImageUrl"]
+SESSION_KEY9["session.userId"]
+SESSION_KEY10["session.username"]
+SESSION_KEY11["session.userRole"]
 end
 SESSION_KEY_READ1["READ: 2<br/>GET /admin/boards<br/>POST /admin/boards"]
 SESSION_KEY_READ2["READ: 1<br/>GET /admin/users"]
 SESSION_KEY_READ3["READ: 1<br/>GET /board/:slug"]
-SESSION_KEY_READ5["READ: 19<br/>DELETE /board/:slug/:displayId<br/>GET /@:username<br/>GET /board<br/>GET /board/:slug<br/>GET /board/:slug/:displayId<br/>GET /board/:slug/:displayId/edit<br/>GET /board/:slug/new<br/>GET /setting/profile<br/>GET /settings/profile<br/>POST /admin/users/:userId/role<br/>POST /admin/users/:userId/status<br/>POST /board/:slug<br/>POST /board/:slug/:displayId/delete<br/>POST /board/:slug/:displayId/edit<br/>POST /logout<br/>POST /setting/profile<br/>POST /settings/profile<br/>POST /users/avatar<br/>POST /users/avatar/delete"]
-SESSION_KEY_READ6["READ: 6<br/>POST /admin/users/:userId/role<br/>POST /admin/users/:userId/status<br/>POST /labs/ssti<br/>POST /logout<br/>POST /users/avatar<br/>POST /users/avatar/delete"]
-SESSION_KEY_READ7["READ: 11<br/>DELETE /board/:slug/:displayId<br/>GET /@:username<br/>GET /board<br/>GET /board/:slug<br/>GET /board/:slug/:displayId<br/>GET /board/:slug/:displayId/edit<br/>GET /board/:slug/new<br/>POST /board/:slug<br/>POST /board/:slug/:displayId/delete<br/>POST /board/:slug/:displayId/edit<br/>POST /logout"]
+SESSION_KEY_READ4["READ: 2<br/>GET /login<br/>POST /login"]
+SESSION_KEY_READ5["READ: 1<br/>POST /login"]
+SESSION_KEY_READ6["READ: 2<br/>GET /login<br/>POST /login"]
+SESSION_KEY_READ7["READ: 2<br/>GET /login<br/>POST /login"]
+SESSION_KEY_READ9["READ: 19<br/>DELETE /board/:slug/:displayId<br/>GET /@:username<br/>GET /board<br/>GET /board/:slug<br/>GET /board/:slug/:displayId<br/>GET /board/:slug/:displayId/edit<br/>GET /board/:slug/new<br/>GET /setting/profile<br/>GET /settings/profile<br/>POST /admin/users/:userId/role<br/>POST /admin/users/:userId/status<br/>POST /board/:slug<br/>POST /board/:slug/:displayId/delete<br/>POST /board/:slug/:displayId/edit<br/>POST /logout<br/>POST /setting/profile<br/>POST /settings/profile<br/>POST /users/avatar<br/>POST /users/avatar/delete"]
+SESSION_KEY_READ10["READ: 6<br/>POST /admin/users/:userId/role<br/>POST /admin/users/:userId/status<br/>POST /labs/ssti<br/>POST /logout<br/>POST /users/avatar<br/>POST /users/avatar/delete"]
+SESSION_KEY_READ11["READ: 11<br/>DELETE /board/:slug/:displayId<br/>GET /@:username<br/>GET /board<br/>GET /board/:slug<br/>GET /board/:slug/:displayId<br/>GET /board/:slug/:displayId/edit<br/>GET /board/:slug/new<br/>POST /board/:slug<br/>POST /board/:slug/:displayId/delete<br/>POST /board/:slug/:displayId/edit<br/>POST /logout"]
 SESSION_ROOT_WRITE["WRITE: 3<br/>POST /login<br/>POST /logout<br/>POST /register"]
 SESSION_KEY_WRITE1["WRITE: 3<br/>GET /admin/boards<br/>POST /admin/boards<br/>POST /admin/boards/:boardId/edit"]
 SESSION_KEY_WRITE2["WRITE: 3<br/>GET /admin/users<br/>POST /admin/users/:userId/role<br/>POST /admin/users/:userId/status"]
 SESSION_KEY_WRITE3["WRITE: 3<br/>DELETE /board/:slug/:displayId<br/>GET /board/:slug<br/>POST /board/:slug/:displayId/delete"]
-SESSION_KEY_WRITE4["WRITE: 4<br/>POST /login<br/>POST /register<br/>POST /users/avatar<br/>POST /users/avatar/delete"]
-SESSION_KEY_WRITE5["WRITE: 2<br/>POST /login<br/>POST /register"]
-SESSION_KEY_WRITE6["WRITE: 2<br/>POST /login<br/>POST /register"]
-SESSION_KEY_WRITE7["WRITE: 2<br/>POST /login<br/>POST /register"]
+SESSION_KEY_WRITE4["WRITE: 2<br/>GET /login<br/>POST /login"]
+SESSION_KEY_WRITE5["WRITE: 1<br/>POST /login"]
+SESSION_KEY_WRITE6["WRITE: 2<br/>GET /login<br/>POST /login"]
+SESSION_KEY_WRITE7["WRITE: 1<br/>POST /login"]
+SESSION_KEY_WRITE8["WRITE: 4<br/>POST /login<br/>POST /register<br/>POST /users/avatar<br/>POST /users/avatar/delete"]
+SESSION_KEY_WRITE9["WRITE: 2<br/>POST /login<br/>POST /register"]
+SESSION_KEY_WRITE10["WRITE: 2<br/>POST /login<br/>POST /register"]
+SESSION_KEY_WRITE11["WRITE: 2<br/>POST /login<br/>POST /register"]
 SESSION_ROOT --> SESSION_ROOT_WRITE
 SESSION_ROOT --> SESSION_KEY1
 SESSION_ROOT --> SESSION_KEY2
@@ -43,12 +55,20 @@ SESSION_ROOT --> SESSION_KEY4
 SESSION_ROOT --> SESSION_KEY5
 SESSION_ROOT --> SESSION_KEY6
 SESSION_ROOT --> SESSION_KEY7
+SESSION_ROOT --> SESSION_KEY8
+SESSION_ROOT --> SESSION_KEY9
+SESSION_ROOT --> SESSION_KEY10
+SESSION_ROOT --> SESSION_KEY11
 SESSION_KEY1 --> SESSION_KEY_READ1
 SESSION_KEY2 --> SESSION_KEY_READ2
 SESSION_KEY3 --> SESSION_KEY_READ3
+SESSION_KEY4 --> SESSION_KEY_READ4
 SESSION_KEY5 --> SESSION_KEY_READ5
 SESSION_KEY6 --> SESSION_KEY_READ6
 SESSION_KEY7 --> SESSION_KEY_READ7
+SESSION_KEY9 --> SESSION_KEY_READ9
+SESSION_KEY10 --> SESSION_KEY_READ10
+SESSION_KEY11 --> SESSION_KEY_READ11
 SESSION_KEY1 --> SESSION_KEY_WRITE1
 SESSION_KEY2 --> SESSION_KEY_WRITE2
 SESSION_KEY3 --> SESSION_KEY_WRITE3
@@ -56,6 +76,10 @@ SESSION_KEY4 --> SESSION_KEY_WRITE4
 SESSION_KEY5 --> SESSION_KEY_WRITE5
 SESSION_KEY6 --> SESSION_KEY_WRITE6
 SESSION_KEY7 --> SESSION_KEY_WRITE7
+SESSION_KEY8 --> SESSION_KEY_WRITE8
+SESSION_KEY9 --> SESSION_KEY_WRITE9
+SESSION_KEY10 --> SESSION_KEY_WRITE10
+SESSION_KEY11 --> SESSION_KEY_WRITE11
 classDef session font-size:10px,padding:2px,stroke-width:1;
 classDef sessionKey stroke-width:1;
 classDef readBlock stroke-dasharray: 4 2,fill:#dbeafe,stroke:#1d4ed8,color:#0f172a;
@@ -64,8 +88,8 @@ classDef flash stroke-dasharray: 5 3,stroke-width:1.5;
 classDef auth stroke-dasharray: 0,stroke-width:1.5;
 classDef other stroke:#6b7280;
 class SESSION_ROOT session;
-class SESSION_KEY1,SESSION_KEY2,SESSION_KEY3,SESSION_KEY4,SESSION_KEY5,SESSION_KEY6,SESSION_KEY7 sessionKey;
-class SESSION_KEY_READ1,SESSION_KEY_READ2,SESSION_KEY_READ3,SESSION_KEY_READ5,SESSION_KEY_READ6,SESSION_KEY_READ7 readBlock;
-class SESSION_ROOT_WRITE,SESSION_KEY_WRITE1,SESSION_KEY_WRITE2,SESSION_KEY_WRITE3,SESSION_KEY_WRITE4,SESSION_KEY_WRITE5,SESSION_KEY_WRITE6,SESSION_KEY_WRITE7 writeBlock;
+class SESSION_KEY1,SESSION_KEY2,SESSION_KEY3,SESSION_KEY4,SESSION_KEY5,SESSION_KEY6,SESSION_KEY7,SESSION_KEY8,SESSION_KEY9,SESSION_KEY10,SESSION_KEY11 sessionKey;
+class SESSION_KEY_READ1,SESSION_KEY_READ2,SESSION_KEY_READ3,SESSION_KEY_READ4,SESSION_KEY_READ5,SESSION_KEY_READ6,SESSION_KEY_READ7,SESSION_KEY_READ9,SESSION_KEY_READ10,SESSION_KEY_READ11 readBlock;
+class SESSION_ROOT_WRITE,SESSION_KEY_WRITE1,SESSION_KEY_WRITE2,SESSION_KEY_WRITE3,SESSION_KEY_WRITE4,SESSION_KEY_WRITE5,SESSION_KEY_WRITE6,SESSION_KEY_WRITE7,SESSION_KEY_WRITE8,SESSION_KEY_WRITE9,SESSION_KEY_WRITE10,SESSION_KEY_WRITE11 writeBlock;
 class SESSION_KEY1,SESSION_KEY2,SESSION_KEY3 flash;
-class SESSION_KEY4,SESSION_KEY5,SESSION_KEY6,SESSION_KEY7 auth;
+class SESSION_KEY4,SESSION_KEY5,SESSION_KEY6,SESSION_KEY7,SESSION_KEY8,SESSION_KEY9,SESSION_KEY10,SESSION_KEY11 auth;

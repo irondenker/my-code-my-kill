@@ -11,6 +11,7 @@ test("parseLoginForm trims username and keeps password", () => {
     const result = parseLoginForm({
         username: "  alice  ",
         password: " secret ",
+        captchaAnswer: " 12 ",
         next: " /board ",
     });
 
@@ -19,6 +20,7 @@ test("parseLoginForm trims username and keeps password", () => {
 
     assert.equal(result.data.username, "alice");
     assert.equal(result.data.password, " secret ");
+    assert.equal(result.data.captchaAnswer, "12");
     assert.equal(result.data.next, "/board");
 });
 

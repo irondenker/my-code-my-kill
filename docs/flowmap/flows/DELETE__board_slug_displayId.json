@@ -4,7 +4,8 @@
   "path": "/board/:slug/:displayId",
   "routeFile": "server/src/routes/board.routes.ts",
   "middlewares": [
-    "requireAuth"
+    "requireAuth",
+    "enforcePostMutationRateLimit"
   ],
   "handler": {
     "name": "deleteArticle",

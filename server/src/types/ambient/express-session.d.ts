@@ -10,5 +10,9 @@ declare module "express-session" {
         boardFlashMessage?: string;
         adminUsersFlashMessage?: string;
         adminBoardsFlashMessage?: string;
+        loginCaptchaFailureCount?: number;
+        loginCaptchaRequired?: boolean;
+        loginCaptchaQuestion?: string;
+        loginCaptchaAnswer?: string;
     }
 }

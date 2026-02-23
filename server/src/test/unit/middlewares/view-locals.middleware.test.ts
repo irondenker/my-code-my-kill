@@ -56,6 +56,7 @@ function makeLabOptions(): LabOptions {
             mimeCheck: true,
             magicNumberCheck: true,
         },
+        securityDefense: {},
     };
 }
 

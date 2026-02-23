@@ -63,6 +63,7 @@ test("lab-options loader falls back to defaults when file is missing", async () 
     assert.equal(typeof result.options.uploadValidation.extensionCheck, "boolean");
     assert.equal(typeof result.options.uploadValidation.mimeCheck, "boolean");
     assert.equal(typeof result.options.uploadValidation.magicNumberCheck, "boolean");
+    assert.deepEqual(result.options.securityDefense, {});
     assert.equal(result.warnings.some((line) => line.includes("Failed to load")), true);
 });
 
@@ -73,6 +74,7 @@ test("lab-options loader falls back to defaults when JSON is invalid", async () 
 
     assert.equal(result.options.sqlInjection.enabled, false);
     assert.equal(result.options.xssInjection.storedXss, false);
+    assert.deepEqual(result.options.securityDefense, {});
     assert.equal(result.warnings.some((line) => line.includes("Failed to load")), true);
 });
 
@@ -113,6 +115,45 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
             mimeCheck: "true",
             magicNumberCheck: "true",
         },
+        securityDefense: {
+            enabled: "true",
+            accountLockout: {
+                enabled: "true",
+                maxFailures: "7",
+                lockMinutes: 15,
+                useLoginLockUntil: "false",
+            },
+            passwordReset: {
+                enabled: "true",
+                tokenTtlMinutes: "25",
+                devRevealToken: {
+                    enabled: "true",
+                },
+                pseudoVerify: {
+                    enabled: "false",
+                },
+            },
+            rateLimit: {
+                enabled: "true",
+                login: {
+                    enabled: "true",
+                    maxRequests: "9",
+                    windowSeconds: "45",
+                },
+                postsMutation: {
+                    enabled: "false",
+                    maxRequests: "14",
+                    windowSeconds: 30,
+                },
+            },
+            simpleCaptcha: {
+                enabled: "true",
+                login: {
+                    enabled: "true",
+                    afterFailures: "4",
+                },
+            },
+        },
     });
 
     const result = await readLabOptionsViaSubprocess({
@@ -139,6 +180,25 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
     assert.equal(typeof result.options.uploadValidation.extensionCheck, "boolean");
     assert.equal(typeof result.options.uploadValidation.mimeCheck, "boolean");
     assert.equal(typeof result.options.uploadValidation.magicNumberCheck, "boolean");
+    assert.equal(result.options.securityDefense.enabled, true);
+    assert.equal(result.options.securityDefense.accountLockout.enabled, true);
+    assert.equal(result.options.securityDefense.accountLockout.maxFailures, 7);
+    assert.equal(result.options.securityDefense.accountLockout.lockMinutes, 15);
+    assert.equal(result.options.securityDefense.accountLockout.useLoginLockUntil, false);
+    assert.equal(result.options.securityDefense.passwordReset.enabled, true);
+    assert.equal(result.options.securityDefense.passwordReset.tokenTtlMinutes, 25);
+    assert.equal(result.options.securityDefense.passwordReset.devRevealToken.enabled, true);
+    assert.equal(result.options.securityDefense.passwordReset.pseudoVerify.enabled, false);
+    assert.equal(result.options.securityDefense.rateLimit.enabled, true);
+    assert.equal(result.options.securityDefense.rateLimit.login.enabled, true);
+    assert.equal(result.options.securityDefense.rateLimit.login.maxRequests, 9);
+    assert.equal(result.options.securityDefense.rateLimit.login.windowSeconds, 45);
+    assert.equal(result.options.securityDefense.rateLimit.postsMutation.enabled, false);
+    assert.equal(result.options.securityDefense.rateLimit.postsMutation.maxRequests, 14);
+    assert.equal(result.options.securityDefense.rateLimit.postsMutation.windowSeconds, 30);
+    assert.equal(result.options.securityDefense.simpleCaptcha.enabled, true);
+    assert.equal(result.options.securityDefense.simpleCaptcha.login.enabled, true);
+    assert.equal(result.options.securityDefense.simpleCaptcha.login.afterFailures, 4);
     assert.equal(result.warnings.length > 0, true);
 });
 

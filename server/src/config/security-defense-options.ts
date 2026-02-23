@@ -1,3 +1,5 @@
+﻿import { getLabOptions } from "./lab-options.js";
+
 export type AccountLockoutOptions = {
     enabled: boolean;
     maxFailures: number;
@@ -16,72 +18,88 @@ export type PasswordResetOptions = {
     };
 };
 
+export type RateLimitOptions = {
+    enabled: boolean;
+    login: {
+        enabled: boolean;
+        maxRequests: number;
+        windowSeconds: number;
+    };
+    postsMutation: {
+        enabled: boolean;
+        maxRequests: number;
+        windowSeconds: number;
+    };
+};
+
+export type SimpleCaptchaOptions = {
+    enabled: boolean;
+    login: {
+        enabled: boolean;
+        afterFailures: number;
+    };
+};
+
 export type SecurityDefenseOptions = {
     enabled: boolean;
     accountLockout: AccountLockoutOptions;
     passwordReset: PasswordResetOptions;
+    rateLimit: RateLimitOptions;
+    simpleCaptcha: SimpleCaptchaOptions;
 };
 
-function parseBooleanEnv(name: string, fallback: boolean): boolean {
-    const raw = process.env[name];
-    if (typeof raw === "undefined") {
-        return fallback;
-    }
-
-    const normalized = raw.trim().toLowerCase();
-    if (["1", "true", "yes", "y", "on"].includes(normalized)) {
-        return true;
-    }
-    if (["0", "false", "no", "n", "off"].includes(normalized)) {
-        return false;
-    }
-
-    console.warn(`[CONFIG] Invalid boolean env ${name}="${raw}". Using ${String(fallback)}.`);
-    return fallback;
-}
-
-function parsePositiveIntEnv(name: string, fallback: number): number {
-    const raw = process.env[name];
-    if (typeof raw === "undefined") {
-        return fallback;
-    }
-
-    const parsed = Number.parseInt(raw, 10);
-    if (Number.isInteger(parsed) && parsed > 0) {
-        return parsed;
-    }
-
-    console.warn(`[CONFIG] Invalid positive integer env ${name}="${raw}". Using ${String(fallback)}.`);
-    return fallback;
-}
-
 /**
- * SECURITY_DEFENSE 옵션은 환경변수에서 요청 시점에 읽습니다.
- * (테스트에서 env를 바꿔가며 검증할 수 있도록 캐시하지 않습니다.)
+ * SECURITY_DEFENSE options are resolved at request time.
+ * Precedence: lab-options.json > defaults.
  */
 export function getSecurityDefenseOptions(): SecurityDefenseOptions {
-    const enabled = parseBooleanEnv("SECURITY_DEFENSE_ENABLED", false);
-    const accountLockoutEnabled = enabled && parseBooleanEnv("SECURITY_DEFENSE_ACCOUNT_LOCKOUT_ENABLED", enabled);
-    const passwordResetEnabled = enabled && parseBooleanEnv("SECURITY_DEFENSE_PASSWORD_RESET_ENABLED", enabled);
+    const labSecurityDefense = getLabOptions().securityDefense;
+
+    const enabled = labSecurityDefense.enabled ?? false;
+    const accountLockoutEnabled = enabled && (labSecurityDefense.accountLockout?.enabled ?? enabled);
+    const passwordResetEnabled = enabled && (labSecurityDefense.passwordReset?.enabled ?? enabled);
+    const rateLimitEnabled = enabled && (labSecurityDefense.rateLimit?.enabled ?? false);
+    const loginRateLimitEnabled = rateLimitEnabled && (labSecurityDefense.rateLimit?.login?.enabled ?? true);
+    const postsMutationRateLimitEnabled = rateLimitEnabled && (labSecurityDefense.rateLimit?.postsMutation?.enabled ?? true);
+    const simpleCaptchaEnabled = enabled && (labSecurityDefense.simpleCaptcha?.enabled ?? false);
+    const loginSimpleCaptchaEnabled = simpleCaptchaEnabled && (labSecurityDefense.simpleCaptcha?.login?.enabled ?? true);
 
     return {
         enabled,
         accountLockout: {
             enabled: accountLockoutEnabled,
-            maxFailures: parsePositiveIntEnv("SECURITY_DEFENSE_ACCOUNT_LOCKOUT_MAX_FAILURES", 5),
-            lockMinutes: parsePositiveIntEnv("SECURITY_DEFENSE_ACCOUNT_LOCKOUT_LOCK_MINUTES", 10),
-            useLoginLockUntil: parseBooleanEnv("SECURITY_DEFENSE_ACCOUNT_LOCKOUT_USE_LOGIN_LOCK_UNTIL", true),
+            maxFailures: labSecurityDefense.accountLockout?.maxFailures ?? 5,
+            lockMinutes: labSecurityDefense.accountLockout?.lockMinutes ?? 10,
+            useLoginLockUntil: labSecurityDefense.accountLockout?.useLoginLockUntil ?? true,
         },
         passwordReset: {
             enabled: passwordResetEnabled,
-            tokenTtlMinutes: parsePositiveIntEnv("SECURITY_DEFENSE_PASSWORD_RESET_TOKEN_TTL_MINUTES", 20),
+            tokenTtlMinutes: labSecurityDefense.passwordReset?.tokenTtlMinutes ?? 20,
             devRevealToken: {
-                enabled:
-                    passwordResetEnabled &&
-                    parseBooleanEnv("SECURITY_DEFENSE_PASSWORD_RESET_DEV_REVEAL_TOKEN_ENABLED", false),
+                enabled: passwordResetEnabled && (labSecurityDefense.passwordReset?.devRevealToken?.enabled ?? false),
             },
             pseudoVerify: {
-                enabled: passwordResetEnabled && parseBooleanEnv("SECURITY_DEFENSE_PASSWORD_RESET_PSEUDO_VERIFY_ENABLED", false),
+                enabled: passwordResetEnabled && (labSecurityDefense.passwordReset?.pseudoVerify?.enabled ?? false),
+            },
+        },
+        rateLimit: {
+            enabled: rateLimitEnabled,
+            login: {
+                enabled: loginRateLimitEnabled,
+                maxRequests: labSecurityDefense.rateLimit?.login?.maxRequests ?? 10,
+                windowSeconds: labSecurityDefense.rateLimit?.login?.windowSeconds ?? 60,
+            },
+            postsMutation: {
+                enabled: postsMutationRateLimitEnabled,
+                maxRequests: labSecurityDefense.rateLimit?.postsMutation?.maxRequests ?? 20,
+                windowSeconds: labSecurityDefense.rateLimit?.postsMutation?.windowSeconds ?? 60,
+            },
+        },
+        simpleCaptcha: {
+            enabled: simpleCaptchaEnabled,
+            login: {
+                enabled: loginSimpleCaptchaEnabled,
+                afterFailures: labSecurityDefense.simpleCaptcha?.login?.afterFailures ?? 3,
             },
         },
     };

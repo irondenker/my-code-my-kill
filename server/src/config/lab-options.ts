@@ -65,6 +65,46 @@ export type CsrfOptions = {
     enabled: boolean;
 };
 
+export type SecurityDefenseLabOptions = {
+    enabled?: boolean;
+    accountLockout?: {
+        enabled?: boolean;
+        maxFailures?: number;
+        lockMinutes?: number;
+        useLoginLockUntil?: boolean;
+    };
+    passwordReset?: {
+        enabled?: boolean;
+        tokenTtlMinutes?: number;
+        devRevealToken?: {
+            enabled?: boolean;
+        };
+        pseudoVerify?: {
+            enabled?: boolean;
+        };
+    };
+    rateLimit?: {
+        enabled?: boolean;
+        login?: {
+            enabled?: boolean;
+            maxRequests?: number;
+            windowSeconds?: number;
+        };
+        postsMutation?: {
+            enabled?: boolean;
+            maxRequests?: number;
+            windowSeconds?: number;
+        };
+    };
+    simpleCaptcha?: {
+        enabled?: boolean;
+        login?: {
+            enabled?: boolean;
+            afterFailures?: number;
+        };
+    };
+};
+
 export type LabOptions = {
     sqlInjection: SqlInjectionOptions;
     ssti: boolean;
@@ -72,6 +112,7 @@ export type LabOptions = {
     csrf: CsrfOptions;
     xssInjection: XssInjectionOptions;
     uploadValidation: UploadValidationOptions;
+    securityDefense: SecurityDefenseLabOptions;
 };
 
 // 프로젝트 루트에서 `lab-options.json`을 찾습니다.
@@ -125,6 +166,7 @@ const DEFAULT_LAB_OPTIONS: LabOptions = {
         mimeCheck: true,
         magicNumberCheck: true,
     },
+    securityDefense: {},
 };
 
 /**
@@ -164,6 +206,7 @@ function getDefaultLabOptions(): LabOptions {
             mimeCheck: DEFAULT_LAB_OPTIONS.uploadValidation.mimeCheck,
             magicNumberCheck: DEFAULT_LAB_OPTIONS.uploadValidation.magicNumberCheck,
         },
+        securityDefense: {},
     };
 }
 
@@ -196,6 +239,49 @@ function parseBooleanOption(value: unknown, key: string, fallback = false): bool
         console.warn(`[CONFIG] Invalid lab option "${key}" in ${LAB_OPTIONS_PATH}. Using ${String(fallback)}.`);
     }
     return fallback;
+}
+
+function parseOptionalBooleanOption(value: unknown, key: string): boolean | undefined {
+    if (typeof value === "undefined") {
+        return undefined;
+    }
+
+    if (typeof value === "boolean") {
+        return value;
+    }
+
+    if (typeof value === "string") {
+        const normalized = value.trim().toLowerCase();
+        if (normalized === "true") {
+            return true;
+        }
+        if (normalized === "false") {
+            return false;
+        }
+    }
+
+    console.warn(`[CONFIG] Invalid lab option "${key}" in ${LAB_OPTIONS_PATH}. Ignoring value.`);
+    return undefined;
+}
+
+function parseOptionalPositiveIntOption(value: unknown, key: string): number | undefined {
+    if (typeof value === "undefined") {
+        return undefined;
+    }
+
+    if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+        return value;
+    }
+
+    if (typeof value === "string") {
+        const parsed = Number.parseInt(value, 10);
+        if (Number.isInteger(parsed) && parsed > 0) {
+            return parsed;
+        }
+    }
+
+    console.warn(`[CONFIG] Invalid lab option "${key}" in ${LAB_OPTIONS_PATH}. Ignoring value.`);
+    return undefined;
 }
 
 /**
@@ -660,6 +746,292 @@ function parseSstiOption(value: unknown): boolean {
     );
 }
 
+function parseSecurityDefenseLabOptions(value: unknown): SecurityDefenseLabOptions {
+    if (typeof value === "undefined") {
+        return {};
+    }
+
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        console.warn(`[CONFIG] Invalid lab option "securityDefense" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
+        return {};
+    }
+
+    const options = value as Record<string, unknown>;
+    const securityDefense: SecurityDefenseLabOptions = {};
+
+    const enabled = parseOptionalBooleanOption(options.enabled, "securityDefense.enabled");
+    if (typeof enabled !== "undefined") {
+        securityDefense.enabled = enabled;
+    }
+
+    const rawAccountLockout = options.accountLockout;
+    const parsedAccountLockout =
+        rawAccountLockout && typeof rawAccountLockout === "object" && !Array.isArray(rawAccountLockout)
+            ? (rawAccountLockout as Record<string, unknown>)
+            : null;
+    if (typeof rawAccountLockout !== "undefined" && !parsedAccountLockout) {
+        console.warn(`[CONFIG] Invalid lab option "securityDefense.accountLockout" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
+    }
+    if (parsedAccountLockout) {
+        const accountLockout: NonNullable<SecurityDefenseLabOptions["accountLockout"]> = {};
+        const accountLockoutEnabled = parseOptionalBooleanOption(
+            parsedAccountLockout.enabled,
+            "securityDefense.accountLockout.enabled",
+        );
+        if (typeof accountLockoutEnabled !== "undefined") {
+            accountLockout.enabled = accountLockoutEnabled;
+        }
+
+        const maxFailures = parseOptionalPositiveIntOption(
+            parsedAccountLockout.maxFailures,
+            "securityDefense.accountLockout.maxFailures",
+        );
+        if (typeof maxFailures !== "undefined") {
+            accountLockout.maxFailures = maxFailures;
+        }
+
+        const lockMinutes = parseOptionalPositiveIntOption(
+            parsedAccountLockout.lockMinutes,
+            "securityDefense.accountLockout.lockMinutes",
+        );
+        if (typeof lockMinutes !== "undefined") {
+            accountLockout.lockMinutes = lockMinutes;
+        }
+
+        const useLoginLockUntil = parseOptionalBooleanOption(
+            parsedAccountLockout.useLoginLockUntil,
+            "securityDefense.accountLockout.useLoginLockUntil",
+        );
+        if (typeof useLoginLockUntil !== "undefined") {
+            accountLockout.useLoginLockUntil = useLoginLockUntil;
+        }
+
+        if (Object.keys(accountLockout).length > 0) {
+            securityDefense.accountLockout = accountLockout;
+        }
+    }
+
+    const rawPasswordReset = options.passwordReset;
+    const parsedPasswordReset =
+        rawPasswordReset && typeof rawPasswordReset === "object" && !Array.isArray(rawPasswordReset)
+            ? (rawPasswordReset as Record<string, unknown>)
+            : null;
+    if (typeof rawPasswordReset !== "undefined" && !parsedPasswordReset) {
+        console.warn(`[CONFIG] Invalid lab option "securityDefense.passwordReset" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
+    }
+    if (parsedPasswordReset) {
+        const passwordReset: NonNullable<SecurityDefenseLabOptions["passwordReset"]> = {};
+        const passwordResetEnabled = parseOptionalBooleanOption(
+            parsedPasswordReset.enabled,
+            "securityDefense.passwordReset.enabled",
+        );
+        if (typeof passwordResetEnabled !== "undefined") {
+            passwordReset.enabled = passwordResetEnabled;
+        }
+
+        const tokenTtlMinutes = parseOptionalPositiveIntOption(
+            parsedPasswordReset.tokenTtlMinutes,
+            "securityDefense.passwordReset.tokenTtlMinutes",
+        );
+        if (typeof tokenTtlMinutes !== "undefined") {
+            passwordReset.tokenTtlMinutes = tokenTtlMinutes;
+        }
+
+        const rawDevRevealToken = parsedPasswordReset.devRevealToken;
+        const parsedDevRevealToken =
+            rawDevRevealToken && typeof rawDevRevealToken === "object" && !Array.isArray(rawDevRevealToken)
+                ? (rawDevRevealToken as Record<string, unknown>)
+                : null;
+        if (typeof rawDevRevealToken !== "undefined" && !parsedDevRevealToken) {
+            console.warn(`[CONFIG] Invalid lab option "securityDefense.passwordReset.devRevealToken" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
+        }
+        if (parsedDevRevealToken) {
+            const devRevealTokenEnabled = parseOptionalBooleanOption(
+                parsedDevRevealToken.enabled,
+                "securityDefense.passwordReset.devRevealToken.enabled",
+            );
+            if (typeof devRevealTokenEnabled !== "undefined") {
+                passwordReset.devRevealToken = {
+                    enabled: devRevealTokenEnabled,
+                };
+            }
+        }
+
+        const rawPseudoVerify = parsedPasswordReset.pseudoVerify;
+        const parsedPseudoVerify =
+            rawPseudoVerify && typeof rawPseudoVerify === "object" && !Array.isArray(rawPseudoVerify)
+                ? (rawPseudoVerify as Record<string, unknown>)
+                : null;
+        if (typeof rawPseudoVerify !== "undefined" && !parsedPseudoVerify) {
+            console.warn(`[CONFIG] Invalid lab option "securityDefense.passwordReset.pseudoVerify" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
+        }
+        if (parsedPseudoVerify) {
+            const pseudoVerifyEnabled = parseOptionalBooleanOption(
+                parsedPseudoVerify.enabled,
+                "securityDefense.passwordReset.pseudoVerify.enabled",
+            );
+            if (typeof pseudoVerifyEnabled !== "undefined") {
+                passwordReset.pseudoVerify = {
+                    enabled: pseudoVerifyEnabled,
+                };
+            }
+        }
+
+        if (Object.keys(passwordReset).length > 0) {
+            securityDefense.passwordReset = passwordReset;
+        }
+    }
+
+    const rawRateLimit = options.rateLimit;
+    const parsedRateLimit =
+        rawRateLimit && typeof rawRateLimit === "object" && !Array.isArray(rawRateLimit)
+            ? (rawRateLimit as Record<string, unknown>)
+            : null;
+    if (typeof rawRateLimit !== "undefined" && !parsedRateLimit) {
+        console.warn(`[CONFIG] Invalid lab option "securityDefense.rateLimit" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
+    }
+    if (parsedRateLimit) {
+        const rateLimit: NonNullable<SecurityDefenseLabOptions["rateLimit"]> = {};
+        const rateLimitEnabled = parseOptionalBooleanOption(
+            parsedRateLimit.enabled,
+            "securityDefense.rateLimit.enabled",
+        );
+        if (typeof rateLimitEnabled !== "undefined") {
+            rateLimit.enabled = rateLimitEnabled;
+        }
+
+        const rawLoginRateLimit = parsedRateLimit.login;
+        const parsedLoginRateLimit =
+            rawLoginRateLimit && typeof rawLoginRateLimit === "object" && !Array.isArray(rawLoginRateLimit)
+                ? (rawLoginRateLimit as Record<string, unknown>)
+                : null;
+        if (typeof rawLoginRateLimit !== "undefined" && !parsedLoginRateLimit) {
+            console.warn(`[CONFIG] Invalid lab option "securityDefense.rateLimit.login" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
+        }
+        if (parsedLoginRateLimit) {
+            const loginRateLimit: NonNullable<NonNullable<SecurityDefenseLabOptions["rateLimit"]>["login"]> = {};
+            const loginEnabled = parseOptionalBooleanOption(
+                parsedLoginRateLimit.enabled,
+                "securityDefense.rateLimit.login.enabled",
+            );
+            if (typeof loginEnabled !== "undefined") {
+                loginRateLimit.enabled = loginEnabled;
+            }
+            const loginMaxRequests = parseOptionalPositiveIntOption(
+                parsedLoginRateLimit.maxRequests,
+                "securityDefense.rateLimit.login.maxRequests",
+            );
+            if (typeof loginMaxRequests !== "undefined") {
+                loginRateLimit.maxRequests = loginMaxRequests;
+            }
+            const loginWindowSeconds = parseOptionalPositiveIntOption(
+                parsedLoginRateLimit.windowSeconds,
+                "securityDefense.rateLimit.login.windowSeconds",
+            );
+            if (typeof loginWindowSeconds !== "undefined") {
+                loginRateLimit.windowSeconds = loginWindowSeconds;
+            }
+            if (Object.keys(loginRateLimit).length > 0) {
+                rateLimit.login = loginRateLimit;
+            }
+        }
+
+        const rawPostsMutationRateLimit = parsedRateLimit.postsMutation;
+        const parsedPostsMutationRateLimit =
+            rawPostsMutationRateLimit && typeof rawPostsMutationRateLimit === "object" && !Array.isArray(rawPostsMutationRateLimit)
+                ? (rawPostsMutationRateLimit as Record<string, unknown>)
+                : null;
+        if (typeof rawPostsMutationRateLimit !== "undefined" && !parsedPostsMutationRateLimit) {
+            console.warn(`[CONFIG] Invalid lab option "securityDefense.rateLimit.postsMutation" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
+        }
+        if (parsedPostsMutationRateLimit) {
+            const postsMutationRateLimit: NonNullable<NonNullable<SecurityDefenseLabOptions["rateLimit"]>["postsMutation"]> = {};
+            const postsMutationEnabled = parseOptionalBooleanOption(
+                parsedPostsMutationRateLimit.enabled,
+                "securityDefense.rateLimit.postsMutation.enabled",
+            );
+            if (typeof postsMutationEnabled !== "undefined") {
+                postsMutationRateLimit.enabled = postsMutationEnabled;
+            }
+            const postsMutationMaxRequests = parseOptionalPositiveIntOption(
+                parsedPostsMutationRateLimit.maxRequests,
+                "securityDefense.rateLimit.postsMutation.maxRequests",
+            );
+            if (typeof postsMutationMaxRequests !== "undefined") {
+                postsMutationRateLimit.maxRequests = postsMutationMaxRequests;
+            }
+            const postsMutationWindowSeconds = parseOptionalPositiveIntOption(
+                parsedPostsMutationRateLimit.windowSeconds,
+                "securityDefense.rateLimit.postsMutation.windowSeconds",
+            );
+            if (typeof postsMutationWindowSeconds !== "undefined") {
+                postsMutationRateLimit.windowSeconds = postsMutationWindowSeconds;
+            }
+            if (Object.keys(postsMutationRateLimit).length > 0) {
+                rateLimit.postsMutation = postsMutationRateLimit;
+            }
+        }
+
+        if (Object.keys(rateLimit).length > 0) {
+            securityDefense.rateLimit = rateLimit;
+        }
+    }
+
+    const rawSimpleCaptcha = options.simpleCaptcha;
+    const parsedSimpleCaptcha =
+        rawSimpleCaptcha && typeof rawSimpleCaptcha === "object" && !Array.isArray(rawSimpleCaptcha)
+            ? (rawSimpleCaptcha as Record<string, unknown>)
+            : null;
+    if (typeof rawSimpleCaptcha !== "undefined" && !parsedSimpleCaptcha) {
+        console.warn(`[CONFIG] Invalid lab option "securityDefense.simpleCaptcha" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
+    }
+    if (parsedSimpleCaptcha) {
+        const simpleCaptcha: NonNullable<SecurityDefenseLabOptions["simpleCaptcha"]> = {};
+        const simpleCaptchaEnabled = parseOptionalBooleanOption(
+            parsedSimpleCaptcha.enabled,
+            "securityDefense.simpleCaptcha.enabled",
+        );
+        if (typeof simpleCaptchaEnabled !== "undefined") {
+            simpleCaptcha.enabled = simpleCaptchaEnabled;
+        }
+
+        const rawLoginSimpleCaptcha = parsedSimpleCaptcha.login;
+        const parsedLoginSimpleCaptcha =
+            rawLoginSimpleCaptcha && typeof rawLoginSimpleCaptcha === "object" && !Array.isArray(rawLoginSimpleCaptcha)
+                ? (rawLoginSimpleCaptcha as Record<string, unknown>)
+                : null;
+        if (typeof rawLoginSimpleCaptcha !== "undefined" && !parsedLoginSimpleCaptcha) {
+            console.warn(`[CONFIG] Invalid lab option "securityDefense.simpleCaptcha.login" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
+        }
+        if (parsedLoginSimpleCaptcha) {
+            const loginSimpleCaptcha: NonNullable<NonNullable<SecurityDefenseLabOptions["simpleCaptcha"]>["login"]> = {};
+            const loginSimpleCaptchaEnabled = parseOptionalBooleanOption(
+                parsedLoginSimpleCaptcha.enabled,
+                "securityDefense.simpleCaptcha.login.enabled",
+            );
+            if (typeof loginSimpleCaptchaEnabled !== "undefined") {
+                loginSimpleCaptcha.enabled = loginSimpleCaptchaEnabled;
+            }
+            const afterFailures = parseOptionalPositiveIntOption(
+                parsedLoginSimpleCaptcha.afterFailures,
+                "securityDefense.simpleCaptcha.login.afterFailures",
+            );
+            if (typeof afterFailures !== "undefined") {
+                loginSimpleCaptcha.afterFailures = afterFailures;
+            }
+            if (Object.keys(loginSimpleCaptcha).length > 0) {
+                simpleCaptcha.login = loginSimpleCaptcha;
+            }
+        }
+
+        if (Object.keys(simpleCaptcha).length > 0) {
+            securityDefense.simpleCaptcha = simpleCaptcha;
+        }
+    }
+
+    return securityDefense;
+}
+
 /**
  * `lab-options.json`을 로드해 LabOptions로 변환합니다.
  * 파일이 없거나 JSON이 깨졌거나 포맷이 틀린 경우, 기본값으로 폴백합니다.
@@ -685,6 +1057,7 @@ function loadLabOptions(): LabOptions {
             csrf: parseCsrfOptions(options.csrf),
             xssInjection: parseXssInjectionOptions(options.xss),
             uploadValidation: parseUploadValidationOptions(options.uploadValidation),
+            securityDefense: parseSecurityDefenseLabOptions(options.securityDefense),
         };
     } catch (err) {
         console.warn(`[CONFIG] Failed to load ${LAB_OPTIONS_PATH}. Using defaults.`);
