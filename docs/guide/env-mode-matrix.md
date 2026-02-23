@@ -25,19 +25,12 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. 이 문�
 | `DB_LOGGING` | Sequelize SQL 로깅 여부입니다. |
 | `AUDIT_CLI_LOG_LEVEL` | 감사로그 콘솔 출력 레벨입니다. |
 
-## SECURITY_DEFENSE 변수
+## SECURITY_DEFENSE 제어 위치
 
-| 변수 | 기본값 | 설명 |
-| --- | --- | --- |
-| `SECURITY_DEFENSE_ENABLED` | `false` | 보안 방어 기능 전체 토글입니다. |
-| `SECURITY_DEFENSE_ACCOUNT_LOCKOUT_ENABLED` | `false` | 로그인 실패 누적 방어 토글입니다. |
-| `SECURITY_DEFENSE_ACCOUNT_LOCKOUT_MAX_FAILURES` | `5` | 실패 임계치입니다. |
-| `SECURITY_DEFENSE_ACCOUNT_LOCKOUT_LOCK_MINUTES` | `10` | 임시잠금 기간(분)입니다. |
-| `SECURITY_DEFENSE_ACCOUNT_LOCKOUT_USE_LOGIN_LOCK_UNTIL` | `true` | `login_locked_until` 사용 여부입니다. |
-| `SECURITY_DEFENSE_PASSWORD_RESET_ENABLED` | `false` | 비밀번호 재설정 플로우 활성화입니다. |
-| `SECURITY_DEFENSE_PASSWORD_RESET_TOKEN_TTL_MINUTES` | `20` | 재설정 토큰 TTL(분)입니다. |
-| `SECURITY_DEFENSE_PASSWORD_RESET_DEV_REVEAL_TOKEN_ENABLED` | `false` | Dev/Lab 토큰 노출 여부입니다. |
-| `SECURITY_DEFENSE_PASSWORD_RESET_PSEUDO_VERIFY_ENABLED` | `false` | profile email/phone 기반 pseudo verification 여부입니다. |
+`SECURITY_DEFENSE`는 환경변수가 아니라 `server/lab-options.json`의 `securityDefense` 키로 제어합니다.
+
+- 우선순위: `lab-options.json` > 코드 기본값
+- 상세 키: `securityDefense.enabled`, `securityDefense.accountLockout.*`, `securityDefense.passwordReset.*`, `securityDefense.rateLimit.*`, `securityDefense.simpleCaptcha.*`
 
 ## 모드별 체크 포인트
 
@@ -57,9 +50,8 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. 이 문�
 
 ## Lab Options와의 관계
 
-- `lab-options.json`은 취약점 실습 토글입니다.
-- `SECURITY_DEFENSE_*`는 방어 기능 토글입니다.
-- 두 축은 분리해서 운영하는 것이 기준입니다.
+- `lab-options.json`은 취약점 실습 토글과 방어 토글(`securityDefense`)을 함께 담습니다.
+- 보안 방어 토글은 `securityDefense` 키에서만 읽습니다.
 
 ## 관련 문서
 

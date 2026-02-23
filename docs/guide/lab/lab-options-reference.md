@@ -21,6 +21,7 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. `lab-opti
 - `xss.stored.enabled`
 - `xss.sanitize.clientSide.*`
 - `xss.sanitize.serverSide.*`
+- `securityDefense.*` (방어 토글 override)
 
 ## 파싱 규칙
 
@@ -30,12 +31,52 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. `lab-opti
 
 ## SECURITY_DEFENSE와의 경계
 
-`lab-options.json`과 `SECURITY_DEFENSE_*`는 목적이 다릅니다.
+현재 구현에서 계정 잠금/비밀번호 재설정/레이트리밋/간이 캡챠 방어는 `lab-options.json`의 `securityDefense`로 제어합니다.
 
-- `lab-options.json`: 취약점 실습 토글입니다.
-- `SECURITY_DEFENSE_*`: 계정 보호/비밀번호 재설정/방어 기능 토글입니다.
+- 우선순위: `lab-options.json` > 코드 기본값
+- 키가 `lab-options.json`에 없으면 코드 기본값을 사용합니다.
 
-즉, 비밀번호 재설정(`/forgot-password`, `/reset-password`)과 계정 잠금 동작은 `lab-options.json`이 아니라 환경변수로 제어합니다.
+예시:
+
+```json
+{
+  "securityDefense": {
+    "enabled": true,
+    "accountLockout": {
+      "enabled": true,
+      "maxFailures": 5,
+      "lockMinutes": 10,
+      "useLoginLockUntil": true
+    },
+    "passwordReset": {
+      "enabled": true,
+      "tokenTtlMinutes": 20,
+      "devRevealToken": { "enabled": true },
+      "pseudoVerify": { "enabled": false }
+    },
+    "rateLimit": {
+      "enabled": true,
+      "login": {
+        "enabled": true,
+        "maxRequests": 10,
+        "windowSeconds": 60
+      },
+      "postsMutation": {
+        "enabled": true,
+        "maxRequests": 20,
+        "windowSeconds": 60
+      }
+    },
+    "simpleCaptcha": {
+      "enabled": true,
+      "login": {
+        "enabled": true,
+        "afterFailures": 3
+      }
+    }
+  }
+}
+```
 
 ## 관련 문서
 
