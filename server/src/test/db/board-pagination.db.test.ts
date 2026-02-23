@@ -190,7 +190,7 @@ test("board list pagination supports limit selector and normalizes invalid limit
             assert.equal(selectedLimit.status, 200);
             assert.match(selectedLimitBody, /option value="20" selected/);
             assert.match(selectedLimitBody, /Showing\s+1\s+to\s+12\s+of\s+12 Posts/);
-            assert.match(selectedLimitBody, /href="\?page=2&limit=20"/);
+            assert.match(selectedLimitBody, /href="\?page=2(?:&|&amp;)limit=20"/);
 
             const maxSelectedLimit = await fetch(`${baseUrl}/board/${boardSlug}?limit=100`, {
                 headers: { cookie: authCookie },
@@ -198,7 +198,7 @@ test("board list pagination supports limit selector and normalizes invalid limit
             const maxSelectedLimitBody = await maxSelectedLimit.text();
             assert.equal(maxSelectedLimit.status, 200);
             assert.match(maxSelectedLimitBody, /option value="100" selected/);
-            assert.match(maxSelectedLimitBody, /href="\?page=2&limit=100"/);
+            assert.match(maxSelectedLimitBody, /href="\?page=2(?:&|&amp;)limit=100"/);
 
             const invalidLimit = await fetch(`${baseUrl}/board/${boardSlug}?limit=abc`, {
                 headers: { cookie: authCookie },
