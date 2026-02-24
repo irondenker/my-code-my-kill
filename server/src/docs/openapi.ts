@@ -217,18 +217,26 @@ export const openApiDocument = {
                     {
                         name: "token",
                         in: "query",
-                        required: false,
+                        required: true,
                         schema: { type: "string" },
                     },
                 ],
                 responses: {
                     200: { $ref: "#/components/responses/HtmlOk" },
-                    400: { $ref: "#/components/responses/HtmlOk" },
+                    404: { $ref: "#/components/responses/HtmlOk" },
                 },
             },
             post: {
                 tags: ["Auth"],
                 summary: "Complete password reset",
+                parameters: [
+                    {
+                        name: "token",
+                        in: "query",
+                        required: true,
+                        schema: { type: "string" },
+                    },
+                ],
                 requestBody: {
                     required: true,
                     content: {
@@ -240,6 +248,7 @@ export const openApiDocument = {
                 responses: {
                     200: { $ref: "#/components/responses/HtmlOk" },
                     400: { $ref: "#/components/responses/HtmlOk" },
+                    404: { $ref: "#/components/responses/HtmlOk" },
                     422: { $ref: "#/components/responses/HtmlOk" },
                 },
             },

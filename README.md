@@ -20,6 +20,12 @@
 - [Docker 첫 실행](./docs/guide/first-run/first-run-docker.md)
 - [VM 첫 실행](./docs/guide/first-run/first-run-vm.md)
 
+### 🔀 Stack Switch
+
+- `node .\scripts\switch-stack.mjs dev`
+- `node .\scripts\switch-stack.mjs prod`
+- 빌드까지 함께: `node .\scripts\switch-stack.mjs dev --build`
+
 ### 🗺️ Flowmap
 
 - [Flowmap 인덱스 조회](./docs/flowmap/README.md)

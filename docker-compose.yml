@@ -3,6 +3,7 @@ name: my-code-my-kill-dev
 services:
   db:
     image: postgres:18
+    restart: unless-stopped
     environment:
       POSTGRES_DB: mcmk
       POSTGRES_USER: mcmk_app
@@ -12,10 +13,17 @@ services:
       - "54973:5432"
     volumes:
       - postgresql:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
   server:
     build:
       context: ./server
       dockerfile: Dockerfile
+    restart: unless-stopped
     command: sh -c "npm install && npm run dev"
     ports:
       - "3000:3000"
@@ -27,7 +35,8 @@ services:
       DB_PORT: 5432
       AUDIT_CLI_LOG_LEVEL: errors
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./server:/app
       - server_node_modules:/app/node_modules
@@ -35,6 +44,7 @@ services:
       - default
   nginx:
     image: nginx:1.27-alpine
+    restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
