@@ -13,22 +13,14 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. 따라서
 
 | 키 경로 | 기본값 | 설명 |
 | --- | --- | --- |
-| `securityDefense.enabled` | `false` | 보안 방어 기능의 최상위 ON/OFF입니다. |
 | `securityDefense.accountLockout.enabled` | `false` | 로그인 실패 누적/락아웃 흐름 활성화입니다. |
 | `securityDefense.accountLockout.maxFailures` | `5` | reset_required 전환 임계 실패 횟수입니다. |
 | `securityDefense.accountLockout.lockMinutes` | `10` | 임시 잠금(`login_locked_until`) 기간(분)입니다. |
 | `securityDefense.accountLockout.useLoginLockUntil` | `true` | 임시 잠금 컬럼 사용 여부입니다. |
-| `securityDefense.passwordReset.enabled` | `false` | `/forgot-password`, `/reset-password` 플로우 활성화입니다. |
 | `securityDefense.passwordReset.tokenTtlMinutes` | `20` | 재설정 토큰 만료 시간(분)입니다. |
-| `securityDefense.passwordReset.devRevealToken.enabled` | `false` | Dev/Lab 토큰 노출(페이지 표시) 활성화입니다. |
-| `securityDefense.passwordReset.pseudoVerify.enabled` | `false` | profile email/phone 일치 기반 pseudo verification 활성화입니다. |
 | `securityDefense.rateLimit.enabled` | `false` | 애플리케이션 2차 레이트리밋 전체 활성화입니다. |
-| `securityDefense.rateLimit.login.enabled` | `true`(상위 ON 시) | 로그인 경로 레이트리밋 활성화입니다. |
-| `securityDefense.rateLimit.login.maxRequests` | `10` | 로그인 윈도우 내 허용 요청 수입니다. |
-| `securityDefense.rateLimit.login.windowSeconds` | `60` | 로그인 레이트리밋 윈도우(초)입니다. |
-| `securityDefense.rateLimit.postsMutation.enabled` | `true`(상위 ON 시) | 게시글 변경 경로 레이트리밋 활성화입니다. |
-| `securityDefense.rateLimit.postsMutation.maxRequests` | `20` | 게시글 변경 윈도우 내 허용 요청 수입니다. |
-| `securityDefense.rateLimit.postsMutation.windowSeconds` | `60` | 게시글 변경 레이트리밋 윈도우(초)입니다. |
+| `securityDefense.rateLimit.maxRequests` | `20` | 로그인/게시글 변경 2차 레이트리밋 윈도우 내 허용 요청 수입니다. |
+| `securityDefense.rateLimit.windowSeconds` | `60` | 로그인/게시글 변경 2차 레이트리밋 윈도우(초)입니다. |
 | `securityDefense.simpleCaptcha.enabled` | `false` | 간이 캡챠 전체 활성화입니다. |
 | `securityDefense.simpleCaptcha.login.enabled` | `true`(상위 ON 시) | 로그인 간이 캡챠 활성화입니다. |
 | `securityDefense.simpleCaptcha.login.afterFailures` | `3` | 같은 세션에서 이 횟수 이상 로그인 실패 시 캡챠를 요구합니다. |
@@ -40,7 +32,6 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. 따라서
 ```json
 {
   "securityDefense": {
-    "enabled": true,
     "accountLockout": {
       "enabled": true,
       "maxFailures": 5,
@@ -48,27 +39,12 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. 따라서
       "useLoginLockUntil": true
     },
     "passwordReset": {
-      "enabled": true,
-      "tokenTtlMinutes": 20,
-      "devRevealToken": {
-        "enabled": true
-      },
-      "pseudoVerify": {
-        "enabled": false
-      }
+      "tokenTtlMinutes": 20
     },
     "rateLimit": {
       "enabled": true,
-      "login": {
-        "enabled": true,
-        "maxRequests": 10,
-        "windowSeconds": 60
-      },
-      "postsMutation": {
-        "enabled": true,
-        "maxRequests": 20,
-        "windowSeconds": 60
-      }
+      "maxRequests": 20,
+      "windowSeconds": 60
     },
     "simpleCaptcha": {
       "enabled": true,
@@ -85,27 +61,12 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. 따라서
 
 ## 추천 프리셋
 
-### 실습용 프리셋 (토큰 노출 ON)
+### 실습용 프리셋
 
-- 목적: 학습/데모에서 재설정 토큰 흐름을 빠르게 확인하는 용도입니다.
+- 목적: 학습/데모에서 방어 토글을 일괄 확인하는 용도입니다.
 - 권장값:
-  - `securityDefense.enabled=true`
   - `securityDefense.accountLockout.enabled=true`
-  - `securityDefense.passwordReset.enabled=true`
-  - `securityDefense.passwordReset.devRevealToken.enabled=true`
-  - `securityDefense.passwordReset.pseudoVerify.enabled=false`
-  - `securityDefense.rateLimit.enabled=true`
-  - `securityDefense.simpleCaptcha.enabled=true`
-
-### 준운영용 프리셋 (토큰 노출 OFF)
-
-- 목적: 실서비스는 아니지만 운영 유사 환경에서 열거/노출을 줄이는 용도입니다.
-- 권장값:
-  - `securityDefense.enabled=true`
-  - `securityDefense.accountLockout.enabled=true`
-  - `securityDefense.passwordReset.enabled=true`
-  - `securityDefense.passwordReset.devRevealToken.enabled=false`
-  - `securityDefense.passwordReset.pseudoVerify.enabled=true`
+  - `securityDefense.passwordReset.tokenTtlMinutes=20`
   - `securityDefense.rateLimit.enabled=true`
   - `securityDefense.simpleCaptcha.enabled=true`
 
@@ -113,9 +74,8 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. 따라서
 
 - 목적: 방어 전후 비교 테스트(브루트포스 재현, 열거 리스크 재현) 용도입니다.
 - 권장값 예시:
-  - `securityDefense.enabled=true`
   - `securityDefense.accountLockout.enabled=false`
-  - `securityDefense.passwordReset.enabled=false`
+  - `securityDefense.passwordReset.tokenTtlMinutes=20`
   - `securityDefense.rateLimit.enabled=false`
   - `securityDefense.simpleCaptcha.enabled=false`
 
@@ -127,7 +87,7 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. 따라서
 2. 요청이 프록시를 거치면 실제 클라이언트 IP가 올바르게 전달되는지 확인합니다.
 3. Nginx burst/nodelay, zone rate를 사용 시나리오에 맞게 완화합니다.
 4. Express 2차 제한이 있으면 사용자 키/리소스 키/윈도우를 분리 조정합니다.
-5. 로그인, 비밀번호 재설정, 게시글 변경 경로를 동일 강도로 묶지 않고 경로별로 분리합니다.
+5. `securityDefense.rateLimit.maxRequests`, `securityDefense.rateLimit.windowSeconds`를 트래픽 패턴에 맞게 조정합니다.
 
 ## 관련 문서
 

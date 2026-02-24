@@ -69,16 +69,16 @@ export async function postLogin(req: Request, res: Response) {
     const securityDefense = getSecurityDefenseOptions();
     const accountLockoutOptions = securityDefense.accountLockout;
     const accountLockoutEnabled = accountLockoutOptions.enabled;
-    const loginRateLimitOptions = securityDefense.rateLimit.login;
+    const rateLimitOptions = securityDefense.rateLimit;
     const loginSimpleCaptchaOptions = securityDefense.simpleCaptcha.login;
 
-    if (loginRateLimitOptions.enabled) {
+    if (rateLimitOptions.enabled) {
         const rateLimitKey = `${ipAddress ?? "unknown"}:${(rawUsername || "").toLowerCase()}`;
         const rateLimitDecision = consumeFixedWindowRateLimit({
             bucket: "login",
             key: rateLimitKey,
-            maxRequests: loginRateLimitOptions.maxRequests,
-            windowSeconds: loginRateLimitOptions.windowSeconds,
+            maxRequests: rateLimitOptions.maxRequests,
+            windowSeconds: rateLimitOptions.windowSeconds,
         });
 
         if (rateLimitDecision.limited) {
@@ -89,8 +89,8 @@ export async function postLogin(req: Request, res: Response) {
                 targetUsername: rawUsername || null,
                 scope: "login",
                 keyType: "ip",
-                maxRequests: loginRateLimitOptions.maxRequests,
-                windowSeconds: loginRateLimitOptions.windowSeconds,
+                maxRequests: rateLimitOptions.maxRequests,
+                windowSeconds: rateLimitOptions.windowSeconds,
                 retryAfterSeconds: rateLimitDecision.retryAfterSeconds,
                 method: req.method,
                 path: req.originalUrl,
@@ -150,7 +150,7 @@ export async function postLogin(req: Request, res: Response) {
     }
 
     const { username, password, next } = parsedLoginForm.data;
-    const nextPath = getSafeRedirectPath(next, "/board");
+    const nextPath = getSafeRedirectPath(next, "/");
     const user = await findUserByUsername(username);
 
     if (accountLockoutEnabled && user?.passwordResetRequired) {

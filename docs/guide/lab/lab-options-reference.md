@@ -41,7 +41,6 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. `lab-opti
 ```json
 {
   "securityDefense": {
-    "enabled": true,
     "accountLockout": {
       "enabled": true,
       "maxFailures": 5,
@@ -49,23 +48,12 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. `lab-opti
       "useLoginLockUntil": true
     },
     "passwordReset": {
-      "enabled": true,
-      "tokenTtlMinutes": 20,
-      "devRevealToken": { "enabled": true },
-      "pseudoVerify": { "enabled": false }
+      "tokenTtlMinutes": 20
     },
     "rateLimit": {
       "enabled": true,
-      "login": {
-        "enabled": true,
-        "maxRequests": 10,
-        "windowSeconds": 60
-      },
-      "postsMutation": {
-        "enabled": true,
-        "maxRequests": 20,
-        "windowSeconds": 60
-      }
+      "maxRequests": 20,
+      "windowSeconds": 60
     },
     "simpleCaptcha": {
       "enabled": true,

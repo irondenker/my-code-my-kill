@@ -140,10 +140,7 @@ if (mode === "login-failed") {
         targetUsername: "bob",
         requestedUsername: "bob",
         issued: true,
-        pseudoVerifyEnabled: true,
-        pseudoVerified: true,
         tokenExpiresAt: new Date("2026-02-23T12:00:00.000Z"),
-        devResetToken: "raw-token",
         ipAddress: "127.0.0.1",
         userAgent: "ua",
     });

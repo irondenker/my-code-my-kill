@@ -124,8 +124,8 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
                 useLoginLockUntil: "false",
             },
             passwordReset: {
-                enabled: "true",
                 tokenTtlMinutes: "25",
+                enabled: "true",
                 devRevealToken: {
                     enabled: "true",
                 },
@@ -135,16 +135,8 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
             },
             rateLimit: {
                 enabled: "true",
-                login: {
-                    enabled: "true",
-                    maxRequests: "9",
-                    windowSeconds: "45",
-                },
-                postsMutation: {
-                    enabled: "false",
-                    maxRequests: "14",
-                    windowSeconds: 30,
-                },
+                maxRequests: "20",
+                windowSeconds: "60",
             },
             simpleCaptcha: {
                 enabled: "true",
@@ -180,26 +172,22 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
     assert.equal(typeof result.options.uploadValidation.extensionCheck, "boolean");
     assert.equal(typeof result.options.uploadValidation.mimeCheck, "boolean");
     assert.equal(typeof result.options.uploadValidation.magicNumberCheck, "boolean");
-    assert.equal(result.options.securityDefense.enabled, true);
     assert.equal(result.options.securityDefense.accountLockout.enabled, true);
     assert.equal(result.options.securityDefense.accountLockout.maxFailures, 7);
     assert.equal(result.options.securityDefense.accountLockout.lockMinutes, 15);
     assert.equal(result.options.securityDefense.accountLockout.useLoginLockUntil, false);
-    assert.equal(result.options.securityDefense.passwordReset.enabled, true);
     assert.equal(result.options.securityDefense.passwordReset.tokenTtlMinutes, 25);
-    assert.equal(result.options.securityDefense.passwordReset.devRevealToken.enabled, true);
-    assert.equal(result.options.securityDefense.passwordReset.pseudoVerify.enabled, false);
     assert.equal(result.options.securityDefense.rateLimit.enabled, true);
-    assert.equal(result.options.securityDefense.rateLimit.login.enabled, true);
-    assert.equal(result.options.securityDefense.rateLimit.login.maxRequests, 9);
-    assert.equal(result.options.securityDefense.rateLimit.login.windowSeconds, 45);
-    assert.equal(result.options.securityDefense.rateLimit.postsMutation.enabled, false);
-    assert.equal(result.options.securityDefense.rateLimit.postsMutation.maxRequests, 14);
-    assert.equal(result.options.securityDefense.rateLimit.postsMutation.windowSeconds, 30);
+    assert.equal(result.options.securityDefense.rateLimit.maxRequests, 20);
+    assert.equal(result.options.securityDefense.rateLimit.windowSeconds, 60);
     assert.equal(result.options.securityDefense.simpleCaptcha.enabled, true);
     assert.equal(result.options.securityDefense.simpleCaptcha.login.enabled, true);
     assert.equal(result.options.securityDefense.simpleCaptcha.login.afterFailures, 4);
     assert.equal(result.warnings.length > 0, true);
+    assert.equal(
+        result.warnings.some((line) => line.includes('Deprecated lab option "securityDefense.enabled"')),
+        true,
+    );
 });
 
 test("lab-options loader ignores deprecated SQLi target keys", async () => {

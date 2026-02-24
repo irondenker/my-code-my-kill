@@ -66,7 +66,6 @@ export type CsrfOptions = {
 };
 
 export type SecurityDefenseLabOptions = {
-    enabled?: boolean;
     accountLockout?: {
         enabled?: boolean;
         maxFailures?: number;
@@ -74,27 +73,12 @@ export type SecurityDefenseLabOptions = {
         useLoginLockUntil?: boolean;
     };
     passwordReset?: {
-        enabled?: boolean;
         tokenTtlMinutes?: number;
-        devRevealToken?: {
-            enabled?: boolean;
-        };
-        pseudoVerify?: {
-            enabled?: boolean;
-        };
     };
     rateLimit?: {
         enabled?: boolean;
-        login?: {
-            enabled?: boolean;
-            maxRequests?: number;
-            windowSeconds?: number;
-        };
-        postsMutation?: {
-            enabled?: boolean;
-            maxRequests?: number;
-            windowSeconds?: number;
-        };
+        maxRequests?: number;
+        windowSeconds?: number;
     };
     simpleCaptcha?: {
         enabled?: boolean;
@@ -758,10 +742,10 @@ function parseSecurityDefenseLabOptions(value: unknown): SecurityDefenseLabOptio
 
     const options = value as Record<string, unknown>;
     const securityDefense: SecurityDefenseLabOptions = {};
-
-    const enabled = parseOptionalBooleanOption(options.enabled, "securityDefense.enabled");
-    if (typeof enabled !== "undefined") {
-        securityDefense.enabled = enabled;
+    if (typeof options.enabled !== "undefined") {
+        console.warn(
+            `[CONFIG] Deprecated lab option "securityDefense.enabled" in ${LAB_OPTIONS_PATH}. This option is ignored.`,
+        );
     }
 
     const rawAccountLockout = options.accountLockout;
@@ -821,12 +805,11 @@ function parseSecurityDefenseLabOptions(value: unknown): SecurityDefenseLabOptio
     }
     if (parsedPasswordReset) {
         const passwordReset: NonNullable<SecurityDefenseLabOptions["passwordReset"]> = {};
-        const passwordResetEnabled = parseOptionalBooleanOption(
-            parsedPasswordReset.enabled,
-            "securityDefense.passwordReset.enabled",
-        );
-        if (typeof passwordResetEnabled !== "undefined") {
-            passwordReset.enabled = passwordResetEnabled;
+
+        if (typeof parsedPasswordReset.enabled !== "undefined") {
+            console.warn(
+                `[CONFIG] Deprecated lab option "securityDefense.passwordReset.enabled" in ${LAB_OPTIONS_PATH}. This option is ignored.`,
+            );
         }
 
         const tokenTtlMinutes = parseOptionalPositiveIntOption(
@@ -837,44 +820,16 @@ function parseSecurityDefenseLabOptions(value: unknown): SecurityDefenseLabOptio
             passwordReset.tokenTtlMinutes = tokenTtlMinutes;
         }
 
-        const rawDevRevealToken = parsedPasswordReset.devRevealToken;
-        const parsedDevRevealToken =
-            rawDevRevealToken && typeof rawDevRevealToken === "object" && !Array.isArray(rawDevRevealToken)
-                ? (rawDevRevealToken as Record<string, unknown>)
-                : null;
-        if (typeof rawDevRevealToken !== "undefined" && !parsedDevRevealToken) {
-            console.warn(`[CONFIG] Invalid lab option "securityDefense.passwordReset.devRevealToken" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
-        }
-        if (parsedDevRevealToken) {
-            const devRevealTokenEnabled = parseOptionalBooleanOption(
-                parsedDevRevealToken.enabled,
-                "securityDefense.passwordReset.devRevealToken.enabled",
+        if (typeof parsedPasswordReset.devRevealToken !== "undefined") {
+            console.warn(
+                `[CONFIG] Deprecated lab option "securityDefense.passwordReset.devRevealToken" in ${LAB_OPTIONS_PATH}. This option is ignored.`,
             );
-            if (typeof devRevealTokenEnabled !== "undefined") {
-                passwordReset.devRevealToken = {
-                    enabled: devRevealTokenEnabled,
-                };
-            }
         }
 
-        const rawPseudoVerify = parsedPasswordReset.pseudoVerify;
-        const parsedPseudoVerify =
-            rawPseudoVerify && typeof rawPseudoVerify === "object" && !Array.isArray(rawPseudoVerify)
-                ? (rawPseudoVerify as Record<string, unknown>)
-                : null;
-        if (typeof rawPseudoVerify !== "undefined" && !parsedPseudoVerify) {
-            console.warn(`[CONFIG] Invalid lab option "securityDefense.passwordReset.pseudoVerify" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
-        }
-        if (parsedPseudoVerify) {
-            const pseudoVerifyEnabled = parseOptionalBooleanOption(
-                parsedPseudoVerify.enabled,
-                "securityDefense.passwordReset.pseudoVerify.enabled",
+        if (typeof parsedPasswordReset.pseudoVerify !== "undefined") {
+            console.warn(
+                `[CONFIG] Deprecated lab option "securityDefense.passwordReset.pseudoVerify" in ${LAB_OPTIONS_PATH}. This option is ignored.`,
             );
-            if (typeof pseudoVerifyEnabled !== "undefined") {
-                passwordReset.pseudoVerify = {
-                    enabled: pseudoVerifyEnabled,
-                };
-            }
         }
 
         if (Object.keys(passwordReset).length > 0) {
@@ -900,76 +855,32 @@ function parseSecurityDefenseLabOptions(value: unknown): SecurityDefenseLabOptio
             rateLimit.enabled = rateLimitEnabled;
         }
 
-        const rawLoginRateLimit = parsedRateLimit.login;
-        const parsedLoginRateLimit =
-            rawLoginRateLimit && typeof rawLoginRateLimit === "object" && !Array.isArray(rawLoginRateLimit)
-                ? (rawLoginRateLimit as Record<string, unknown>)
-                : null;
-        if (typeof rawLoginRateLimit !== "undefined" && !parsedLoginRateLimit) {
-            console.warn(`[CONFIG] Invalid lab option "securityDefense.rateLimit.login" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
-        }
-        if (parsedLoginRateLimit) {
-            const loginRateLimit: NonNullable<NonNullable<SecurityDefenseLabOptions["rateLimit"]>["login"]> = {};
-            const loginEnabled = parseOptionalBooleanOption(
-                parsedLoginRateLimit.enabled,
-                "securityDefense.rateLimit.login.enabled",
-            );
-            if (typeof loginEnabled !== "undefined") {
-                loginRateLimit.enabled = loginEnabled;
-            }
-            const loginMaxRequests = parseOptionalPositiveIntOption(
-                parsedLoginRateLimit.maxRequests,
-                "securityDefense.rateLimit.login.maxRequests",
-            );
-            if (typeof loginMaxRequests !== "undefined") {
-                loginRateLimit.maxRequests = loginMaxRequests;
-            }
-            const loginWindowSeconds = parseOptionalPositiveIntOption(
-                parsedLoginRateLimit.windowSeconds,
-                "securityDefense.rateLimit.login.windowSeconds",
-            );
-            if (typeof loginWindowSeconds !== "undefined") {
-                loginRateLimit.windowSeconds = loginWindowSeconds;
-            }
-            if (Object.keys(loginRateLimit).length > 0) {
-                rateLimit.login = loginRateLimit;
-            }
+        const maxRequests = parseOptionalPositiveIntOption(
+            parsedRateLimit.maxRequests,
+            "securityDefense.rateLimit.maxRequests",
+        );
+        if (typeof maxRequests !== "undefined") {
+            rateLimit.maxRequests = maxRequests;
         }
 
-        const rawPostsMutationRateLimit = parsedRateLimit.postsMutation;
-        const parsedPostsMutationRateLimit =
-            rawPostsMutationRateLimit && typeof rawPostsMutationRateLimit === "object" && !Array.isArray(rawPostsMutationRateLimit)
-                ? (rawPostsMutationRateLimit as Record<string, unknown>)
-                : null;
-        if (typeof rawPostsMutationRateLimit !== "undefined" && !parsedPostsMutationRateLimit) {
-            console.warn(`[CONFIG] Invalid lab option "securityDefense.rateLimit.postsMutation" in ${LAB_OPTIONS_PATH}. Ignoring values.`);
+        const windowSeconds = parseOptionalPositiveIntOption(
+            parsedRateLimit.windowSeconds,
+            "securityDefense.rateLimit.windowSeconds",
+        );
+        if (typeof windowSeconds !== "undefined") {
+            rateLimit.windowSeconds = windowSeconds;
         }
-        if (parsedPostsMutationRateLimit) {
-            const postsMutationRateLimit: NonNullable<NonNullable<SecurityDefenseLabOptions["rateLimit"]>["postsMutation"]> = {};
-            const postsMutationEnabled = parseOptionalBooleanOption(
-                parsedPostsMutationRateLimit.enabled,
-                "securityDefense.rateLimit.postsMutation.enabled",
+
+        if (typeof parsedRateLimit.login !== "undefined") {
+            console.warn(
+                `[CONFIG] Deprecated lab option "securityDefense.rateLimit.login" in ${LAB_OPTIONS_PATH}. This option is ignored.`,
             );
-            if (typeof postsMutationEnabled !== "undefined") {
-                postsMutationRateLimit.enabled = postsMutationEnabled;
-            }
-            const postsMutationMaxRequests = parseOptionalPositiveIntOption(
-                parsedPostsMutationRateLimit.maxRequests,
-                "securityDefense.rateLimit.postsMutation.maxRequests",
+        }
+
+        if (typeof parsedRateLimit.postsMutation !== "undefined") {
+            console.warn(
+                `[CONFIG] Deprecated lab option "securityDefense.rateLimit.postsMutation" in ${LAB_OPTIONS_PATH}. This option is ignored.`,
             );
-            if (typeof postsMutationMaxRequests !== "undefined") {
-                postsMutationRateLimit.maxRequests = postsMutationMaxRequests;
-            }
-            const postsMutationWindowSeconds = parseOptionalPositiveIntOption(
-                parsedPostsMutationRateLimit.windowSeconds,
-                "securityDefense.rateLimit.postsMutation.windowSeconds",
-            );
-            if (typeof postsMutationWindowSeconds !== "undefined") {
-                postsMutationRateLimit.windowSeconds = postsMutationWindowSeconds;
-            }
-            if (Object.keys(postsMutationRateLimit).length > 0) {
-                rateLimit.postsMutation = postsMutationRateLimit;
-            }
         }
 
         if (Object.keys(rateLimit).length > 0) {

@@ -12,7 +12,7 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. 따라서
 
 ## 로그인 실패 누적과 reset_required 전환
 
-로그인 방어 토글이 켜진 상태(`securityDefense.enabled=true`, `securityDefense.accountLockout.enabled=true`)에서는 로그인 실패 시 다음 순서로 처리합니다.
+로그인 방어 토글이 켜진 상태(`securityDefense.accountLockout.enabled=true`)에서는 로그인 실패 시 다음 순서로 처리합니다.
 
 1. 사용자 존재 여부와 무관하게 로그인 실패 응답 문구는 동일하게 유지합니다.
 2. 사용자가 존재할 때만 `login_failed_count`를 증가시킵니다.
@@ -41,7 +41,7 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. 따라서
 
 ## 사용자 열거 방지 UX 선택
 
-forgot-password 요청(`POST /forgot-password`)은 계정 존재 여부, pseudo verification 통과 여부, 토큰 발급 여부와 무관하게 항상 동일한 접수 문구를 반환합니다.
+forgot-password 요청(`POST /forgot-password`)은 계정 존재 여부, 토큰 발급 여부와 무관하게 항상 동일한 접수 문구를 반환합니다.
 
 - 외부 응답: 항상 동일 문구입니다.
 - 내부 상태: 감사로그와 DB 상태로만 구분합니다.
@@ -49,21 +49,19 @@ forgot-password 요청(`POST /forgot-password`)은 계정 존재 여부, pseudo 
 
 이 방식은 학습 환경에서 사용자 열거(User Enumeration)를 줄이는 기본 UX 선택입니다.
 
-## Dev/Lab 대체 본인확인
+## Forgot-password 응답 형태
 
-MCMK는 실서비스가 아니므로 실전 채널 발송을 강제하지 않습니다. 대신 다음 대체 모드를 사용합니다.
+MCMK는 실서비스가 아니므로 forgot-password 성공 시 reset 링크를 페이지에 표시합니다.
 
-- `devRevealToken` 모드: reset 링크/토큰을 forgot-password 화면에 표시합니다.
-- `pseudoVerify` 모드: 프로필에 저장된 email/phone과 입력값이 일치할 때만 토큰을 발급합니다.
-
-두 모드는 `lab-options.json`의 `securityDefense.passwordReset` 하위 토글로 독립 제어가 가능합니다.
+- 입력: `username`만 사용합니다.
+- 출력: 링크(`/reset-password?token=...`)만 표시합니다.
+- 노출 제외: 토큰 원문 텍스트는 별도로 표시하지 않습니다.
 
 ## Express 2차 레이트리밋과 간이 캡챠
 
 현재 구현에서는 `lab-options.json`의 `securityDefense` 하위 토글로 다음 방어를 제어합니다.
 
-- `securityDefense.rateLimit.login.*`: 로그인 시도 고속 요청 제한(429)입니다.
-- `securityDefense.rateLimit.postsMutation.*`: 게시글 생성/수정/삭제 고속 요청 제한(429)입니다.
+- `securityDefense.rateLimit.*`: 로그인과 게시글 생성/수정/삭제에 공통으로 적용되는 2차 요청 제한(429)입니다.
 - `securityDefense.simpleCaptcha.login.*`: 같은 세션에서 로그인 실패가 누적되면 간이 산술 캡챠를 요구합니다.
 
 간이 캡챠는 학습/실습용이며 실서비스 보안 캡챠 대체가 아닙니다.

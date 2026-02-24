@@ -190,10 +190,7 @@ test("buildPasswordResetRequestedAuditLogWriteParams maps action/details", () =>
         targetUsername: "bob",
         requestedUsername: "bob",
         issued: true,
-        pseudoVerifyEnabled: true,
-        pseudoVerified: true,
         tokenExpiresAt: new Date("2026-02-23T12:00:00.000Z"),
-        devResetToken: "token-raw",
         ipAddress: "127.0.0.1",
         userAgent: "UA",
     });
@@ -203,10 +200,7 @@ test("buildPasswordResetRequestedAuditLogWriteParams maps action/details", () =>
     assert.deepEqual(payload.details, {
         requestedUsername: "bob",
         issued: true,
-        pseudoVerifyEnabled: true,
-        pseudoVerified: true,
         tokenExpiresAt: "2026-02-23T12:00:00.000Z",
-        devResetToken: "token-raw",
     });
 });
 

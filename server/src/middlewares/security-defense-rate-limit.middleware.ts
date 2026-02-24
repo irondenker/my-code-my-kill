@@ -6,7 +6,7 @@ import { HttpError } from "../utils/http/http-error.js";
 import { getRequestIp, getRequestUserAgent } from "../utils/http/request-meta.util.js";
 
 export const enforcePostMutationRateLimit: RequestHandler = (req, _res, next) => {
-    const rateLimitOptions = getSecurityDefenseOptions().rateLimit.postsMutation;
+    const rateLimitOptions = getSecurityDefenseOptions().rateLimit;
     if (!rateLimitOptions.enabled) {
         return next();
     }

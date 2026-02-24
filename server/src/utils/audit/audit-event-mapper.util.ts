@@ -239,22 +239,14 @@ export function buildPasswordResetRequestedAuditLogWriteParams(params: AuditRequ
     targetUsername: string | null;
     requestedUsername: string;
     issued: boolean;
-    pseudoVerifyEnabled: boolean;
-    pseudoVerified: boolean | null;
     tokenExpiresAt: Date | null;
-    devResetToken: string | null;
 }): AuditLogWriteParams {
     const details: Record<string, unknown> = {
         requestedUsername: params.requestedUsername,
         issued: params.issued,
-        pseudoVerifyEnabled: params.pseudoVerifyEnabled,
-        pseudoVerified: params.pseudoVerified,
     };
     if (params.tokenExpiresAt instanceof Date) {
         details.tokenExpiresAt = params.tokenExpiresAt.toISOString();
-    }
-    if (typeof params.devResetToken === "string" && params.devResetToken.length > 0) {
-        details.devResetToken = params.devResetToken;
     }
 
     return {

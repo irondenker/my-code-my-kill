@@ -57,7 +57,7 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. 따라서
 ## details 필드 예시
 
 - `LOGIN_FAILED`: `reason`, `attemptedUsername`, `failedCount`, `passwordResetRequired`, `lockedUntil`
-- `PASSWORD_RESET_REQUESTED`: `requestedUsername`, `issued`, `pseudoVerifyEnabled`, `pseudoVerified`, `tokenExpiresAt`
+- `PASSWORD_RESET_REQUESTED`: `requestedUsername`, `issued`, `tokenExpiresAt`
 - `PASSWORD_RESET_COMPLETED`: `result=success`
 - `ACCOUNT_LOCKED`: `failedCount`, `lockMinutes`, `passwordResetRequired`
 

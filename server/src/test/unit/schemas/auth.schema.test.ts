@@ -46,36 +46,27 @@ test("parseRegisterForm normalizes username and password", () => {
     assert.equal(result.data.password, "1234");
 });
 
-test("parseForgotPasswordForm trims optional verification fields", () => {
+test("parseForgotPasswordForm trims username", () => {
     const result = parseForgotPasswordForm({
         username: "  alice ",
-        email: "  alice@example.com ",
-        phoneNumber: " 010-1111-2222 ",
     });
 
     assert.equal(result.success, true);
     if (!result.success) return;
 
     assert.equal(result.data.username, "alice");
-    assert.equal(result.data.email, "alice@example.com");
-    assert.equal(result.data.phoneNumber, "010-1111-2222");
 });
 
-test("parseResetPasswordForm requires token/password/confirmPassword", () => {
+test("parseResetPasswordForm requires password/confirmPassword", () => {
     const invalid = parseResetPasswordForm({
-        token: " ",
         password: "",
         confirmPassword: "",
     });
     assert.equal(invalid.success, false);
 
     const valid = parseResetPasswordForm({
-        token: " token-123 ",
         password: "new-password-123",
         confirmPassword: "new-password-123",
     });
     assert.equal(valid.success, true);
-    if (!valid.success) return;
-
-    assert.equal(valid.data.token, "token-123");
 });

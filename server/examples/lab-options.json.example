@@ -77,7 +77,6 @@
     }
   },
   "securityDefense": {
-    "enabled": false,
     "accountLockout": {
       "enabled": false,
       "maxFailures": 5,
@@ -85,27 +84,12 @@
       "useLoginLockUntil": true
     },
     "passwordReset": {
-      "enabled": false,
-      "tokenTtlMinutes": 20,
-      "devRevealToken": {
-        "enabled": false
-      },
-      "pseudoVerify": {
-        "enabled": false
-      }
+      "tokenTtlMinutes": 20
     },
     "rateLimit": {
       "enabled": false,
-      "login": {
-        "enabled": false,
-        "maxRequests": 10,
-        "windowSeconds": 60
-      },
-      "postsMutation": {
-        "enabled": false,
-        "maxRequests": 20,
-        "windowSeconds": 60
-      }
+      "maxRequests": 20,
+      "windowSeconds": 60
     },
     "simpleCaptcha": {
       "enabled": false,

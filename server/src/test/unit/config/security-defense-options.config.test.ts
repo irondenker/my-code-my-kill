@@ -65,7 +65,6 @@ async function readOptions(params: {
     });
 
     return JSON.parse(stdout.trim()) as {
-        enabled: boolean;
         accountLockout: {
             enabled: boolean;
             maxFailures: number;
@@ -73,27 +72,12 @@ async function readOptions(params: {
             useLoginLockUntil: boolean;
         };
         passwordReset: {
-            enabled: boolean;
             tokenTtlMinutes: number;
-            devRevealToken: {
-                enabled: boolean;
-            };
-            pseudoVerify: {
-                enabled: boolean;
-            };
         };
         rateLimit: {
             enabled: boolean;
-            login: {
-                enabled: boolean;
-                maxRequests: number;
-                windowSeconds: number;
-            };
-            postsMutation: {
-                enabled: boolean;
-                maxRequests: number;
-                windowSeconds: number;
-            };
+            maxRequests: number;
+            windowSeconds: number;
         };
         simpleCaptcha: {
             enabled: boolean;
@@ -106,8 +90,6 @@ async function readOptions(params: {
 }
 
 function assertSecurityDefenseOptionShape(options: Awaited<ReturnType<typeof readOptions>>) {
-    assert.equal(typeof options.enabled, "boolean");
-
     assert.equal(typeof options.accountLockout.enabled, "boolean");
     assert.equal(typeof options.accountLockout.maxFailures, "number");
     assert.equal(Number.isInteger(options.accountLockout.maxFailures), true);
@@ -117,28 +99,17 @@ function assertSecurityDefenseOptionShape(options: Awaited<ReturnType<typeof rea
     assert.equal(options.accountLockout.lockMinutes > 0, true);
     assert.equal(typeof options.accountLockout.useLoginLockUntil, "boolean");
 
-    assert.equal(typeof options.passwordReset.enabled, "boolean");
     assert.equal(typeof options.passwordReset.tokenTtlMinutes, "number");
     assert.equal(Number.isInteger(options.passwordReset.tokenTtlMinutes), true);
     assert.equal(options.passwordReset.tokenTtlMinutes > 0, true);
-    assert.equal(typeof options.passwordReset.devRevealToken.enabled, "boolean");
-    assert.equal(typeof options.passwordReset.pseudoVerify.enabled, "boolean");
 
     assert.equal(typeof options.rateLimit.enabled, "boolean");
-    assert.equal(typeof options.rateLimit.login.enabled, "boolean");
-    assert.equal(typeof options.rateLimit.login.maxRequests, "number");
-    assert.equal(Number.isInteger(options.rateLimit.login.maxRequests), true);
-    assert.equal(options.rateLimit.login.maxRequests > 0, true);
-    assert.equal(typeof options.rateLimit.login.windowSeconds, "number");
-    assert.equal(Number.isInteger(options.rateLimit.login.windowSeconds), true);
-    assert.equal(options.rateLimit.login.windowSeconds > 0, true);
-    assert.equal(typeof options.rateLimit.postsMutation.enabled, "boolean");
-    assert.equal(typeof options.rateLimit.postsMutation.maxRequests, "number");
-    assert.equal(Number.isInteger(options.rateLimit.postsMutation.maxRequests), true);
-    assert.equal(options.rateLimit.postsMutation.maxRequests > 0, true);
-    assert.equal(typeof options.rateLimit.postsMutation.windowSeconds, "number");
-    assert.equal(Number.isInteger(options.rateLimit.postsMutation.windowSeconds), true);
-    assert.equal(options.rateLimit.postsMutation.windowSeconds > 0, true);
+    assert.equal(typeof options.rateLimit.maxRequests, "number");
+    assert.equal(Number.isInteger(options.rateLimit.maxRequests), true);
+    assert.equal(options.rateLimit.maxRequests > 0, true);
+    assert.equal(typeof options.rateLimit.windowSeconds, "number");
+    assert.equal(Number.isInteger(options.rateLimit.windowSeconds), true);
+    assert.equal(options.rateLimit.windowSeconds > 0, true);
 
     assert.equal(typeof options.simpleCaptcha.enabled, "boolean");
     assert.equal(typeof options.simpleCaptcha.login.enabled, "boolean");
@@ -173,7 +144,6 @@ test("security defense options parse lab-options values", async () => {
         labMode: "payload",
         labPayload: JSON.stringify({
             securityDefense: {
-                enabled: true,
                 accountLockout: {
                     enabled: true,
                     maxFailures: 7,
@@ -181,27 +151,12 @@ test("security defense options parse lab-options values", async () => {
                     useLoginLockUntil: false,
                 },
                 passwordReset: {
-                    enabled: true,
                     tokenTtlMinutes: 30,
-                    devRevealToken: {
-                        enabled: true,
-                    },
-                    pseudoVerify: {
-                        enabled: true,
-                    },
                 },
                 rateLimit: {
                     enabled: true,
-                    login: {
-                        enabled: true,
-                        maxRequests: 8,
-                        windowSeconds: 45,
-                    },
-                    postsMutation: {
-                        enabled: true,
-                        maxRequests: 12,
-                        windowSeconds: 30,
-                    },
+                    maxRequests: 8,
+                    windowSeconds: 45,
                 },
                 simpleCaptcha: {
                     enabled: true,
@@ -214,22 +169,14 @@ test("security defense options parse lab-options values", async () => {
         }),
     });
 
-    assert.equal(options.enabled, true);
     assert.equal(options.accountLockout.enabled, true);
     assert.equal(options.accountLockout.maxFailures, 7);
     assert.equal(options.accountLockout.lockMinutes, 15);
     assert.equal(options.accountLockout.useLoginLockUntil, false);
-    assert.equal(options.passwordReset.enabled, true);
     assert.equal(options.passwordReset.tokenTtlMinutes, 30);
-    assert.equal(options.passwordReset.devRevealToken.enabled, true);
-    assert.equal(options.passwordReset.pseudoVerify.enabled, true);
     assert.equal(options.rateLimit.enabled, true);
-    assert.equal(options.rateLimit.login.enabled, true);
-    assert.equal(options.rateLimit.login.maxRequests, 8);
-    assert.equal(options.rateLimit.login.windowSeconds, 45);
-    assert.equal(options.rateLimit.postsMutation.enabled, true);
-    assert.equal(options.rateLimit.postsMutation.maxRequests, 12);
-    assert.equal(options.rateLimit.postsMutation.windowSeconds, 30);
+    assert.equal(options.rateLimit.maxRequests, 8);
+    assert.equal(options.rateLimit.windowSeconds, 45);
     assert.equal(options.simpleCaptcha.enabled, true);
     assert.equal(options.simpleCaptcha.login.enabled, true);
     assert.equal(options.simpleCaptcha.login.afterFailures, 4);
@@ -249,22 +196,14 @@ test("security defense options fallback on missing nested lab values", async () 
     });
 
     assertSecurityDefenseOptionShape(options);
-    assert.equal(options.enabled, true);
-    assert.equal(options.accountLockout.enabled, true);
+    assert.equal(options.accountLockout.enabled, baseline.accountLockout.enabled);
     assert.equal(options.accountLockout.maxFailures, baseline.accountLockout.maxFailures);
     assert.equal(options.accountLockout.lockMinutes, baseline.accountLockout.lockMinutes);
     assert.equal(options.accountLockout.useLoginLockUntil, baseline.accountLockout.useLoginLockUntil);
-    assert.equal(options.passwordReset.enabled, true);
     assert.equal(options.passwordReset.tokenTtlMinutes, baseline.passwordReset.tokenTtlMinutes);
-    assert.equal(options.passwordReset.devRevealToken.enabled, baseline.passwordReset.devRevealToken.enabled);
-    assert.equal(options.passwordReset.pseudoVerify.enabled, baseline.passwordReset.pseudoVerify.enabled);
     assert.equal(options.rateLimit.enabled, baseline.rateLimit.enabled);
-    assert.equal(options.rateLimit.login.enabled, baseline.rateLimit.login.enabled);
-    assert.equal(options.rateLimit.login.maxRequests, baseline.rateLimit.login.maxRequests);
-    assert.equal(options.rateLimit.login.windowSeconds, baseline.rateLimit.login.windowSeconds);
-    assert.equal(options.rateLimit.postsMutation.enabled, baseline.rateLimit.postsMutation.enabled);
-    assert.equal(options.rateLimit.postsMutation.maxRequests, baseline.rateLimit.postsMutation.maxRequests);
-    assert.equal(options.rateLimit.postsMutation.windowSeconds, baseline.rateLimit.postsMutation.windowSeconds);
+    assert.equal(options.rateLimit.maxRequests, baseline.rateLimit.maxRequests);
+    assert.equal(options.rateLimit.windowSeconds, baseline.rateLimit.windowSeconds);
     assert.equal(options.simpleCaptcha.enabled, baseline.simpleCaptcha.enabled);
     assert.equal(options.simpleCaptcha.login.enabled, baseline.simpleCaptcha.login.enabled);
     assert.equal(options.simpleCaptcha.login.afterFailures, baseline.simpleCaptcha.login.afterFailures);

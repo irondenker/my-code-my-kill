@@ -121,7 +121,6 @@ async function withAccountLockoutEnabled(run: () => Promise<void>): Promise<void
     const labSecurityDefense = getLabOptions().securityDefense;
     const previous = cloneSecurityDefenseLabOptions(labSecurityDefense);
     const next = cloneSecurityDefenseLabOptions(labSecurityDefense);
-    next.enabled = true;
     next.accountLockout = {
         enabled: true,
         maxFailures: 5,
@@ -137,26 +136,12 @@ async function withAccountLockoutEnabled(run: () => Promise<void>): Promise<void
     }
 }
 
-async function withPasswordResetEnabled(
-    params: {
-        devRevealTokenEnabled?: boolean;
-        pseudoVerifyEnabled?: boolean;
-    },
-    run: () => Promise<void>
-): Promise<void> {
+async function withPasswordResetEnabled(run: () => Promise<void>): Promise<void> {
     const labSecurityDefense = getLabOptions().securityDefense;
     const previous = cloneSecurityDefenseLabOptions(labSecurityDefense);
     const next = cloneSecurityDefenseLabOptions(labSecurityDefense);
-    next.enabled = true;
     next.passwordReset = {
-        enabled: true,
         tokenTtlMinutes: 20,
-        devRevealToken: {
-            enabled: Boolean(params.devRevealTokenEnabled),
-        },
-        pseudoVerify: {
-            enabled: Boolean(params.pseudoVerifyEnabled),
-        },
     };
     applySecurityDefenseLabOptions(labSecurityDefense, next);
 
@@ -169,9 +154,6 @@ async function withPasswordResetEnabled(
 
 function cloneSecurityDefenseLabOptions(value: SecurityDefenseLabOptions): SecurityDefenseLabOptions {
     const cloned: SecurityDefenseLabOptions = {};
-    if (typeof value.enabled !== "undefined") {
-        cloned.enabled = value.enabled;
-    }
 
     if (value.accountLockout) {
         const accountLockout: NonNullable<SecurityDefenseLabOptions["accountLockout"]> = {};
@@ -194,17 +176,8 @@ function cloneSecurityDefenseLabOptions(value: SecurityDefenseLabOptions): Secur
 
     if (value.passwordReset) {
         const passwordReset: NonNullable<SecurityDefenseLabOptions["passwordReset"]> = {};
-        if (typeof value.passwordReset.enabled !== "undefined") {
-            passwordReset.enabled = value.passwordReset.enabled;
-        }
         if (typeof value.passwordReset.tokenTtlMinutes !== "undefined") {
             passwordReset.tokenTtlMinutes = value.passwordReset.tokenTtlMinutes;
-        }
-        if (value.passwordReset.devRevealToken && typeof value.passwordReset.devRevealToken.enabled !== "undefined") {
-            passwordReset.devRevealToken = { enabled: value.passwordReset.devRevealToken.enabled };
-        }
-        if (value.passwordReset.pseudoVerify && typeof value.passwordReset.pseudoVerify.enabled !== "undefined") {
-            passwordReset.pseudoVerify = { enabled: value.passwordReset.pseudoVerify.enabled };
         }
         if (Object.keys(passwordReset).length > 0) {
             cloned.passwordReset = passwordReset;
@@ -218,13 +191,8 @@ function applySecurityDefenseLabOptions(
     target: SecurityDefenseLabOptions,
     source: SecurityDefenseLabOptions,
 ): void {
-    delete target.enabled;
     delete target.accountLockout;
     delete target.passwordReset;
-
-    if (typeof source.enabled !== "undefined") {
-        target.enabled = source.enabled;
-    }
 
     if (source.accountLockout) {
         target.accountLockout = { ...source.accountLockout };
@@ -232,17 +200,8 @@ function applySecurityDefenseLabOptions(
 
     if (source.passwordReset) {
         const passwordReset: NonNullable<SecurityDefenseLabOptions["passwordReset"]> = {};
-        if (typeof source.passwordReset.enabled !== "undefined") {
-            passwordReset.enabled = source.passwordReset.enabled;
-        }
         if (typeof source.passwordReset.tokenTtlMinutes !== "undefined") {
             passwordReset.tokenTtlMinutes = source.passwordReset.tokenTtlMinutes;
-        }
-        if (source.passwordReset.devRevealToken && typeof source.passwordReset.devRevealToken.enabled !== "undefined") {
-            passwordReset.devRevealToken = { enabled: source.passwordReset.devRevealToken.enabled };
-        }
-        if (source.passwordReset.pseudoVerify && typeof source.passwordReset.pseudoVerify.enabled !== "undefined") {
-            passwordReset.pseudoVerify = { enabled: source.passwordReset.pseudoVerify.enabled };
         }
         if (Object.keys(passwordReset).length > 0) {
             target.passwordReset = passwordReset;
@@ -284,8 +243,6 @@ async function postLoginForm(params: {
 async function postForgotPasswordForm(params: {
     baseUrl: string;
     username: string;
-    email?: string;
-    phoneNumber?: string;
 }): Promise<{ response: Response; body: string }> {
     const forgotPage = await fetchFormPage({
         baseUrl: params.baseUrl,
@@ -300,9 +257,7 @@ async function postForgotPasswordForm(params: {
         },
         body:
             `_csrf=${encodeURIComponent(forgotPage.csrfToken)}` +
-            `&username=${encodeURIComponent(params.username)}` +
-            `&email=${encodeURIComponent(params.email ?? "")}` +
-            `&phoneNumber=${encodeURIComponent(params.phoneNumber ?? "")}`,
+            `&username=${encodeURIComponent(params.username)}`,
         redirect: "manual",
     });
 
@@ -321,7 +276,7 @@ async function postResetPasswordForm(params: {
         path: `/reset-password?token=${encodeURIComponent(params.token)}`,
     });
 
-    const response = await fetch(`${params.baseUrl}/reset-password`, {
+    const response = await fetch(`${params.baseUrl}/reset-password?token=${encodeURIComponent(params.token)}`, {
         method: "POST",
         headers: {
             "content-type": "application/x-www-form-urlencoded",
@@ -329,7 +284,6 @@ async function postResetPasswordForm(params: {
         },
         body:
             `_csrf=${encodeURIComponent(resetPage.csrfToken)}` +
-            `&token=${encodeURIComponent(params.token)}` +
             `&password=${encodeURIComponent(params.password)}` +
             `&confirmPassword=${encodeURIComponent(params.confirmPassword ?? params.password)}`,
         redirect: "manual",
@@ -339,8 +293,8 @@ async function postResetPasswordForm(params: {
     return { response, body };
 }
 
-function extractDevResetToken(html: string): string | null {
-    const match = html.match(/Token:\s*<code>([^<]+)<\/code>/);
+function extractResetTokenFromLink(html: string): string | null {
+    const match = html.match(/\/reset-password\?token=([A-Za-z0-9%._~-]+)/);
     return match?.[1] ?? null;
 }
 
@@ -558,7 +512,7 @@ test("auth endpoints block inactive accounts on login", { skip: skipReason }, as
     }
 });
 
-test("auth endpoints fallback to /board for unsafe next on login success", { skip: skipReason }, async () => {
+test("auth endpoints fallback to / for unsafe next on login success", { skip: skipReason }, async () => {
     const username = makeId("unsafe-next").slice(0, 32);
     const password = "unsafe-pass-123";
     const existing = await createUserForRegister({
@@ -580,7 +534,7 @@ test("auth endpoints fallback to /board for unsafe next on login success", { ski
             });
 
             assert.equal(response.status, 302);
-            assert.equal(response.headers.get("location"), "/board");
+            assert.equal(response.headers.get("location"), "/");
         });
     } finally {
         await cleanupUserById(existing.userId);
@@ -740,74 +694,69 @@ test("forgot/reset flow clears reset-required state and updates password", { ski
 
     try {
         await withAccountLockoutEnabled(async () => {
-            await withPasswordResetEnabled(
-                {
-                    devRevealTokenEnabled: true,
-                    pseudoVerifyEnabled: false,
-                },
-                async () => {
-                    await withTestServer(async (baseUrl) => {
-                        for (let i = 0; i < 5; i += 1) {
-                            const failedLogin = await postLoginForm({
-                                baseUrl,
-                                username,
-                                password: "wrong-pass-123",
-                            });
-                            assert.equal(failedLogin.response.status, 401);
-                        }
-
-                        const beforeReset = await findPasswordResetStateByUserId(created.userId);
-                        assert.notEqual(beforeReset, null);
-                        assert.equal(beforeReset?.passwordResetRequired, true);
-
-                        const forgotResponse = await postForgotPasswordForm({
+            await withPasswordResetEnabled(async () => {
+                await withTestServer(async (baseUrl) => {
+                    for (let i = 0; i < 5; i += 1) {
+                        const failedLogin = await postLoginForm({
                             baseUrl,
                             username,
+                            password: "wrong-pass-123",
                         });
-                        assert.equal(forgotResponse.response.status, 200);
-                        assert.match(
-                            forgotResponse.body,
-                            /If the submitted account information is valid, the reset request has been accepted\./
-                        );
+                        assert.equal(failedLogin.response.status, 401);
+                    }
 
-                        const resetToken = extractDevResetToken(forgotResponse.body);
-                        assert.notEqual(resetToken, null);
+                    const beforeReset = await findPasswordResetStateByUserId(created.userId);
+                    assert.notEqual(beforeReset, null);
+                    assert.equal(beforeReset?.passwordResetRequired, true);
 
-                        const resetResponse = await postResetPasswordForm({
-                            baseUrl,
-                            token: resetToken ?? "",
-                            password: newPassword,
-                        });
-                        assert.equal(resetResponse.response.status, 200);
-                        assert.match(resetResponse.body, /Password reset completed\./);
-
-                        const afterReset = await findPasswordResetStateByUserId(created.userId);
-                        assert.notEqual(afterReset, null);
-                        assert.equal(afterReset?.passwordResetRequired, false);
-                        assert.equal(afterReset?.loginFailedCount, 0);
-                        assert.equal(afterReset?.loginLockedUntil, null);
-                        assert.equal(afterReset?.passwordResetTokenHash, null);
-                        assert.equal(afterReset?.passwordResetTokenExpiresAt, null);
-                        assert.notEqual(afterReset?.passwordResetRequestedAt, null);
-                        assert.notEqual(afterReset?.passwordResetUsedAt, null);
-
-                        const authCookie = await loginAs({
-                            baseUrl,
-                            username,
-                            password: newPassword,
-                            nextPath: "/board",
-                        });
-                        assert.match(authCookie, /mcmk\.sid=/);
+                    const forgotResponse = await postForgotPasswordForm({
+                        baseUrl,
+                        username,
                     });
-                }
-            );
+                    assert.equal(forgotResponse.response.status, 200);
+                    assert.match(
+                        forgotResponse.body,
+                        /If the submitted account information is valid, the reset request has been accepted\./
+                    );
+
+                    const resetToken = extractResetTokenFromLink(forgotResponse.body);
+                    assert.notEqual(resetToken, null);
+                    assert.equal(/Token:\s*<code>/.test(forgotResponse.body), false);
+
+                    const resetResponse = await postResetPasswordForm({
+                        baseUrl,
+                        token: resetToken ?? "",
+                        password: newPassword,
+                    });
+                    assert.equal(resetResponse.response.status, 200);
+                    assert.match(resetResponse.body, /Password reset completed\./);
+
+                    const afterReset = await findPasswordResetStateByUserId(created.userId);
+                    assert.notEqual(afterReset, null);
+                    assert.equal(afterReset?.passwordResetRequired, false);
+                    assert.equal(afterReset?.loginFailedCount, 0);
+                    assert.equal(afterReset?.loginLockedUntil, null);
+                    assert.equal(afterReset?.passwordResetTokenHash, null);
+                    assert.equal(afterReset?.passwordResetTokenExpiresAt, null);
+                    assert.notEqual(afterReset?.passwordResetRequestedAt, null);
+                    assert.notEqual(afterReset?.passwordResetUsedAt, null);
+
+                    const authCookie = await loginAs({
+                        baseUrl,
+                        username,
+                        password: newPassword,
+                        nextPath: "/board",
+                    });
+                    assert.match(authCookie, /mcmk\.sid=/);
+                });
+            });
         });
     } finally {
         await cleanupUserById(created.userId);
     }
 });
 
-test("forgot-password keeps generic response and honors pseudo verification", { skip: skipReason }, async () => {
+test("forgot-password returns generic response and shows only reset link", { skip: skipReason }, async () => {
     const username = makeId("pseudo-reset").slice(0, 32);
     const created = await createUserForRegister({
         username,
@@ -815,48 +764,50 @@ test("forgot-password keeps generic response and honors pseudo verification", { 
     });
 
     try {
-        await updateUserProfile({
-            userId: created.userId,
-            displayName: null,
-            email: "pseudo-user@example.com",
-            phoneNumber: "010-4444-5555",
-            bio: null,
-        });
-
-        await withPasswordResetEnabled(
-            {
-                devRevealTokenEnabled: true,
-                pseudoVerifyEnabled: true,
-            },
-            async () => {
-                await withTestServer(async (baseUrl) => {
-                    const mismatched = await postForgotPasswordForm({
-                        baseUrl,
-                        username,
-                        email: "wrong@example.com",
-                    });
-                    assert.equal(mismatched.response.status, 200);
-                    assert.match(
-                        mismatched.body,
-                        /If the submitted account information is valid, the reset request has been accepted\./
-                    );
-                    assert.equal(extractDevResetToken(mismatched.body), null);
-
-                    const matched = await postForgotPasswordForm({
-                        baseUrl,
-                        username,
-                        email: "pseudo-user@example.com",
-                    });
-                    assert.equal(matched.response.status, 200);
-                    assert.match(
-                        matched.body,
-                        /If the submitted account information is valid, the reset request has been accepted\./
-                    );
-                    assert.notEqual(extractDevResetToken(matched.body), null);
+        await withPasswordResetEnabled(async () => {
+            await withTestServer(async (baseUrl) => {
+                const existingUser = await postForgotPasswordForm({
+                    baseUrl,
+                    username,
                 });
-            }
-        );
+                assert.equal(existingUser.response.status, 200);
+                assert.match(
+                    existingUser.body,
+                    /If the submitted account information is valid, the reset request has been accepted\./
+                );
+                assert.notEqual(extractResetTokenFromLink(existingUser.body), null);
+                assert.equal(/Token:\s*<code>/.test(existingUser.body), false);
+                assert.equal(/Already have a token\?/.test(existingUser.body), false);
+
+                const unknownUser = await postForgotPasswordForm({
+                    baseUrl,
+                    username: `${username}-unknown`,
+                });
+                assert.equal(unknownUser.response.status, 200);
+                assert.match(
+                    unknownUser.body,
+                    /If the submitted account information is valid, the reset request has been accepted\./
+                );
+                assert.equal(extractResetTokenFromLink(unknownUser.body), null);
+            });
+        });
     } finally {
         await cleanupUserById(created.userId);
     }
+});
+
+test("reset-password page requires token query", { skip: skipReason }, async () => {
+    await withTestServer(async (baseUrl) => {
+        const missingToken = await fetch(`${baseUrl}/reset-password`, {
+            method: "GET",
+            redirect: "manual",
+        });
+        assert.equal(missingToken.status, 404);
+
+        const invalidToken = await fetch(`${baseUrl}/reset-password?token=invalid-token`, {
+            method: "GET",
+            redirect: "manual",
+        });
+        assert.equal(invalidToken.status, 404);
+    });
 });

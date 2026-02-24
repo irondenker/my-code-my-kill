@@ -30,7 +30,7 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. 이 문�
 `SECURITY_DEFENSE`는 환경변수가 아니라 `server/lab-options.json`의 `securityDefense` 키로 제어합니다.
 
 - 우선순위: `lab-options.json` > 코드 기본값
-- 상세 키: `securityDefense.enabled`, `securityDefense.accountLockout.*`, `securityDefense.passwordReset.*`, `securityDefense.rateLimit.*`, `securityDefense.simpleCaptcha.*`
+- 상세 키: `securityDefense.accountLockout.*`, `securityDefense.passwordReset.tokenTtlMinutes`, `securityDefense.rateLimit.*`, `securityDefense.simpleCaptcha.*`
 
 ## 모드별 체크 포인트
 
