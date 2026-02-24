@@ -18,8 +18,29 @@ body {
   border-bottom-left-radius: 0;
 }
 
+.form-signin .form-floating > #floatingInput {
+  margin-bottom: -1px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
 .form-signin input[type="password"] {
   margin-bottom: 10px;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
+}
+
+.form-signin .auth-copyright {
+  font-size: 0.75rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.form-signin .auth-title-link,
+.form-signin .auth-title-link:visited,
+.form-signin .auth-title-link:hover,
+.form-signin .auth-title-link:focus,
+.form-signin .auth-title-link:active {
+  color: inherit;
+  text-decoration: none;
 }

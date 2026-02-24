@@ -143,24 +143,24 @@
                 const endPage = Math.min(totalPages, currentPage + pageRange);
             %>
 
-            <div class="" id="dataTable_info" role="status" aria-live="polite">
+            <div class="small mb-0" id="dataTable_info" role="status" aria-live="polite">
                 Showing <%= startRow %>
                 to <%= endRow %>
                 of <%= pagination.totalCount %> Posts
             </div>
 
-            <form method="get" action="/board/<%= boardSlug %>" class="d-flex gap-2 align-items-center">
-                <label class="form-label mb-0" for="limit">Rows</label>
+            <form method="get" action="/board/<%= boardSlug %>" class="d-flex gap-2 align-items-center mb-0">
+                <label class="form-label mb-0 small" for="limit">Rows</label>
                 <select id="limit" class="form-select form-select-sm" style="width: 100px;" name="limit">
                     <% limitOptions.forEach((option) => { %>
                     <option value="<%= option %>" <%= currentLimit === option ? "selected" : "" %>><%= option %></option>
                     <% }) %>
                 </select>
-                <button type="submit" class="btn btn-outline-secondary btn-sm">Apply</button>
+                <button type="submit" class="btn btn-primary btn-sm">Apply</button>
             </form>
 
             <div id="dataTable_paginate">
-                <ul class="pagination">
+                <ul class="pagination pagination-sm mb-0">
 
                     <!-- Previous -->
                     <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
