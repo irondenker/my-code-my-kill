@@ -2,6 +2,7 @@ import { isSqlInjectionTargetEnabled } from "../lab/sql-injection-control.servic
 import * as labImplementation from "./article-query.lab.service.js";
 import * as normalImplementation from "./article-query.normal.service.js";
 import type { ArticleForShow, ArticleOutline, ArticleRecord, NeighborPost } from "../../types/article/article.types.js";
+import { normalizeBoardSlug } from "../../utils/board/board-slug.util.js";
 
 /**
  * 게시글 조회/존재확인 서비스 facade입니다.
@@ -22,10 +23,11 @@ export async function countArticles(): Promise<number> {
  * 특정 보드(slug)의 활성 게시글 수를 반환합니다.
  */
 export async function countArticlesBySlug(slug: string): Promise<number> {
+    const canonicalSlug = normalizeBoardSlug(slug);
     if (isSqlInjectionTargetEnabled("articleLookup")) {
-        return labImplementation.countArticlesBySlug(slug);
+        return labImplementation.countArticlesBySlug(canonicalSlug);
     }
-    return normalImplementation.countArticlesBySlug(slug);
+    return normalImplementation.countArticlesBySlug(canonicalSlug);
 }
 
 /**
@@ -43,10 +45,12 @@ export async function listArticleOutlinesBySlug(params: {
     offset: number;
     limit: number;
 }): Promise<ArticleOutline[]> {
+    const canonicalSlug = normalizeBoardSlug(params.slug);
+    const canonicalParams = { ...params, slug: canonicalSlug };
     if (isSqlInjectionTargetEnabled("articleLookup")) {
-        return labImplementation.listArticleOutlinesBySlug(params);
+        return labImplementation.listArticleOutlinesBySlug(canonicalParams);
     }
-    return normalImplementation.listArticleOutlinesBySlug(params);
+    return normalImplementation.listArticleOutlinesBySlug(canonicalParams);
 }
 
 /**
@@ -56,10 +60,12 @@ export async function findArticleBySlugDisplayId(params: {
     slug: string;
     displayId: number;
 }): Promise<ArticleRecord | null> {
+    const canonicalSlug = normalizeBoardSlug(params.slug);
+    const canonicalParams = { ...params, slug: canonicalSlug };
     if (isSqlInjectionTargetEnabled("articleLookup")) {
-        return labImplementation.findArticleBySlugDisplayId(params);
+        return labImplementation.findArticleBySlugDisplayId(canonicalParams);
     }
-    return normalImplementation.findArticleBySlugDisplayId(params);
+    return normalImplementation.findArticleBySlugDisplayId(canonicalParams);
 }
 
 /**
@@ -67,10 +73,12 @@ export async function findArticleBySlugDisplayId(params: {
  * (404/403 분기 등에 사용)
  */
 export async function doesArticleExistBySlugDisplayId(params: { slug: string; displayId: number }): Promise<boolean> {
+    const canonicalSlug = normalizeBoardSlug(params.slug);
+    const canonicalParams = { ...params, slug: canonicalSlug };
     if (isSqlInjectionTargetEnabled("articleLookup")) {
-        return labImplementation.doesArticleExistBySlugDisplayId(params);
+        return labImplementation.doesArticleExistBySlugDisplayId(canonicalParams);
     }
-    return normalImplementation.doesArticleExistBySlugDisplayId(params);
+    return normalImplementation.doesArticleExistBySlugDisplayId(canonicalParams);
 }
 
 /**
@@ -80,10 +88,12 @@ export async function findArticleForShowBySlugDisplayId(params: {
     slug: string;
     displayId: number;
 }): Promise<ArticleForShow | null> {
+    const canonicalSlug = normalizeBoardSlug(params.slug);
+    const canonicalParams = { ...params, slug: canonicalSlug };
     if (isSqlInjectionTargetEnabled("articleLookup")) {
-        return labImplementation.findArticleForShowBySlugDisplayId(params);
+        return labImplementation.findArticleForShowBySlugDisplayId(canonicalParams);
     }
-    return normalImplementation.findArticleForShowBySlugDisplayId(params);
+    return normalImplementation.findArticleForShowBySlugDisplayId(canonicalParams);
 }
 
 /**

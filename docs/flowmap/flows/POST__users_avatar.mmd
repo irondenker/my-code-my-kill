@@ -18,20 +18,18 @@ MIDDLEWARE2 --> HANDLER
 subgraph SINKS["[SINKS]"]
 direction TB
 SINK1["File Upload"]
-SINK2["Image Upload"]
-SINK3["Session<br/>(Read)"]
-SINK4["Session<br/>(Write)"]
+SINK2["Session<br/>(Read)"]
+SINK3["Session<br/>(Write)"]
 end
 HANDLER --> SINK1
 HANDLER --> SINK2
 HANDLER --> SINK3
-HANDLER --> SINK4
 SINK_READ_KEY1["session.userId"]
 SINK_READ_KEY2["session.username"]
-SINK3 --> SINK_READ_KEY1
-SINK3 --> SINK_READ_KEY2
+SINK2 --> SINK_READ_KEY1
+SINK2 --> SINK_READ_KEY2
 SINK_WRITE_KEY1["session.profileImageUrl"]
-SINK4 --> SINK_WRITE_KEY1
+SINK3 --> SINK_WRITE_KEY1
 subgraph EXITS["[EXITS]"]
 direction TB
 EXIT1["REDIRECT"]
@@ -51,7 +49,7 @@ classDef auth stroke-dasharray: 0,stroke-width:1.5;
 classDef other stroke:#6b7280;
 classDef exit stroke-dasharray: 4 2;
 class MIDDLEWARE1,MIDDLEWARE2 middleware;
-class SINK1,SINK2,SINK3,SINK4 sink;
+class SINK1,SINK2,SINK3 sink;
 class SINK_READ_KEY1,SINK_READ_KEY2 sessionKey;
 class SINK_WRITE_KEY1 sessionKey;
 class SINK_READ_KEY1,SINK_READ_KEY2,SINK_WRITE_KEY1 auth;

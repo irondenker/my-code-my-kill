@@ -20,12 +20,6 @@
 - [Docker 첫 실행](./docs/guide/first-run/first-run-docker.md)
 - [VM 첫 실행](./docs/guide/first-run/first-run-vm.md)
 
-### 🔀 Stack Switch
-
-- `node .\scripts\switch-stack.mjs dev`
-- `node .\scripts\switch-stack.mjs prod`
-- 빌드까지 함께: `node .\scripts\switch-stack.mjs dev --build`
-
 ### 🗺️ Flowmap
 
 - [Flowmap 인덱스 조회](./docs/flowmap/README.md)
@@ -34,6 +28,24 @@
 ### 📝 How To Commit
 
 - [커밋 이모지 가이드](./docs/guide/commit-emoji-guide.md)
+
+## 🧪 Seed Assets Prep
+
+에셋 준비 스크립트는 seed 실행과 분리되어 있습니다. 아래 순서로 한 번 준비한 뒤 시더에서 재사용하세요.
+
+```bash
+cd server
+npm run assets:fetch
+npm run assets:avatars
+npm run assets:files
+npm run seed
+```
+
+- `assets:fetch`: Lorem Picsum 게시글 이미지 raw 대량 다운로드 (`seed-assets/raw/post-images`)
+- `assets:avatars`: 로컬 생성형 webp 아바타 raw 생성 (`seed-assets/raw/avatars`)
+- `assets:files`: 업로드 whitelist 기반 첨부 raw 생성 (`seed-assets/raw/files`)
+- `seed`: 업로드 파이프라인을 재사용해 유저/게시글/첨부/감사로그 현실형 더미 데이터 시딩
+  - seed 실행 시 주요 테이블(`users`, `boards`, `posts`, `board_post_counters`, `audit_logs`)을 reset 후 재생성
 
 ## 🔗 Links
 

@@ -1366,11 +1366,10 @@
       "handler": {
         "name": "postAvatarUpload",
         "file": "server/src/controllers/avatar.controller.ts",
-        "line": 83
+        "line": 43
       },
       "sinks": [
         "File Upload",
-        "Image Upload",
         "req.session.read()",
         "req.session.write()"
       ],
@@ -1403,7 +1402,7 @@
       "handler": {
         "name": "postAvatarDelete",
         "file": "server/src/controllers/avatar.controller.ts",
-        "line": 178
+        "line": 68
       },
       "sinks": [
         "req.session.read()",

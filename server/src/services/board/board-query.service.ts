@@ -2,6 +2,7 @@ import { isSqlInjectionTargetEnabled } from "../lab/sql-injection-control.servic
 import * as labImplementation from "./board-query.lab.service.js";
 import * as normalImplementation from "./board-query.normal.service.js";
 import type { BoardMeta } from "../../types/board/board.types.js";
+import { normalizeBoardSlug } from "../../utils/board/board-slug.util.js";
 
 /**
  * 보드 메타 서비스 facade입니다.
@@ -16,10 +17,11 @@ export async function listBoards(): Promise<BoardMeta[]> {
 }
 
 export async function findBoardBySlug(slug: string): Promise<BoardMeta | null> {
+    const canonicalSlug = normalizeBoardSlug(slug);
     if (isSqlInjectionTargetEnabled("boardLookup")) {
-        return labImplementation.findBoardBySlug(slug);
+        return labImplementation.findBoardBySlug(canonicalSlug);
     }
-    return normalImplementation.findBoardBySlug(slug);
+    return normalImplementation.findBoardBySlug(canonicalSlug);
 }
 
 export async function findBoardById(boardId: number): Promise<BoardMeta | null> {

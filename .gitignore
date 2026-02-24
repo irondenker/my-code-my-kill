@@ -265,3 +265,13 @@ server/public/uploads/posts/files/*
 
 backups/
 lab-options.json
+
+# Keep seed asset folders but ignore generated binaries/manifests by default.
+seed-assets/raw/avatars/*
+!seed-assets/raw/avatars/.gitkeep
+seed-assets/raw/post-images/*
+!seed-assets/raw/post-images/.gitkeep
+seed-assets/raw/files/*
+!seed-assets/raw/files/.gitkeep
+seed-assets/manifest/*.json
+!seed-assets/manifest/.gitkeep

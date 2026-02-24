@@ -7,6 +7,7 @@ import {
     storeArticleAttachment,
     storeArticleImage,
 } from "./article-upload.service.js";
+import { normalizeBoardSlug } from "../../utils/board/board-slug.util.js";
 
 /**
  * 게시글 쓰기/수정/삭제 서비스 facade입니다.
@@ -104,10 +105,14 @@ export async function updateArticle(params: {
  * 관리자 권한으로 게시글을 soft delete 합니다.
  */
 export async function softDeleteArticleBySlugDisplayIdAsAdmin(params: { slug: string; displayId: number }): Promise<boolean> {
+    const canonicalParams = {
+        ...params,
+        slug: normalizeBoardSlug(params.slug),
+    };
     if (isSqlInjectionTargetEnabled("articleDelete")) {
-        return labImplementation.softDeleteArticleBySlugDisplayIdAsAdmin(params);
+        return labImplementation.softDeleteArticleBySlugDisplayIdAsAdmin(canonicalParams);
     }
-    return normalImplementation.softDeleteArticleBySlugDisplayIdAsAdmin(params);
+    return normalImplementation.softDeleteArticleBySlugDisplayIdAsAdmin(canonicalParams);
 }
 
 /**
@@ -118,10 +123,14 @@ export async function softDeleteArticleBySlugDisplayId(params: {
     displayId: number;
     requestUserId: number;
 }): Promise<boolean> {
+    const canonicalParams = {
+        ...params,
+        slug: normalizeBoardSlug(params.slug),
+    };
     if (isSqlInjectionTargetEnabled("articleDelete")) {
-        return labImplementation.softDeleteArticleBySlugDisplayId(params);
+        return labImplementation.softDeleteArticleBySlugDisplayId(canonicalParams);
     }
-    return normalImplementation.softDeleteArticleBySlugDisplayId(params);
+    return normalImplementation.softDeleteArticleBySlugDisplayId(canonicalParams);
 }
 
 /**
