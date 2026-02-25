@@ -196,6 +196,9 @@ const errorTagNode = document.getElementById("errorTag");
 
 let remainingCards = stackContainer ? cardNodes.length : 0;
 
+const THROW_VARIANT_CLASSES = ["throw-a", "throw-b", "throw-c", "throw-d", "throw-e", "throw-f"];
+const LINE_LENGTH_BUCKETS = [24, 32, 40, 48, 56, 64, 72, 80, 88, 96];
+
 function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
@@ -291,16 +294,11 @@ function setupCardThrowing() {
         const clickTarget = cardNode.querySelector(".card") ?? cardNode;
         clickTarget.classList.add("pokeup");
         clickTarget.addEventListener("click", () => {
-            const upOrDown = [800, -800];
-            const randomY = upOrDown[Math.floor(Math.random() * upOrDown.length)];
-            const randomX = Math.floor(Math.random() * 1000) - 1000;
-            cardNode.style.transform = `translate(${randomX}px, ${randomY}px) rotate(-540deg)`;
-            cardNode.style.transition = "transform 1s ease, opacity 1.8s";
-            cardNode.style.opacity = "0";
+            const randomVariant = THROW_VARIANT_CLASSES[randomInt(0, THROW_VARIANT_CLASSES.length - 1)];
+            cardNode.classList.add("card-thrown", randomVariant);
             remainingCards -= 1;
             if (stackContainer && remainingCards === 0) {
-                stackContainer.style.width = "0";
-                stackContainer.style.height = "0";
+                stackContainer.classList.add("stack-collapsed");
             }
         }, { once: true });
     });
@@ -311,7 +309,7 @@ function fillFakeCodeLines(mode) {
     if (!needsCodeLines) return;
 
     if (mode === "timeout" && connectorNode) {
-        connectorNode.style.width = "70%";
+        connectorNode.classList.add("connector-expanded");
     }
 
     cardNodes.forEach((cardNode) => {
@@ -321,10 +319,9 @@ function fillFakeCodeLines(mode) {
         const numLines = randomInt(5, 10);
 
         for (let i = 0; i < numLines; i += 1) {
-            const lineLength = randomInt(24, 96);
+            const lineLength = LINE_LENGTH_BUCKETS[randomInt(0, LINE_LENGTH_BUCKETS.length - 1)];
             const lineNode = document.createElement("li");
-            lineNode.classList.add(`line-${i}`);
-            lineNode.style.setProperty("--linelength", `${lineLength}%`);
+            lineNode.classList.add(`line-len-${lineLength}`);
             codeList.appendChild(lineNode);
         }
 
@@ -348,8 +345,7 @@ function fillFakeCodeLines(mode) {
 
                     if (mode === "timeout" && errorTagNode) {
                         setTimeout(() => {
-                            errorTagNode.style.display = "block";
-                            errorTagNode.style.width = "50px";
+                            errorTagNode.classList.add("tag-visible");
                         }, 1200);
                     }
                 } else {
@@ -362,11 +358,8 @@ function fillFakeCodeLines(mode) {
 
 function bootVisualEngine(mode) {
     clearCodeLists();
-    if (connectorNode) connectorNode.style.width = "0";
-    if (errorTagNode) {
-        errorTagNode.style.display = "none";
-        errorTagNode.style.width = "26px";
-    }
+    if (connectorNode) connectorNode.classList.remove("connector-expanded");
+    if (errorTagNode) errorTagNode.classList.remove("tag-visible");
 
     if (firstCard) {
         firstCard.addEventListener("animationend", () => {

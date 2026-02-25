@@ -62,12 +62,21 @@ body.gimmick-edge .badge-row {
     display: none;
 }
 
+#server-network-connector.connector-expanded {
+    width: 70%;
+}
+
 #errorTag {
     display: none;
     transition: width .6s;
     margin-top: -11px;
-    width: 26%;
+    width: 26px;
     padding-left: 27%;
+}
+
+#errorTag.tag-visible {
+    display: block;
+    width: 50px;
 }
 
 .writing {
@@ -259,6 +268,40 @@ body.gimmick-timeout .errorLine {
     transition: width 1s, height 1s;
 }
 
+.stack-container.stack-collapsed {
+    width: 0;
+    height: 0;
+}
+
+.card-container.card-thrown {
+    transition: transform 1s ease, opacity 1.8s;
+    opacity: 0;
+}
+
+.card-container.throw-a {
+    transform: translate(-960px, -800px) rotate(-540deg);
+}
+
+.card-container.throw-b {
+    transform: translate(-840px, 800px) rotate(-540deg);
+}
+
+.card-container.throw-c {
+    transform: translate(-720px, -800px) rotate(-540deg);
+}
+
+.card-container.throw-d {
+    transform: translate(-620px, 800px) rotate(-540deg);
+}
+
+.card-container.throw-e {
+    transform: translate(-500px, -800px) rotate(-540deg);
+}
+
+.card-container.throw-f {
+    transform: translate(-400px, 800px) rotate(-540deg);
+}
+
 .pokeup {
     -webkit-transition: all .3s ease;
     transition: all .3s ease;
@@ -296,9 +339,85 @@ body.gimmick-timeout .errorLine {
     perspective: 1000px;
 }
 
+.perspec-layer-1 {
+    --spreaddist: 125px;
+    --scaledist: 0.75;
+    --vertdist: -25px;
+}
+
+.perspec-layer-2 {
+    --spreaddist: 100px;
+    --scaledist: 0.8;
+    --vertdist: -20px;
+}
+
+.perspec-layer-3 {
+    --spreaddist: 75px;
+    --scaledist: 0.85;
+    --vertdist: -15px;
+}
+
+.perspec-layer-4 {
+    --spreaddist: 50px;
+    --scaledist: 0.9;
+    --vertdist: -10px;
+}
+
+.perspec-layer-5 {
+    --spreaddist: 25px;
+    --scaledist: 0.95;
+    --vertdist: -5px;
+}
+
+.perspec-layer-6 {
+    --spreaddist: 0px;
+    --scaledist: 1;
+    --vertdist: 0px;
+}
+
 .writeLine {
     -webkit-animation: writeLine .4s linear forwards;
     animation: writeLine .4s linear forwards;
+}
+
+.writing .code ul li.line-len-24 {
+    --linelength: 24%;
+}
+
+.writing .code ul li.line-len-32 {
+    --linelength: 32%;
+}
+
+.writing .code ul li.line-len-40 {
+    --linelength: 40%;
+}
+
+.writing .code ul li.line-len-48 {
+    --linelength: 48%;
+}
+
+.writing .code ul li.line-len-56 {
+    --linelength: 56%;
+}
+
+.writing .code ul li.line-len-64 {
+    --linelength: 64%;
+}
+
+.writing .code ul li.line-len-72 {
+    --linelength: 72%;
+}
+
+.writing .code ul li.line-len-80 {
+    --linelength: 80%;
+}
+
+.writing .code ul li.line-len-88 {
+    --linelength: 88%;
+}
+
+.writing .code ul li.line-len-96 {
+    --linelength: 96%;
 }
 
 .explode {

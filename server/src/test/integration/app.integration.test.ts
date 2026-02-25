@@ -168,12 +168,18 @@ test("GET /api-docs returns swagger ui shell with inlined spec payload", async (
     await withTestServer(async (baseUrl) => {
         const response = await fetch(`${baseUrl}/api-docs`);
         const body = await response.text();
+        const swaggerCssResponse = await fetch(`${baseUrl}/assets/vendor/swagger-ui/swagger-ui.css`);
 
         assert.equal(response.status, 200);
         assert.match(response.headers.get("content-type") ?? "", /^text\/html/);
+        assert.match(body, /href="\/assets\/vendor\/swagger-ui\/swagger-ui\.css"/);
+        assert.match(body, /src="\/assets\/vendor\/swagger-ui\/swagger-ui-bundle\.js"/);
+        assert.equal(body.includes("cdn.jsdelivr.net"), false);
         assert.match(body, /SwaggerUIBundle/);
         assert.match(body, /const spec = /);
         assert.match(body, /openapi/);
+        assert.equal(swaggerCssResponse.status, 200);
+        assert.equal(swaggerCssResponse.headers.get("x-content-type-options"), "nosniff");
     });
 });
 

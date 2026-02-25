@@ -4,6 +4,7 @@ import { openApiDocument } from "../docs/openapi.js";
 const router = Router();
 
 router.get("/api-docs", (_req, res) => {
+    const cspNonce = String(res.locals.cspNonce ?? "");
     const inlinedSpecJson = JSON.stringify(openApiDocument)
         .replace(/</g, "\\u003c")
         .replace(/\u2028/g, "\\u2028")
@@ -18,7 +19,7 @@ router.get("/api-docs", (_req, res) => {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>API Docs</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css" />
+    <link rel="stylesheet" href="/assets/vendor/swagger-ui/swagger-ui.css" />
     <style>
       html, body { margin: 0; padding: 0; background: #ffffff; }
       #swagger-ui { max-width: 1200px; margin: 0 auto; }
@@ -26,8 +27,8 @@ router.get("/api-docs", (_req, res) => {
   </head>
   <body>
     <div id="swagger-ui"></div>
-    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
-    <script>
+    <script nonce="${cspNonce}" src="/assets/vendor/swagger-ui/swagger-ui-bundle.js"></script>
+    <script nonce="${cspNonce}">
       const spec = ${inlinedSpecJson};
       window.ui = SwaggerUIBundle({
         spec,

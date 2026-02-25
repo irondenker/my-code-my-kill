@@ -40,13 +40,16 @@ services:
     networks:
       - default
   nginx:
-    image: nginx:1.27-alpine
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
       - server
     volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./server/views/errors:/var/www/errors:ro
       - public_uploads:/var/www/public/uploads:ro

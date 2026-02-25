@@ -26,7 +26,7 @@ export function createCspMiddleware(params?: {
             `img-src 'self' data: blob:`,
             `font-src 'self' data:`,
             // Bootstrap/일반 CSS 상황에선 style-src가 문제될 수 있어 일단 'unsafe-inline' 허용을 추천(나중에 nonce로 강화 가능)
-            `style-src 'self' 'unsafe-inline'`,
+            `style-src 'self'`,
             `script-src 'self' 'nonce-${nonce}'`,
             // 필요 시 fetch/websocket 열어주기
             `connect-src 'self'`,
@@ -34,6 +34,7 @@ export function createCspMiddleware(params?: {
             // `upgrade-insecure-requests`,
         ].join("; ");
 
+        res.setHeader("X-Content-Type-Options", "nosniff");
         res.setHeader(reportOnly ? "Content-Security-Policy-Report-Only" : "Content-Security-Policy", csp);
 
         next();

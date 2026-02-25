@@ -57,15 +57,29 @@ export function createApp() {
     app.disable("x-powered-by");
 
     // CSP 설정
-    app.use(createCspMiddleware({ reportOnly: true }));
+    app.use(createCspMiddleware({ reportOnly: false }));
 
     // 운영 환경에서 reverse proxy(nginx 등) 뒤에 있을 수 있으므로 trust proxy를 활성화합니다.
     app.set("trust proxy", 1);
 
     app.set("view engine", "ejs");
     const publicDir = path.join(process.cwd(), "public");
+    const swaggerUiDistDir = path.join(process.cwd(), "node_modules", "swagger-ui-dist");
     const errorStaticRoot = path.join(process.cwd(), "views", "errors");
     app.use(createPublicStaticMiddleware({ publicDir }));
+
+
+    app.use(
+        // 조치 1. swagger 모듈의 css/js 파일이 cdn을 통해 다운로드 받지 않도록 설정
+        // 미리 정적 파일을 다운로드 받은 후, 해당 경로를 로컬에서 서빙 
+        "/assets/vendor/swagger-ui",
+        express.static(swaggerUiDistDir, {
+            redirect: false,
+            setHeaders(res) {
+                res.setHeader("X-Content-Type-Options", "nosniff");
+            },
+        })
+    );
     app.use("/errors/common", createErrorCommonStaticMiddleware({ errorStaticRoot }));
 
     // Body parser (주의: multipart는 별도 처리)
