@@ -83,4 +83,3 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. 따라서
 - [Auth Defense and Rate Limit 동작 원리](./auth-defense-and-rate-limit.md)
 - [Security Defense 토글 운영 가이드](../guide/security-defense-toggles.md)
 - [Audit Log 운영 가이드](../guide/audit-log-operations-guide.md)
-

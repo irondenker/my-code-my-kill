@@ -37,6 +37,11 @@
 | [`learn/auth-defense-and-rate-limit.md`](./learn/auth-defense-and-rate-limit.md) | 로그인 방어/비밀번호 재설정/레이트리밋 동작 원리 문서 |
 | [`learn/csp.md`](./learn/csp.md) | CSP 개념 정리 문서 |
 | [`learn/how-to-apply-csp.md`](./learn/how-to-apply-csp.md) | CSP 적용 실무 문서 |
+| [`learn/swagger-cdn-to-local-serving.md`](./learn/swagger-cdn-to-local-serving.md) | Swagger CDN 의존 제거 및 로컬 서빙 전환 정리 |
+| [`learn/csp-inline-eval-hardening.md`](./learn/csp-inline-eval-hardening.md) | 인라인 코드 제거와 `unsafe-inline`/`unsafe-eval` 하드닝 |
+| [`learn/nosniff-mime-sniffing.md`](./learn/nosniff-mime-sniffing.md) | `nosniff` 적용, MIME 스니핑 위험, 한계 정리 |
+| [`learn/appendix-sri-integrity.md`](./learn/appendix-sri-integrity.md) | SRI 검증 절차, 운영 포인트, 공급망 위협 정리 |
+| [`learn/nginx-header-consistency.md`](./learn/nginx-header-consistency.md) | nginx 직접 응답 경로의 보안 헤더 일관화 정리 |
 | [`learn/nodenext-import-extension.md`](./learn/nodenext-import-extension.md) | NodeNext import 규칙 문서 |
 
 ## Flowmap
