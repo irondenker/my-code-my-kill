@@ -9,6 +9,7 @@
 | [`guide/first-run/first-run-docker.md`](./guide/first-run/first-run-docker.md) | 로컬 Docker 첫 실행 가이드 |
 | [`guide/first-run/first-run-vm.md`](./guide/first-run/first-run-vm.md) | VM 첫 실행 가이드 |
 | [`guide/first-run/quality-gates.md`](./guide/first-run/quality-gates.md) | 품질 게이트 초기 설정 가이드 |
+| [`guide/first-run/seed-assets-prep.md`](./guide/first-run/seed-assets-prep.md) | Seeder용 raw 에셋 준비 가이드 |
 
 ## Guide
 
@@ -19,7 +20,6 @@
 | [`guide/audit-log-operations-guide.md`](./guide/audit-log-operations-guide.md) | 감사로그 저장/조회/운영 가이드 |
 | [`guide/admin-operations-guide.md`](./guide/admin-operations-guide.md) | 관리자 기능 운영 가이드 |
 | [`guide/profile-avatar-lifecycle-guide.md`](./guide/profile-avatar-lifecycle-guide.md) | 프로필/아바타 라이프사이클 가이드 |
-| [`guide/seed-assets-prep.md`](./guide/seed-assets-prep.md) | Seeder용 raw 에셋 준비 가이드 |
 | [`guide/lab/lab-options-reference.md`](./guide/lab/lab-options-reference.md) | `lab-options.json` 레퍼런스 |
 | [`guide/lab/sqli-lab-guide.md`](./guide/lab/sqli-lab-guide.md) | SQLi 실습 설정 가이드 |
 | [`guide/lab/xss-filter-guide.md`](./guide/lab/xss-filter-guide.md) | XSS 실습 설정 가이드 |

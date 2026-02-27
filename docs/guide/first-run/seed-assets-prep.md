@@ -1,4 +1,4 @@
-# Seed Assets 준비 가이드
+# Seed Assets Prep
 
 Seeder 실행 전에 raw 더미 에셋을 먼저 준비합니다.
 
