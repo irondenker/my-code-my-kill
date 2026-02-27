@@ -35,9 +35,9 @@
         - `pg_sleep(2)` 사용 시: **2초 이상 경과 후** 예상 응답 수신
     2. `CASE ~ WHEN ~ END` 구문 사용: 미리 정한 **`TRUE` / `FALSE` 확인용 문자열이 뜨는지** 확인
         - `TRUE` 반응 시: `[CORRECT!]` 출력
-        ![CORRECT 출력 예시](./assets/2.png)
+        - ![CORRECT 출력 예시](./assets/2.png)
         - `FALSE` 반응 시: `[WRONG!]` 출력
-        ![FALSE 출력 예시](./assets/2.png)
+        - ![FALSE 출력 예시](./assets/2.png)
 
 ### 실습 전제
 
@@ -802,9 +802,9 @@
         - 여기서부터는 예상되는 단어가 있으므로, 한꺼번에 검증할 예정
         - `title`칸은 **입력 가능 글자 수 제한 존재**
         - 따라서 **글자 제한이 넉넉한 `Content` 칸 공략**
-        ![`Content` 칸 공략 예시](./assets/4.png)
+        - ![`Content` 칸 공략 예시](./assets/4.png)
         - 이후 **`Content` 칸에서 반응 확인**
-        ![`Content` 칸 출력 예시](./assets/5.png)
+        - ![`Content` 칸 출력 예시](./assets/5.png)
     - **입력:**
 
         ```SQL
