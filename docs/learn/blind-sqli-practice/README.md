@@ -37,7 +37,7 @@
         - `TRUE` 반응 시: `[CORRECT!]` 출력
         - ![CORRECT 출력 예시](./assets/2.png)
         - `FALSE` 반응 시: `[WRONG!]` 출력
-        - ![FALSE 출력 예시](./assets/2.png)
+        - ![FALSE 출력 예시](./assets/3.png)
 
 ### 실습 전제
 
