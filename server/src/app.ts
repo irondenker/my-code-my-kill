@@ -33,6 +33,7 @@ const labOptions = getLabOptions();
  * - enabled=false: CSRF 보호 활성화
  */
 const csrfLabEnabled = labOptions.csrf.enabled;
+const cspEnabled = labOptions.csp.enabled;
 
 /**
  * 서버 사이드(XSS) escape 함수입니다.
@@ -57,7 +58,9 @@ export function createApp() {
     app.disable("x-powered-by");
 
     // CSP 설정
-    app.use(createCspMiddleware({ reportOnly: false }));
+    if (cspEnabled) {
+        app.use(createCspMiddleware({ reportOnly: false }));
+    }
 
     // 운영 환경에서 reverse proxy(nginx 등) 뒤에 있을 수 있으므로 trust proxy를 활성화합니다.
     app.set("trust proxy", 1);

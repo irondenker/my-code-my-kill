@@ -26,6 +26,9 @@
   "csrf": {
     "enabled": false
   },
+  "csp": {
+    "enabled": true
+  },
   "uploadValidation": {
     "extensionCheck": true,
     "mimeCheck": true,

@@ -58,6 +58,7 @@ test("lab-options loader falls back to defaults when file is missing", async () 
 
     assert.equal(result.options.sqlInjection.enabled, false);
     assert.equal(result.options.csrf.enabled, false);
+    assert.equal(result.options.csp.enabled, true);
     assert.equal(result.options.ssti, false);
     assert.equal(result.options.debugErrorRoutes, false);
     assert.equal(typeof result.options.uploadValidation.extensionCheck, "boolean");
@@ -73,6 +74,7 @@ test("lab-options loader falls back to defaults when JSON is invalid", async () 
     });
 
     assert.equal(result.options.sqlInjection.enabled, false);
+    assert.equal(result.options.csp.enabled, true);
     assert.equal(result.options.xssInjection.storedXss, false);
     assert.deepEqual(result.options.securityDefense, {});
     assert.equal(result.warnings.some((line) => line.includes("Failed to load")), true);
@@ -91,6 +93,7 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
         ssti: { enabled: "true" },
         debug: { errorRoutes: { enabled: true } },
         csrf: { enabled: "false" },
+        csp: { enabled: "false" },
         xss: {
             stored: { enabled: "true" },
             sanitize: {
@@ -159,6 +162,7 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
     assert.equal(result.options.sqlInjection.targets.articleDelete, true);
     assert.equal(result.options.ssti, true);
     assert.equal(result.options.debugErrorRoutes, true);
+    assert.equal(result.options.csp.enabled, false);
     assert.equal(result.options.xssInjection.storedXss, true);
     assert.equal(result.options.xssInjection.clientSide.sanitizeEnabled, false);
     assert.equal(result.options.xssInjection.clientSide.defaultRuleToggles.lessThan, false);

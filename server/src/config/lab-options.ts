@@ -65,6 +65,10 @@ export type CsrfOptions = {
     enabled: boolean;
 };
 
+export type CspOptions = {
+    enabled: boolean;
+};
+
 export type SecurityDefenseLabOptions = {
     accountLockout?: {
         enabled?: boolean;
@@ -94,6 +98,7 @@ export type LabOptions = {
     ssti: boolean;
     debugErrorRoutes: boolean;
     csrf: CsrfOptions;
+    csp: CspOptions;
     xssInjection: XssInjectionOptions;
     uploadValidation: UploadValidationOptions;
     securityDefense: SecurityDefenseLabOptions;
@@ -144,6 +149,9 @@ const DEFAULT_LAB_OPTIONS: LabOptions = {
     csrf: {
         enabled: false,
     },
+    csp: {
+        enabled: true,
+    },
     xssInjection: { ...DEFAULT_XSS_INJECTION_OPTIONS },
     uploadValidation: {
         extensionCheck: true,
@@ -179,6 +187,9 @@ function getDefaultLabOptions(): LabOptions {
         debugErrorRoutes: DEFAULT_LAB_OPTIONS.debugErrorRoutes,
         csrf: {
             enabled: DEFAULT_LAB_OPTIONS.csrf.enabled,
+        },
+        csp: {
+            enabled: DEFAULT_LAB_OPTIONS.csp.enabled,
         },
         xssInjection: {
             storedXss: DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
@@ -709,7 +720,37 @@ function parseCsrfOptions(value: unknown): CsrfOptions {
 /**
  * SSTI 토글을 파싱합니다.
  *
- * 기대 형태(부분 JSON):
+ * Expected shape (partial JSON):
+ * - `csp: { "enabled": boolean }`
+ */
+function parseCspOptions(value: unknown): CspOptions {
+    if (typeof value === "undefined") {
+        return {
+            enabled: DEFAULT_LAB_OPTIONS.csp.enabled,
+        };
+    }
+
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        console.warn(`[CONFIG] Invalid lab option "csp" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+        return {
+            enabled: DEFAULT_LAB_OPTIONS.csp.enabled,
+        };
+    }
+
+    const options = value as Record<string, unknown>;
+    return {
+        enabled: parseBooleanOption(
+            options.enabled,
+            "csp.enabled",
+            DEFAULT_LAB_OPTIONS.csp.enabled,
+        ),
+    };
+}
+
+/**
+ * SSTI lab option parser.
+ *
+ * Expected shape (partial JSON):
  * - `ssti: { "enabled": boolean }`
  */
 function parseSstiOption(value: unknown): boolean {
@@ -966,6 +1007,7 @@ function loadLabOptions(): LabOptions {
             ssti: parseSstiOption(options.ssti),
             debugErrorRoutes: parseDebugErrorRoutesOption(options.debug),
             csrf: parseCsrfOptions(options.csrf),
+            csp: parseCspOptions(options.csp),
             xssInjection: parseXssInjectionOptions(options.xss),
             uploadValidation: parseUploadValidationOptions(options.uploadValidation),
             securityDefense: parseSecurityDefenseLabOptions(options.securityDefense),

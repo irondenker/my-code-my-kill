@@ -112,6 +112,8 @@ await new Promise((resolve, reject) => {
 console.log(JSON.stringify({
     status: response.status,
     location: response.headers.get("location"),
+    csp: response.headers.get("content-security-policy"),
+    cspReportOnly: response.headers.get("content-security-policy-report-only"),
     body: text,
 }));
 `;
@@ -142,6 +144,8 @@ async function probeLabRoute(params: {
     return JSON.parse(jsonLine) as {
         status: number;
         location: string | null;
+        csp: string | null;
+        cspReportOnly: string | null;
         body: string;
     };
 }
@@ -201,4 +205,32 @@ test("ssti route renders template output when lab option is on (with csrf lab mo
 
     assert.equal(result.status, 200);
     assert.match(result.body, /hello-49/);
+});
+
+test("csp header is emitted when csp lab option is enabled", async () => {
+    const result = await probeLabRoute({
+        nodeEnv: "test",
+        options: {
+            csp: { enabled: true },
+        },
+        path: "/healthz",
+    });
+
+    assert.equal(result.status, 200);
+    assert.match(result.csp ?? "", /default-src 'self'/);
+    assert.equal(result.cspReportOnly, null);
+});
+
+test("csp header is not emitted when csp lab option is disabled", async () => {
+    const result = await probeLabRoute({
+        nodeEnv: "test",
+        options: {
+            csp: { enabled: false },
+        },
+        path: "/healthz",
+    });
+
+    assert.equal(result.status, 200);
+    assert.equal(result.csp, null);
+    assert.equal(result.cspReportOnly, null);
 });

@@ -24,6 +24,7 @@ function makeLabOptions(): LabOptions {
         ssti: false,
         debugErrorRoutes: false,
         csrf: { enabled: false },
+        csp: { enabled: true },
         xssInjection: {
             storedXss: true,
             clientSide: {

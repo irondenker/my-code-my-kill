@@ -17,6 +17,7 @@ MCMK는 실서비스가 아닌 학습/실습용 프로젝트입니다. `lab-opti
 - `sqlInjection.targets.*`
 - `ssti.enabled`
 - `csrf.enabled`
+- `csp.enabled`
 - `uploadValidation.*`
 - `xss.stored.enabled`
 - `xss.sanitize.clientSide.*`
