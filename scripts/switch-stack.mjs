@@ -16,7 +16,11 @@ if (!modeArg) {
 }
 
 const targetComposeFile = modeArg === "dev" ? "docker-compose.yml" : "docker-compose.prod.yml";
-const otherComposeFile = modeArg === "dev" ? "docker-compose.prod.yml" : "docker-compose.yml";
+const composeFiles = ["docker-compose.yml", "docker-compose.prod.yml"];
+const hostPortsByMode = {
+    dev: [30000, 8080, 54321],
+    prod: [3000, 80, 5432],
+};
 
 function runDockerCompose(args) {
     const result = spawnSync("docker", ["compose", ...args], {
@@ -34,8 +38,40 @@ function runDockerCompose(args) {
     }
 }
 
-console.log(`[switch-stack] Stopping opposite stack: ${otherComposeFile}`);
-runDockerCompose(["-f", otherComposeFile, "down", "--remove-orphans"]);
+function getContainersPublishingPort(port) {
+    const result = spawnSync(
+        "docker",
+        ["ps", "--filter", `publish=${port}`, "--format", "{{.Names}}"],
+        { cwd: repoRoot, encoding: "utf-8" },
+    );
+
+    if (result.error || (result.status ?? 1) !== 0) {
+        return [];
+    }
+
+    return result.stdout
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+}
+
+for (const composeFile of composeFiles) {
+    console.log(`[switch-stack] Stopping stack: ${composeFile}`);
+    runDockerCompose(["-f", composeFile, "down", "--remove-orphans"]);
+}
+
+for (const port of hostPortsByMode[modeArg]) {
+    const conflictingContainers = getContainersPublishingPort(port);
+    if (conflictingContainers.length > 0) {
+        console.error(
+            `[switch-stack] Port ${port} is still occupied by: ${conflictingContainers.join(", ")}`,
+        );
+        console.error(
+            "[switch-stack] Stop them first, then retry. Example: docker rm -f <container_name>",
+        );
+        process.exit(1);
+    }
+}
 
 console.log(`[switch-stack] Starting target stack: ${targetComposeFile}`);
 const upArgs = ["-f", targetComposeFile, "up", "-d"];

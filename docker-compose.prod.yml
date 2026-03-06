@@ -41,6 +41,27 @@ services:
       - public_uploads:/app/public/uploads
     networks:
       - default
+  migrator:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    profiles:
+      - tools
+    env_file:
+      - ./server/.env.production
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      AUDIT_CLI_LOG_LEVEL: errors
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./seed-assets:/seed-assets:ro
+      - public_uploads:/app/public/uploads
+    networks:
+      - default
   nginx:
     build:
       context: ./nginx
@@ -58,6 +79,5 @@ services:
 
 volumes:
   postgresql:
-    external: true
-    name: postgresql
+    name: postgresql_prod
   public_uploads:

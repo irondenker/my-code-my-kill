@@ -5,7 +5,7 @@
 Docker 실행 시 아래와 같은 오류가 발생합니다.
 
 ```text
-ports are not available: exposing port TCP 0.0.0.0:54973 ...
+ports are not available: exposing port TCP 0.0.0.0:54321 ...
 bind: An attempt was made to access a socket in a way forbidden by its access permissions.
 ```
 
@@ -30,7 +30,7 @@ Windows의 TCP 제외 포트 대역을 확인합니다.
 netsh int ipv4 show excludedportrange protocol=tcp
 ```
 
-사용하려는 호스트 포트(예: `54973`)가 제외 대역에 포함되어 있으면, Docker 포트 매핑에서 다른 호스트 포트를 사용합니다.
+사용하려는 호스트 포트(예: `54321`)가 제외 대역에 포함되어 있으면, Docker 포트 매핑에서 다른 호스트 포트를 사용합니다.
 
 ## 참고
 

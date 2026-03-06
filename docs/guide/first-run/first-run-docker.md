@@ -41,17 +41,26 @@ cp server/examples/lab-options.json.example server/lab-options.json
 
 ## 2) DB 볼륨 준비
 
-dev/prod 모두 외부 볼륨 `postgresql`을 사용합니다.
+dev/prod는 DB 볼륨을 분리해 사용합니다.
+
+- dev: `postgresql_dev`
+- prod: `postgresql_prod`
+
+처음 실행 시 Docker가 볼륨을 자동 생성하므로 별도 생성 명령은 필수가 아닙니다.
+사전에 만들어두고 싶다면 아래를 실행하세요.
 
 ```bash
-docker volume create postgresql
+docker volume create postgresql_dev
+docker volume create postgresql_prod
 ```
 
 완전 초기화가 필요할 때만 아래를 실행하세요.
 
 ```bash
-docker volume rm postgresql
-docker volume create postgresql
+docker volume rm postgresql_dev
+docker volume rm postgresql_prod
+docker volume create postgresql_dev
+docker volume create postgresql_prod
 ```
 
 ## 3) dev 컨테이너 기동 후 DB 초기화
@@ -65,6 +74,16 @@ docker compose -f docker-compose.yml exec -T server npm run db:seed:all
 ```
 
 DB 컨테이너가 막 뜨는 타이밍이면 마이그레이션 접속이 실패할 수 있습니다. 이 경우 5~10초 후 다시 실행하세요.
+
+## 3.1) prod DB 마이그레이션/시드 (필요 시)
+
+`docker-compose.prod.yml`의 `server` 컨테이너는 runtime 이미지라 `sequelize-cli`가 없습니다.
+prod DB 작업은 `migrator` 서비스로 실행하세요.
+
+```bash
+docker compose -f docker-compose.prod.yml --profile tools run --rm migrator npm run db:migrate
+docker compose -f docker-compose.prod.yml --profile tools run --rm migrator npm run db:seed:all
+```
 
 ## 4) 실행 모드 선택 (prod 또는 dev)
 
@@ -86,7 +105,8 @@ docker compose -f docker-compose.yml up -d --build
 
 1. 브라우저 접속
    - prod: `http://localhost` (80)
-   - dev: `http://localhost:3000`
+   - dev (nginx): `http://localhost:8080`
+   - dev (server direct): `http://localhost:30000`
 2. 필요 시 실행 모드에 맞는 로그 확인
 
 prod 로그
@@ -118,7 +138,7 @@ docker compose -f docker-compose.yml exec -T server npm run test:db
 
 - 기본 마이그레이션 경로는 `server/migrations`입니다.
 - 기존 체인이 필요하면 `server/migrations/old`와 `--migrations-path` 옵션을 사용하세요.
-- prod 컨테이너에는 `sequelize-cli`가 없으므로 마이그레이션/시드는 dev에서 처리해야 합니다.
+- prod `server` 컨테이너에는 `sequelize-cli`가 없으므로, prod DB 작업은 `migrator` 서비스를 사용하세요.
 - 로컬 hook/CI 초기 설정은 [`quality-gates.md`](./quality-gates.md)를 참고하세요.
 - 환경변수/실행모드 전체 맵은 [`env-mode-matrix.md`](../env-mode-matrix.md)를 참고하세요.
 
