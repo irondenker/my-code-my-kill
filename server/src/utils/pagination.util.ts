@@ -19,8 +19,21 @@ export function computeTotalPages(totalCount: number, limit: number): number {
  * 숫자가 아니거나 1 미만이면 fallback을 반환합니다.
  */
 export function parsePositiveInt(rawValue: unknown, fallback: number): number {
-    const value = Number(rawValue);
-    return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
+    if (typeof rawValue === "number") {
+        return Number.isInteger(rawValue) && rawValue > 0 ? rawValue : fallback;
+    }
+
+    if (typeof rawValue === "string") {
+        const trimmed = rawValue.trim();
+        if (!/^[0-9]+$/.test(trimmed)) {
+            return fallback;
+        }
+
+        const value = Number.parseInt(trimmed, 10);
+        return value > 0 ? value : fallback;
+    }
+
+    return fallback;
 }
 
 /**

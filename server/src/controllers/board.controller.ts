@@ -12,16 +12,13 @@ import {
     countArticlesBySlug,
     listArticleOutlinesBySlug,
 } from "../services/article.service.js";
+import { computeTotalPages } from "../utils/pagination.util.js";
 import {
-    computeTotalPages,
-    normalizeLimitByOptions,
-    parsePositiveInt,
-} from "../utils/pagination.util.js";
-import {
-    PAGINATION_DEFAULT_LIMIT,
-    PAGINATION_LIMIT_OPTIONS,
-    PAGINATION_MAX_LIMIT,
-} from "../constants/board.constants.js";
+    buildBoardListQueryCarry,
+    normalizeBoardListQuery,
+    type BoardListQueryOverrides,
+} from "../utils/query-carry.js";
+import { PAGINATION_LIMIT_OPTIONS } from "../constants/board.constants.js";
 import { getStringParamOrThrow } from "../utils/http/route-param.util.js";
 import { consumeSessionFlashMessage } from "../utils/session/session-flash.util.js";
 
@@ -39,15 +36,6 @@ import { consumeSessionFlashMessage } from "../utils/session/session-flash.util.
  * - 최대값(100) 초과면 최대값으로 보정
  * - 허용 옵션(10/20/30/40/50/100) 외 값이면 기본값으로 보정
  */
-function parsePageLimit(rawValue: unknown): number {
-    return normalizeLimitByOptions({
-        rawValue,
-        defaultLimit: PAGINATION_DEFAULT_LIMIT,
-        maxLimit: PAGINATION_MAX_LIMIT,
-        allowedOptions: PAGINATION_LIMIT_OPTIONS,
-    });
-}
-
 /**
  * 보드 디렉토리(목록) 접근 여부를 판정합니다.
  * readAccess 정책 중 `owner_or_admin`은 "게시글 단위" 정책이라 목록 접근엔 적용하지 않습니다.
@@ -147,12 +135,12 @@ export async function getBoardBySlug(req: Request, res: Response) {
     }
 
     // 2) 페이지네이션 파라미터를 정규화하고, 목록 상단에 노출할 플래시 메시지를 소비합니다.
-    const page = parsePositiveInt(req.query.page, 1);
-    const limit = parsePageLimit(req.query.limit);
+    const boardListQuery = normalizeBoardListQuery(req.query);
+    const { q, sort, order, page, limit } = boardListQuery;
     const formSuccess = consumeSessionFlashMessage(req, "boardFlashMessage");
 
     // 3) 전체 개수 -> 페이지 메타 계산 -> 현재 페이지 오프셋 계산 순서로 목록을 조회합니다.
-    const totalCount = await countArticlesBySlug(slug);
+    const totalCount = await countArticlesBySlug(slug, { q });
     const totalPages = computeTotalPages(totalCount, limit);
     const offset = (page - 1) * limit;
 
@@ -160,6 +148,9 @@ export async function getBoardBySlug(req: Request, res: Response) {
         slug,
         offset,
         limit,
+        q,
+        sort,
+        order,
     });
 
     // 4) owner_or_admin 보드는 "게시글 단위"로 열람 가능 여부가 갈리므로,
@@ -173,6 +164,8 @@ export async function getBoardBySlug(req: Request, res: Response) {
         };
     });
 
+    const queryCarry = (overrides: BoardListQueryOverrides = {}) => buildBoardListQueryCarry(boardListQuery, overrides);
+
     return res.render("board/index", {
         boardSlug: slug,
         boardDisplayName: board.name,
@@ -180,6 +173,12 @@ export async function getBoardBySlug(req: Request, res: Response) {
         formSuccess,
         canCreate: canCreateForBoard(req, board),
         postOutlines,
+        q,
+        sort,
+        order,
+        page,
+        limit,
+        queryCarry,
         pagination: {
             page,
             totalPages,

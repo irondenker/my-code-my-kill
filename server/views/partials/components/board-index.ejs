@@ -65,6 +65,49 @@
             <% } %>
         </div>
         <% } else { %>
+        <div class="board-content-width mb-3">
+            <form method="get" action="/board/<%= boardSlug %>" class="row g-2 align-items-end mb-2">
+                <input type="hidden" name="sort" value="<%= sort %>">
+                <input type="hidden" name="limit" value="<%= limit %>">
+                <input type="hidden" name="page" value="1">
+                <div class="col-sm-8">
+                    <label class="form-label small mb-1" for="board-q">Search</label>
+                    <input
+                        id="board-q"
+                        class="form-control form-control-sm"
+                        type="text"
+                        name="q"
+                        maxlength="100"
+                        value="<%= q %>"
+                        placeholder="Search by title"
+                    >
+                </div>
+                <div class="col-sm-4">
+                    <label class="form-label small mb-1" for="board-order">Order</label>
+                    <select id="board-order" class="form-select form-select-sm" name="order">
+                        <option value="desc" <%= order === "desc" ? "selected" : "" %>>desc</option>
+                        <option value="asc" <%= order === "asc" ? "selected" : "" %>>asc</option>
+                    </select>
+                </div>
+                <div class="col-12 d-flex align-items-center gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm">Search</button>
+                    <span class="small text-muted">Sort: <%= sort %> (<%= order %>)</span>
+                </div>
+            </form>
+
+            <% if (q) { %>
+            <p class="small text-muted mb-0">
+                Search term:
+                <% if (serverSideSanitizeEnabled) { %>
+                "<%= q %>"
+                <% } else { %>
+                <!-- XSS LAB: raw output when labOptions.xssInjection.serverSide.enabled=false -->
+                "<%- q %>"
+                <% } %>
+            </p>
+            <% } %>
+        </div>
+
         <div class="list-group board-list">
             <% postOutlines.forEach(post=> { %>
             <%
@@ -134,7 +177,6 @@
                 const totalPages = pagination.totalPages;
                 const currentLimit = pagination.limit;
                 const limitOptions = Array.isArray(pagination.limitOptions) ? pagination.limitOptions : [10, 20, 30, 40, 50, 100];
-                const limitQuery = currentLimit === 10 ? "" : `&limit=${currentLimit}`;
                 const startRow = pagination.totalCount === 0 ? 0 : (currentPage - 1) * currentLimit + 1;
                 const endRow = (currentPage - 1) * currentLimit + postOutlines.length;
 
@@ -149,28 +191,73 @@
                 of <%= pagination.totalCount %> Posts
             </div>
 
-            <form method="get" action="/board/<%= boardSlug %>" class="d-flex gap-2 align-items-center mb-0">
-                <label class="form-label mb-0 small" for="limit">Rows</label>
-                <select id="limit" class="form-select form-select-sm" style="width: 100px;" name="limit">
-                    <% limitOptions.forEach((option) => { %>
-                    <option value="<%= option %>" <%= currentLimit === option ? "selected" : "" %>><%= option %></option>
-                    <% }) %>
-                </select>
-                <button type="submit" class="btn btn-primary btn-sm">Apply</button>
-            </form>
+            <div class="dropup">
+                <button
+                    class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside"
+                    data-bs-display="static"
+                    aria-expanded="false"
+                    aria-label="Pagination options"
+                    title="Pagination options"
+                >
+                    <svg class="bi" width="16" height="16" aria-hidden="true">
+                        <use xlink:href="/assets/icons/icons.svg#grid"></use>
+                    </svg>
+                </button>
+                <div class="dropdown-menu p-3 start-50 translate-middle-x" style="min-width: 220px;">
+                    <form method="get" action="/board/<%= boardSlug %>" class="d-flex flex-column gap-2 mb-0">
+                        <input type="hidden" name="q" value="<%= q %>">
+                        <input type="hidden" name="sort" value="<%= sort %>">
+                        <input type="hidden" name="order" value="<%= order %>">
+                        <label class="form-label mb-0 small" for="limit">Rows</label>
+                        <select id="limit" class="form-select form-select-sm" name="limit">
+                            <% limitOptions.forEach((option) => { %>
+                            <option value="<%= option %>" <%= currentLimit === option ? "selected" : "" %>><%= option %></option>
+                            <% }) %>
+                        </select>
+                        <div class="d-flex flex-wrap gap-1">
+                            <% limitOptions.forEach((option) => { %>
+                            <a
+                                class="btn btn-outline-secondary btn-sm <%= currentLimit === option ? "active" : "" %>"
+                                href="<%= queryCarry({ limit: option }) %>"
+                            ><%= option %></a>
+                            <% }) %>
+                        </div>
+
+                        <label class="form-label mb-0 small" for="page-jump">
+                            Page <span id="page-jump-meta" class="small text-muted">(Total <%= totalPages %>)</span>
+                        </label>
+                        <input
+                            id="page-jump"
+                            class="form-control form-control-sm"
+                            name="page"
+                            type="number"
+                            min="1"
+                            max="<%= totalPages %>"
+                            step="1"
+                            inputmode="numeric"
+                            required
+                            value="<%= currentPage %>"
+                        />
+                        <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+                    </form>
+                </div>
+            </div>
 
             <div id="dataTable_paginate">
                 <ul class="pagination pagination-sm mb-0">
 
                     <!-- Previous -->
                     <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                        <a class="page-link" href="?page=<%= currentPage - 1 %><%= limitQuery %>">Previous</a>
+                        <a class="page-link" href="<%= queryCarry({ page: currentPage - 1 }) %>">Previous</a>
                     </li>
 
                     <!-- current page +/-1 -->
                     <% for (let i = startPage; i <= endPage; i++) { %>
                     <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-                        <a class="page-link" href="?page=<%= i %><%= limitQuery %>"><%= i %></a>
+                        <a class="page-link" href="<%= queryCarry({ page: i }) %>"><%= i %></a>
                     </li>
                     <% } %>
 
@@ -181,13 +268,13 @@
                     </li>
 
                     <li class="page-item <%= currentPage === totalPages ? 'active' : '' %>">
-                        <a class="page-link" href="?page=<%= totalPages %><%= limitQuery %>"><%= totalPages %></a>
+                        <a class="page-link" href="<%= queryCarry({ page: totalPages }) %>"><%= totalPages %></a>
                     </li>
                     <% } %>
 
                     <!-- Next -->
                     <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                        <a class="page-link" href="?page=<%= currentPage + 1 %><%= limitQuery %>">Next</a>
+                        <a class="page-link" href="<%= queryCarry({ page: currentPage + 1 }) %>">Next</a>
                     </li>
                 </ul>
             </div>
@@ -195,3 +282,6 @@
         <% } %>
     </div>
 </main>
+
+
+

@@ -4,6 +4,18 @@ import type { ArticleForShow, ArticleOutline, ArticleRecord, NeighborPost } from
 import type { ArticleOutlineRow, ArticleRecordRow, ArticleShowRow, NeighborPostRow } from "../../types/article/article-data.types.js";
 import { mapArticleForShow, mapArticleOutline, mapArticleRecord, mapNeighborArticle } from "../../utils/article/article-mapper.util.js";
 
+type BoardListSort = "display_id";
+type BoardListOrder = "asc" | "desc";
+
+const ORDER_BY_COLUMN_MAP: Record<BoardListSort, string> = {
+    display_id: "p.display_id",
+};
+
+const ORDER_BY_DIRECTION_MAP: Record<BoardListOrder, "ASC" | "DESC"> = {
+    asc: "ASC",
+    desc: "DESC",
+};
+
 /**
  * 게시글 조회/존재확인 정상 모드 서비스입니다.
  *
@@ -31,7 +43,14 @@ export async function countArticles(): Promise<number> {
 /**
  * 특정 보드(slug)의 활성 게시글 수를 반환합니다.
  */
-export async function countArticlesBySlug(slug: string): Promise<number> {
+export async function countArticlesBySlug(slug: string, params?: { q?: string }): Promise<number> {
+    const q = typeof params?.q === "string" ? params.q : "";
+    const titleFilterClause = q.length > 0 ? " AND p.title ILIKE :qPattern" : "";
+    const replacements: { slug: string; qPattern?: string } = { slug };
+    if (q.length > 0) {
+        replacements.qPattern = `%${q}%`;
+    }
+
     const rows = await sequelize.query<{ total_count: string }>(
         `
         SELECT COUNT(*) AS total_count
@@ -39,10 +58,11 @@ export async function countArticlesBySlug(slug: string): Promise<number> {
         JOIN boards b ON p.board_id = b.board_id
         WHERE p.use_yn = true
           AND b.slug = :slug
+          ${titleFilterClause}
         `,
         {
             type: QueryTypes.SELECT,
-            replacements: { slug },
+            replacements,
         }
     );
 
@@ -85,8 +105,21 @@ export async function listArticleOutlinesBySlug(params: {
     slug: string;
     offset: number;
     limit: number;
+    q?: string;
+    sort?: BoardListSort;
+    order?: BoardListOrder;
 }): Promise<ArticleOutline[]> {
     const { slug, offset, limit } = params;
+    const q = typeof params.q === "string" ? params.q : "";
+    const sort = params.sort === "display_id" ? params.sort : "display_id";
+    const order = params.order === "asc" ? "asc" : "desc";
+    const orderByColumn = ORDER_BY_COLUMN_MAP[sort];
+    const orderByDirection = ORDER_BY_DIRECTION_MAP[order];
+    const titleFilterClause = q.length > 0 ? " AND p.title ILIKE :qPattern" : "";
+    const replacements: { slug: string; limit: number; offset: number; qPattern?: string } = { slug, limit, offset };
+    if (q.length > 0) {
+        replacements.qPattern = `%${q}%`;
+    }
 
     const rows = await sequelize.query<ArticleOutlineRow>(
         `
@@ -102,11 +135,12 @@ export async function listArticleOutlinesBySlug(params: {
         JOIN users u ON p.user_id = u.user_id
         WHERE p.use_yn = true
           AND b.slug = :slug
-        ORDER BY p.created_at DESC
+          ${titleFilterClause}
+        ORDER BY ${orderByColumn} ${orderByDirection}
         LIMIT :limit
         OFFSET :offset
         `,
-        { type: QueryTypes.SELECT, replacements: { slug, limit, offset } }
+        { type: QueryTypes.SELECT, replacements }
     );
 
     return rows.map(mapArticleOutline);

@@ -20,7 +20,7 @@ test("computeTotalPages normalizes limit and computes ceil pages", () => {
 
 test("parsePositiveInt normalizes invalid values to fallback", () => {
     assert.equal(parsePositiveInt("3", 1), 3);
-    assert.equal(parsePositiveInt("1.9", 1), 1);
+    assert.equal(parsePositiveInt("1.9", 7), 7);
     assert.equal(parsePositiveInt(0, 7), 7);
     assert.equal(parsePositiveInt("abc", 7), 7);
 });

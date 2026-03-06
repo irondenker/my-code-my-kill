@@ -4,6 +4,9 @@ import * as normalImplementation from "./article-query.normal.service.js";
 import type { ArticleForShow, ArticleOutline, ArticleRecord, NeighborPost } from "../../types/article/article.types.js";
 import { normalizeBoardSlug } from "../../utils/board/board-slug.util.js";
 
+type BoardListSort = "display_id";
+type BoardListOrder = "asc" | "desc";
+
 /**
  * 게시글 조회/존재확인 서비스 facade입니다.
  *
@@ -22,12 +25,12 @@ export async function countArticles(): Promise<number> {
 /**
  * 특정 보드(slug)의 활성 게시글 수를 반환합니다.
  */
-export async function countArticlesBySlug(slug: string): Promise<number> {
+export async function countArticlesBySlug(slug: string, params?: { q?: string }): Promise<number> {
     const canonicalSlug = normalizeBoardSlug(slug);
     if (isSqlInjectionTargetEnabled("articleLookup")) {
-        return labImplementation.countArticlesBySlug(canonicalSlug);
+        return labImplementation.countArticlesBySlug(canonicalSlug, params);
     }
-    return normalImplementation.countArticlesBySlug(canonicalSlug);
+    return normalImplementation.countArticlesBySlug(canonicalSlug, params);
 }
 
 /**
@@ -44,6 +47,9 @@ export async function listArticleOutlinesBySlug(params: {
     slug: string;
     offset: number;
     limit: number;
+    q?: string;
+    sort?: BoardListSort;
+    order?: BoardListOrder;
 }): Promise<ArticleOutline[]> {
     const canonicalSlug = normalizeBoardSlug(params.slug);
     const canonicalParams = { ...params, slug: canonicalSlug };

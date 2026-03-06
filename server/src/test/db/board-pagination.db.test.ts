@@ -72,10 +72,10 @@ test("board list pagination normalizes invalid page and renders page slices", { 
             });
             const invalidPageBody = await invalidPage.text();
             assert.equal(invalidPage.status, 200);
-            assert.match(invalidPageBody, /href="\?page=2"/);
+            assert.match(invalidPageBody, /href="\?(?=[^"]*page=2)[^"]*"/);
             assert.match(
                 invalidPageBody,
-                /<li class="page-item active">\s*<a class="page-link" href="\?page=1">1<\/a>/
+                /<li class="page-item active">\s*<a class="page-link" href="\?(?=[^"]*page=1)[^"]*">1<\/a>/
             );
 
             const zeroPage = await fetch(`${baseUrl}/board/${boardSlug}?page=0`, {
@@ -85,7 +85,7 @@ test("board list pagination normalizes invalid page and renders page slices", { 
             assert.equal(zeroPage.status, 200);
             assert.match(
                 zeroPageBody,
-                /<li class="page-item active">\s*<a class="page-link" href="\?page=1">1<\/a>/
+                /<li class="page-item active">\s*<a class="page-link" href="\?(?=[^"]*page=1)[^"]*">1<\/a>/
             );
 
             const floatPage = await fetch(`${baseUrl}/board/${boardSlug}?page=1.9`, {
@@ -95,7 +95,7 @@ test("board list pagination normalizes invalid page and renders page slices", { 
             assert.equal(floatPage.status, 200);
             assert.match(
                 floatPageBody,
-                /<li class="page-item active">\s*<a class="page-link" href="\?page=1">1<\/a>/
+                /<li class="page-item active">\s*<a class="page-link" href="\?(?=[^"]*page=1)[^"]*">1<\/a>/
             );
 
             const secondPage = await fetch(`${baseUrl}/board/${boardSlug}?page=2`, {
@@ -105,7 +105,7 @@ test("board list pagination normalizes invalid page and renders page slices", { 
             assert.equal(secondPage.status, 200);
             assert.match(
                 secondPageBody,
-                /<li class="page-item active">\s*<a class="page-link" href="\?page=2">2<\/a>/
+                /<li class="page-item active">\s*<a class="page-link" href="\?(?=[^"]*page=2)[^"]*">2<\/a>/
             );
 
             const hugePage = await fetch(`${baseUrl}/board/${boardSlug}?page=999999`, {
@@ -180,8 +180,10 @@ test("board list pagination supports limit selector and normalizes invalid limit
             assert.match(defaultLimitBody, /option value="40"/);
             assert.match(defaultLimitBody, /option value="50"/);
             assert.match(defaultLimitBody, /option value="100"/);
+            assert.match(defaultLimitBody, /id="page-jump"/);
+            assert.match(defaultLimitBody, /id="page-jump-meta"[^>]*>\s*\(Total\s+2\)\s*</);
             assert.match(defaultLimitBody, /Showing\s+1\s+to\s+10\s+of\s+12 Posts/);
-            assert.match(defaultLimitBody, /href="\?page=2"/);
+            assert.match(defaultLimitBody, /href="\?(?=[^"]*page=2)[^"]*"/);
 
             const selectedLimit = await fetch(`${baseUrl}/board/${boardSlug}?limit=20`, {
                 headers: { cookie: authCookie },
@@ -189,8 +191,10 @@ test("board list pagination supports limit selector and normalizes invalid limit
             const selectedLimitBody = await selectedLimit.text();
             assert.equal(selectedLimit.status, 200);
             assert.match(selectedLimitBody, /option value="20" selected/);
+            assert.match(selectedLimitBody, /aria-label="Pagination options"/);
+            assert.match(selectedLimitBody, /id="page-jump-meta"[^>]*>\s*\(Total\s+1\)\s*</);
             assert.match(selectedLimitBody, /Showing\s+1\s+to\s+12\s+of\s+12 Posts/);
-            assert.match(selectedLimitBody, /href="\?page=2(?:&|&amp;)limit=20"/);
+            assert.match(selectedLimitBody, /href="\?(?=[^"]*page=2)(?=[^"]*limit=20)[^"]*"/);
 
             const maxSelectedLimit = await fetch(`${baseUrl}/board/${boardSlug}?limit=100`, {
                 headers: { cookie: authCookie },
@@ -198,7 +202,7 @@ test("board list pagination supports limit selector and normalizes invalid limit
             const maxSelectedLimitBody = await maxSelectedLimit.text();
             assert.equal(maxSelectedLimit.status, 200);
             assert.match(maxSelectedLimitBody, /option value="100" selected/);
-            assert.match(maxSelectedLimitBody, /href="\?page=2(?:&|&amp;)limit=100"/);
+            assert.match(maxSelectedLimitBody, /href="\?(?=[^"]*page=2)(?=[^"]*limit=100)[^"]*"/);
 
             const invalidLimit = await fetch(`${baseUrl}/board/${boardSlug}?limit=abc`, {
                 headers: { cookie: authCookie },

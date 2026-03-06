@@ -4,6 +4,9 @@ import type { ArticleForShow, ArticleOutline, ArticleRecord, NeighborPost } from
 import type { ArticleOutlineRow, ArticleRecordRow, ArticleShowRow, NeighborPostRow } from "../../types/article/article-data.types.js";
 import { mapArticleForShow, mapArticleOutline, mapArticleRecord, mapNeighborArticle } from "../../utils/article/article-mapper.util.js";
 
+type BoardListSort = "display_id";
+type BoardListOrder = "asc" | "desc";
+
 /**
  * 게시글 조회/존재확인 lab 모드 서비스입니다.
  *
@@ -15,7 +18,10 @@ import { mapArticleForShow, mapArticleOutline, mapArticleRecord, mapNeighborArti
 /**
  * 특정 보드(slug)의 활성 게시글 수를 반환합니다.
  */
-export async function countArticlesBySlug(slug: string): Promise<number> {
+export async function countArticlesBySlug(slug: string, params?: { q?: string }): Promise<number> {
+    const q = typeof params?.q === "string" ? params.q : "";
+    const titleFilterClause = q.length > 0 ? ` AND p.title ILIKE '%${q}%'` : "";
+
     const rows = await sequelize.query<{ total_count: string }>(
         `
         SELECT COUNT(*) AS total_count
@@ -23,6 +29,7 @@ export async function countArticlesBySlug(slug: string): Promise<number> {
         JOIN boards b ON p.board_id = b.board_id
         WHERE p.use_yn = true
           AND b.slug = '${slug}'
+          ${titleFilterClause}
         `,
         { type: QueryTypes.SELECT }
     );
@@ -66,8 +73,16 @@ export async function listArticleOutlinesBySlug(params: {
     slug: string;
     offset: number;
     limit: number;
+    q?: string;
+    sort?: BoardListSort;
+    order?: BoardListOrder;
 }): Promise<ArticleOutline[]> {
     const { slug, offset, limit } = params;
+    const q = typeof params.q === "string" ? params.q : "";
+    const sort = params.sort === "display_id" ? params.sort : "display_id";
+    const orderKeyword = params.order === "asc" ? "ASC" : "DESC";
+    const titleFilterClause = q.length > 0 ? ` AND p.title ILIKE '%${q}%'` : "";
+    const orderByColumn = sort === "display_id" ? "p.display_id" : "p.display_id";
 
     const rows = await sequelize.query<ArticleOutlineRow>(
         `
@@ -83,7 +98,8 @@ export async function listArticleOutlinesBySlug(params: {
         JOIN users u ON p.user_id = u.user_id
         WHERE p.use_yn = true
           AND b.slug = '${slug}'
-        ORDER BY p.created_at DESC
+          ${titleFilterClause}
+        ORDER BY ${orderByColumn} ${orderKeyword}
         LIMIT ${limit}
         OFFSET ${offset}
         `,
