@@ -61,6 +61,7 @@ test("lab-options loader falls back to defaults when file is missing", async () 
     assert.equal(result.options.csp.enabled, true);
     assert.equal(result.options.ssti, false);
     assert.equal(result.options.debugErrorRoutes, false);
+    assert.equal(result.options.xssInjection.reflected404, false);
     assert.equal(typeof result.options.uploadValidation.extensionCheck, "boolean");
     assert.equal(typeof result.options.uploadValidation.mimeCheck, "boolean");
     assert.equal(typeof result.options.uploadValidation.magicNumberCheck, "boolean");
@@ -96,6 +97,7 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
         csp: { enabled: "false" },
         xss: {
             stored: { enabled: "true" },
+            reflected404: { enabled: "true" },
             sanitize: {
                 clientSide: {
                     enabled: "false",
@@ -164,6 +166,7 @@ test("lab-options loader parses string booleans and recovers invalid nested valu
     assert.equal(result.options.debugErrorRoutes, true);
     assert.equal(result.options.csp.enabled, false);
     assert.equal(result.options.xssInjection.storedXss, true);
+    assert.equal(result.options.xssInjection.reflected404, true);
     assert.equal(result.options.xssInjection.clientSide.sanitizeEnabled, false);
     assert.equal(result.options.xssInjection.clientSide.defaultRuleToggles.lessThan, false);
     assert.equal(result.options.xssInjection.clientSide.customRules.length, 1);

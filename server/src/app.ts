@@ -118,8 +118,12 @@ export function createApp() {
     app.use("/", rootRouter);
 
     // 라우팅 실패(매칭 없음)는 404 에러로 통일해 errorHandler 흐름으로 보냅니다.
-    app.use((_req, _res, next) => {
-        return next(new HttpError(404, "Not Found"));
+    app.use((req, _res, next) => {
+        const notFoundError = new HttpError(404, "Not Found");
+        if (labOptions.xssInjection.reflected404) {
+            (notFoundError as HttpError & { path?: string }).path = req.originalUrl;
+        }
+        return next(notFoundError);
     });
 
     // csurf의 EBADCSRFTOKEN을 403으로 변환하고, 감사 로그를 남깁니다.

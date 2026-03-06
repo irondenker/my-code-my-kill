@@ -8,6 +8,7 @@ process.env.DB_USER ??= "test_user";
 process.env.DB_PASSWORD ??= "test_password";
 
 const { errorHandler } = await import("../../../middlewares/error-handler.js");
+const { getLabOptions } = await import("../../../config/lab-options.js");
 
 type MockReq = {
     session: {
@@ -27,10 +28,13 @@ type MockRes = {
     contentType?: string;
     sentBody?: string;
     redirectLocation?: string;
+    renderedView?: string;
+    renderedData?: Record<string, unknown>;
     status: (code: number) => MockRes;
     type: (contentType: string) => MockRes;
     send: (body: string) => MockRes;
     redirect: (location: string) => MockRes;
+    render: (view: string, data: Record<string, unknown>) => MockRes;
 };
 
 const originalConsoleError = console.error;
@@ -79,6 +83,11 @@ function makeRes(): MockRes {
             res.redirectLocation = location;
             return res;
         },
+        render(view: string, data: Record<string, unknown>) {
+            res.renderedView = view;
+            res.renderedData = data;
+            return res;
+        },
     };
     return res;
 }
@@ -107,16 +116,16 @@ test("errorHandler redirects 401 on login path to plain /login", () => {
     assert.equal(res.redirectLocation, "/login");
 });
 
-test("errorHandler renders static app source page for 404", () => {
+test("errorHandler renders not-found template for 404", () => {
     const req = makeReq();
     const res = makeRes();
+    const reflected404Enabled = getLabOptions().xssInjection.reflected404;
 
     errorHandler({ status: 404 }, req as any, res as any, () => undefined);
 
     assert.equal(res.statusCode, 404);
-    assert.equal(res.contentType, "html");
-    assert.match(res.sentBody ?? "", /data-error-code="404"/);
-    assert.match(res.sentBody ?? "", /data-error-source="app"/);
+    assert.equal(res.renderedView, "errors/common/not-found");
+    assert.equal(res.renderedData?.path, reflected404Enabled ? req.originalUrl : null);
 });
 
 test("errorHandler renders fallback source for non-static status", () => {

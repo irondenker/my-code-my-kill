@@ -27,6 +27,7 @@ function makeLabOptions(): LabOptions {
         csp: { enabled: true },
         xssInjection: {
             storedXss: true,
+            reflected404: false,
             clientSide: {
                 sanitizeEnabled: false,
                 defaultRuleToggles: {

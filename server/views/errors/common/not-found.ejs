@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>404 Not Found</title>
+        <link rel="stylesheet" type="text/css" href="/assets/css/fonts.css" />
+        <link rel="stylesheet" type="text/css" href="/errors/common/style.css" />
+    </head>
+    <body data-error-code="404" data-error-source="app">
+        <div class="container">
+            <div class="error">
+                <p class="kicker">service layer</p>
+                <h1>404</h1>
+                <h2>not found</h2>
+                <% if (typeof path === "string" && path.length > 0) { %>
+                <p class="message">
+                    Page "
+                    <% if (serverSideSanitizeEnabled) { %>
+                    <%= path %>
+                    <% } else { %>
+                    <!-- XSS LAB: raw output when labOptions.xssInjection.serverSide.enabled=false -->
+                    <%- path %>
+                    <% } %>
+                    " not found
+                </p>
+                <% } else { %>
+                <p class="message">
+                    The page you requested could not be found. Check the URL and try again.
+                </p>
+                <% } %>
+                <p class="subtitle">ERR_NOT_FOUND</p>
+            </div>
+        </div>
+    </body>
+</html>

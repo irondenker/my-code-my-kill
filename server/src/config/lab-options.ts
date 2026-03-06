@@ -34,6 +34,7 @@ export type XssSideOptions = {
 
 export type XssInjectionOptions = {
     storedXss: boolean;
+    reflected404: boolean;
     clientSide: XssSideOptions;
     serverSide: XssSideOptions;
 };
@@ -123,6 +124,7 @@ const DEFAULT_XSS_SIDE_OPTIONS: XssSideOptions = {
 
 const DEFAULT_XSS_INJECTION_OPTIONS: XssInjectionOptions = {
     storedXss: false,
+    reflected404: false,
     clientSide: { ...DEFAULT_XSS_SIDE_OPTIONS },
     serverSide: { ...DEFAULT_XSS_SIDE_OPTIONS },
 };
@@ -193,6 +195,7 @@ function getDefaultLabOptions(): LabOptions {
         },
         xssInjection: {
             storedXss: DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
+            reflected404: DEFAULT_XSS_INJECTION_OPTIONS.reflected404,
             clientSide: cloneDefaultXssSideOptions(),
             serverSide: cloneDefaultXssSideOptions(),
         },
@@ -416,6 +419,7 @@ function parseXssSideOptions(value: unknown, keyPrefix: string): XssSideOptions 
 function getDefaultXssInjectionOptions(): XssInjectionOptions {
     return {
         storedXss: DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
+        reflected404: DEFAULT_XSS_INJECTION_OPTIONS.reflected404,
         clientSide: cloneDefaultXssSideOptions(),
         serverSide: cloneDefaultXssSideOptions(),
     };
@@ -451,6 +455,18 @@ function parseXssInjectionOptions(value: unknown): XssInjectionOptions {
         console.warn(`[CONFIG] Invalid lab option "xss.stored" in ${LAB_OPTIONS_PATH}. Using defaults.`);
     }
 
+    const rawReflected404 = options.reflected404;
+    const parsedReflected404 =
+        rawReflected404 && typeof rawReflected404 === "object" && !Array.isArray(rawReflected404)
+            ? (rawReflected404 as Record<string, unknown>)
+            : {};
+    if (
+        typeof rawReflected404 !== "undefined" &&
+        (!rawReflected404 || typeof rawReflected404 !== "object" || Array.isArray(rawReflected404))
+    ) {
+        console.warn(`[CONFIG] Invalid lab option "xss.reflected404" in ${LAB_OPTIONS_PATH}. Using defaults.`);
+    }
+
     const rawSanitize = options.sanitize;
     const parsedSanitize =
         rawSanitize && typeof rawSanitize === "object" && !Array.isArray(rawSanitize)
@@ -465,6 +481,11 @@ function parseXssInjectionOptions(value: unknown): XssInjectionOptions {
             parsedStored.enabled,
             "xss.stored.enabled",
             DEFAULT_XSS_INJECTION_OPTIONS.storedXss,
+        ),
+        reflected404: parseBooleanOption(
+            parsedReflected404.enabled,
+            "xss.reflected404.enabled",
+            DEFAULT_XSS_INJECTION_OPTIONS.reflected404,
         ),
         clientSide: parseXssSideOptions(parsedSanitize.clientSide, "xss.sanitize.clientSide"),
         serverSide: parseXssSideOptions(parsedSanitize.serverSide, "xss.sanitize.serverSide"),

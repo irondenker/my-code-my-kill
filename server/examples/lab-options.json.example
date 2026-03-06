@@ -38,6 +38,9 @@
     "stored": {
       "enabled": false
     },
+    "reflected404": {
+      "enabled": false
+    },
     "sanitize": {
       "clientSide": {
         "enabled": true,

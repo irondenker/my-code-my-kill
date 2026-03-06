@@ -5,6 +5,7 @@ import { getSafeRedirectPath } from "../utils/http/redirect.util.js";
 import { logAuthzDeniedSafely } from "../services/audit.service.js";
 import { getRequestIp, getRequestUserAgent } from "../utils/http/request-meta.util.js";
 import { getSessionActor } from "../utils/session/session-actor.util.js";
+import { getLabOptions } from "../config/lab-options.js";
 
 const staticErrorStatuses = new Set([403, 404, 500, 503, 504]);
 const sharedErrorPage = path.join(process.cwd(), "views", "errors", "common", "index.html");
@@ -67,6 +68,19 @@ export function errorHandler(
             return res.redirect(`/login?next=${encodeURIComponent(nextPath)}`);
         }
         return res.redirect("/login");
+    }
+
+    if (status === 404) {
+        const reflected404Enabled = getLabOptions().xssInjection.reflected404;
+        const pathValue =
+            reflected404Enabled
+                ? typeof (err as { path?: unknown })?.path === "string"
+                    ? String((err as { path?: string }).path)
+                    : req.originalUrl
+                : null;
+        return res.status(404).render("errors/common/not-found", {
+            path: pathValue,
+        });
     }
 
     const source = staticErrorStatuses.has(status) ? "app" : "app-fallback";
