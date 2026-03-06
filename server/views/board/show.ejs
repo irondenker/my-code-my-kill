@@ -51,17 +51,14 @@
           </div>
           <% } %>
           <% if (serverSideSanitizeEnabled) { %>
-          <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7">
-            <%= post.content %>
-          </div>
+          <!-- prettier-ignore -->
+          <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7"><%= post.content %></div>
           <% } else if (labStoredXssEnabled) { %>
-          <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7">
-            <%- post.content %>
-          </div>
+          <!-- prettier-ignore -->
+          <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7"><%- post.content %></div>
           <% } else { %>
-          <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7">
-            <%- escapeForXss(post.content) %>
-          </div>
+          <!-- prettier-ignore -->
+          <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7"><%- escapeForXss(post.content) %></div>
           <% } %>
         </div>
       </article>

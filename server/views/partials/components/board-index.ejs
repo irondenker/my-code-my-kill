@@ -102,10 +102,13 @@
       </form>
 
       <% if (q) { %>
+      <% const selfQueryHref = `/board/${boardSlug}${queryCarry()}`; %>
       <p class="small text-muted mb-0">
-        Search term: <% if (serverSideSanitizeEnabled) { %> "<%= q %>" <% } else { %>
+        Search term: <% if (serverSideSanitizeEnabled) { %>
+        <a href="<%= selfQueryHref %>" class="link-secondary" title="<%= q %>">"<%= q %>"</a>
+        <% } else { %>
         <!-- XSS LAB: raw output when labOptions.xssInjection.serverSide.enabled=false -->
-        "<%- q %>"
+        <a href="<%= selfQueryHref %>" class="link-secondary" title="<%- q %>">"<%- q %>"</a>
         <% } %>
       </p>
       <% } %>
@@ -176,12 +179,19 @@
     <div
       class="d-flex flex-wrap justify-content-between align-items-center my-2 gap-2 board-pagination"
     >
-      <% const currentPage = pagination.page; const totalPages = pagination.totalPages; const
-      currentLimit = pagination.limit; const limitOptions = Array.isArray(pagination.limitOptions) ?
-      pagination.limitOptions : [10, 20, 30, 40, 50, 100]; const startRow = pagination.totalCount
-      === 0 ? 0 : (currentPage - 1) * currentLimit + 1; const endRow = (currentPage - 1) *
-      currentLimit + postOutlines.length; const pageRange = 1; // +/-1 const startPage = Math.max(1,
-      currentPage - pageRange); const endPage = Math.min(totalPages, currentPage + pageRange); %>
+      <%
+      const currentPage = pagination.page;
+      const totalPages = pagination.totalPages;
+      const currentLimit = pagination.limit;
+      const limitOptions = Array.isArray(pagination.limitOptions)
+        ? pagination.limitOptions
+        : [10, 20, 30, 40, 50, 100];
+      const startRow = pagination.totalCount === 0 ? 0 : (currentPage - 1) * currentLimit + 1;
+      const endRow = (currentPage - 1) * currentLimit + postOutlines.length;
+      const pageRange = 1;
+      const startPage = Math.max(1, currentPage - pageRange);
+      const endPage = Math.min(totalPages, currentPage + pageRange);
+      %>
 
       <div class="small mb-0" id="dataTable_info" role="status" aria-live="polite">
         Showing <%= startRow %> to <%= endRow %> of <%= pagination.totalCount %> Posts
