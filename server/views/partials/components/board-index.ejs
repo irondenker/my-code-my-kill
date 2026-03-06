@@ -1,134 +1,139 @@
 <main class="container py-4 board-page">
-    <div class="board-layout">
-        <%
-            const boardTitle = typeof boardDisplayName === "string" ? boardDisplayName : "Board";
-            const boardDesc = typeof boardDescription === "string" ? boardDescription : null;
-            const boardHref = boardSlug ? `/board/${boardSlug}` : "/board";
-            const isBoardDirectory = !boardSlug;
-        %>
-        <div class="board-content-width board-header">
-            <h1 class="board-title fw-bold text-body-emphasis">
-                <a href="<%= boardHref %>" class="text-decoration-none text-reset">
-                    <%= boardTitle %>
-                </a>
-            </h1>
-            <% if (boardDesc) { %>
-            <p class="board-description text-muted"><%= boardDesc %></p>
-            <% } %>
-            <% if (formSuccess) { %>
-            <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
-                <div
-                    class="toast text-bg-success border-0"
-                    role="status"
-                    aria-live="polite"
-                    aria-atomic="true"
-                    data-auto-toast="true"
-                    data-bs-delay="2500"
-                >
-                    <div class="d-flex">
-                        <div class="toast-body"><%= formSuccess %></div>
-                        <button
-                            type="button"
-                            class="btn-close btn-close-white me-2 m-auto"
-                            data-bs-dismiss="toast"
-                            aria-label="Close"
-                        ></button>
-                    </div>
-                </div>
-            </div>
-            <% } %>
-            <% if (canCreate && boardSlug) { %>
-            <div class="board-actions">
-                <a class="btn btn-primary" href="/board/<%= boardSlug %>/new">New post</a>
-            </div>
-            <% } %>
+  <div class="board-layout">
+    <% const boardTitle = typeof boardDisplayName === "string" ? boardDisplayName : "Board"; const
+    boardDesc = typeof boardDescription === "string" ? boardDescription : null; const boardHref =
+    boardSlug ? `/board/${boardSlug}` : "/board"; const isBoardDirectory = !boardSlug; %>
+    <div class="board-content-width board-header">
+      <h1 class="board-title fw-bold text-body-emphasis">
+        <a href="<%= boardHref %>" class="text-decoration-none text-reset"> <%= boardTitle %> </a>
+      </h1>
+      <% if (boardDesc) { %>
+      <p class="board-description text-muted"><%= boardDesc %></p>
+      <% } %>
+      <% if (formSuccess) { %>
+      <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080">
+        <div
+          class="toast text-bg-success border-0"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          data-auto-toast="true"
+          data-bs-delay="2500"
+        >
+          <div class="d-flex">
+            <div class="toast-body"><%= formSuccess %></div>
+            <button
+              type="button"
+              class="btn-close btn-close-white me-2 m-auto"
+              data-bs-dismiss="toast"
+              aria-label="Close"
+            ></button>
+          </div>
         </div>
-        <% if (isBoardDirectory) { %>
-        <div class="list-group board-list">
-            <% if (Array.isArray(boards) && boards.length > 0) { %>
-            <% boards.forEach((board) => { %>
-            <a href="/board/<%= board.slug %>" class="list-group-item list-group-item-action d-flex gap-3 p-3" aria-current="true">
-                <svg class="bi flex-shrink-0" alt="" width="32" height="32">
-                    <use xlink:href="/assets/icons/icons.svg#plain-post"></use>
-                </svg>
-                <div class="d-flex flex-column">
-                    <h6 class="mb-0"><%= board.name %></h6>
-                    <small class="text-muted">/<%= board.slug %></small>
-                    <% if (board.description) { %>
-                    <small class="text-muted"><%= board.description %></small>
-                    <% } %>
-                </div>
-            </a>
-            <% }) %>
+      </div>
+      <% } %>
+      <% if (canCreate && boardSlug) { %>
+      <div class="board-actions">
+        <a class="btn btn-primary" href="/board/<%= boardSlug %>/new">New post</a>
+      </div>
+      <% } %>
+    </div>
+    <% if (isBoardDirectory) { %>
+    <div class="list-group board-list">
+      <% if (Array.isArray(boards) && boards.length > 0) { %> <% boards.forEach((board) => { %>
+      <a
+        href="/board/<%= board.slug %>"
+        class="list-group-item list-group-item-action d-flex gap-3 p-3"
+        aria-current="true"
+      >
+        <svg class="bi flex-shrink-0" alt="" width="32" height="32">
+          <use xlink:href="/assets/icons/icons.svg#plain-post"></use>
+        </svg>
+        <div class="d-flex flex-column">
+          <h6 class="mb-0"><%= board.name %></h6>
+          <small class="text-muted">/<%= board.slug %></small>
+          <% if (board.description) { %>
+          <small class="text-muted"><%= board.description %></small>
+          <% } %>
+        </div>
+      </a>
+      <% }) %>
+      <% } else { %>
+      <div class="list-group-item p-3 text-muted">No boards available.</div>
+      <% } %>
+    </div>
+    <% } else { %>
+    <div class="board-content-width mb-3">
+      <form method="get" action="/board/<%= boardSlug %>" class="row g-2 align-items-end mb-2">
+        <input type="hidden" name="sort" value="<%= sort %>" />
+        <input type="hidden" name="limit" value="<%= limit %>" />
+        <input type="hidden" name="page" value="1" />
+        <div class="col-sm-8">
+          <label class="form-label small mb-1" for="board-q">Search</label>
+          <input
+            id="board-q"
+            class="form-control form-control-sm"
+            type="text"
+            name="q"
+            maxlength="100"
+            value="<%= q %>"
+            placeholder="Search by title"
+          />
+        </div>
+        <div class="col-sm-4">
+          <label class="form-label small mb-1" for="board-order">Order</label>
+          <select id="board-order" class="form-select form-select-sm" name="order">
+            <% if (order === "desc") { %>
+            <option value="desc" selected>desc</option>
             <% } else { %>
-            <div class="list-group-item p-3 text-muted">No boards available.</div>
+            <option value="desc">desc</option>
             <% } %>
-        </div>
-        <% } else { %>
-        <div class="board-content-width mb-3">
-            <form method="get" action="/board/<%= boardSlug %>" class="row g-2 align-items-end mb-2">
-                <input type="hidden" name="sort" value="<%= sort %>">
-                <input type="hidden" name="limit" value="<%= limit %>">
-                <input type="hidden" name="page" value="1">
-                <div class="col-sm-8">
-                    <label class="form-label small mb-1" for="board-q">Search</label>
-                    <input
-                        id="board-q"
-                        class="form-control form-control-sm"
-                        type="text"
-                        name="q"
-                        maxlength="100"
-                        value="<%= q %>"
-                        placeholder="Search by title"
-                    >
-                </div>
-                <div class="col-sm-4">
-                    <label class="form-label small mb-1" for="board-order">Order</label>
-                    <select id="board-order" class="form-select form-select-sm" name="order">
-                        <option value="desc" <%= order === "desc" ? "selected" : "" %>>desc</option>
-                        <option value="asc" <%= order === "asc" ? "selected" : "" %>>asc</option>
-                    </select>
-                </div>
-                <div class="col-12 d-flex align-items-center gap-2">
-                    <button type="submit" class="btn btn-primary btn-sm">Search</button>
-                    <span class="small text-muted">Sort: <%= sort %> (<%= order %>)</span>
-                </div>
-            </form>
-
-            <% if (q) { %>
-            <p class="small text-muted mb-0">
-                Search term:
-                <% if (serverSideSanitizeEnabled) { %>
-                "<%= q %>"
-                <% } else { %>
-                <!-- XSS LAB: raw output when labOptions.xssInjection.serverSide.enabled=false -->
-                "<%- q %>"
-                <% } %>
-            </p>
+            <% if (order === "asc") { %>
+            <option value="asc" selected>asc</option>
+            <% } else { %>
+            <option value="asc">asc</option>
             <% } %>
+          </select>
         </div>
+        <div class="col-12 d-flex align-items-center gap-2">
+          <button type="submit" class="btn btn-primary btn-sm">Search</button>
+          <span class="small text-muted">Sort: <%= sort %> (<%= order %>)</span>
+        </div>
+      </form>
 
-        <div class="list-group board-list">
-            <% postOutlines.forEach(post=> { %>
-            <%
+      <% if (q) { %>
+      <p class="small text-muted mb-0">
+        Search term: <% if (serverSideSanitizeEnabled) { %> "<%= q %>" <% } else { %>
+        <!-- XSS LAB: raw output when labOptions.xssInjection.serverSide.enabled=false -->
+        "<%- q %>"
+        <% } %>
+      </p>
+      <% } %>
+    </div>
+
+    <div class="list-group board-list">
+      <% postOutlines.forEach(post=> { %>
+      <%
                 const showLink = post.canOpen !== false;
             %>
-            <% if (showLink) { %>
-            <a href="/board/<%= post.boardSlug %>/<%= post.displayId %>" class="list-group-item list-group-item-action d-flex gap-3 p-3" aria-current="true">
-                <svg class="bi flex-shrink-0" alt="" width="32" height="32">
-                    <use xlink:href="/assets/icons/icons.svg#plain-post"></use>
-                </svg>
-                <div class="d-flex gap-2 justify-content-between w-100">
-                    <div>
-                        <h6 class="mb-0">
-                            <span class="text-muted me-2">#<%= post.displayId %></span>
-                            <%= post.title %>
-                        </h6>
-                        <p class="mb-0 opacity-75">
-                            <%= post.author %>
-                        </p>
-                    </div>
-                    <%
+      <% if (showLink) { %>
+      <a
+        href="/board/<%= post.boardSlug %>/<%= post.displayId %>"
+        class="list-group-item list-group-item-action d-flex gap-3 p-3"
+        aria-current="true"
+      >
+        <svg class="bi flex-shrink-0" alt="" width="32" height="32">
+          <use xlink:href="/assets/icons/icons.svg#plain-post"></use>
+        </svg>
+        <div class="d-flex gap-2 justify-content-between w-100">
+          <div>
+            <h6 class="mb-0">
+              <span class="text-muted me-2">#<%= post.displayId %></span>
+              <%= post.title %>
+            </h6>
+            <p class="mb-0 opacity-75"><%= post.author %></p>
+          </div>
+          <%
                         const createdAt = post.createdAt;
                         const year = createdAt.getFullYear();
                         const month = String(createdAt.getMonth() + 1).padStart(2, "0");
@@ -137,25 +142,23 @@
                         const minutes = String(createdAt.getMinutes()).padStart(2, "0");
                         const createdLabel = `${year}-${month}-${day} ${hours}:${minutes}`;
                     %>
-                    <small class="opacity-50 text-nowrap"><%= createdLabel %></small>
-                </div>
-            </a>
-            <% } else { %>
-            <div class="list-group-item d-flex gap-3 p-3">
-                    <svg class="bi flex-shrink-0" alt="" width="32" height="32">
-                        <use xlink:href="/assets/icons/icons.svg#plain-post"></use>
-                    </svg>
-                    <div class="d-flex gap-2 justify-content-between w-100">
-                        <div>
-                            <h6 class="mb-0">
-                                <span class="text-muted me-2">#<%= post.displayId %></span>
-                                <%= post.title %>
-                            </h6>
-                            <p class="mb-0 opacity-75">
-                                <%= post.author %>
-                            </p>
-                        </div>
-                        <%
+          <small class="opacity-50 text-nowrap"><%= createdLabel %></small>
+        </div>
+      </a>
+      <% } else { %>
+      <div class="list-group-item d-flex gap-3 p-3">
+        <svg class="bi flex-shrink-0" alt="" width="32" height="32">
+          <use xlink:href="/assets/icons/icons.svg#plain-post"></use>
+        </svg>
+        <div class="d-flex gap-2 justify-content-between w-100">
+          <div>
+            <h6 class="mb-0">
+              <span class="text-muted me-2">#<%= post.displayId %></span>
+              <%= post.title %>
+            </h6>
+            <p class="mb-0 opacity-75"><%= post.author %></p>
+          </div>
+          <%
                             const createdAt = post.createdAt;
                             const year = createdAt.getFullYear();
                             const month = String(createdAt.getMonth() + 1).padStart(2, "0");
@@ -164,124 +167,121 @@
                             const minutes = String(createdAt.getMinutes()).padStart(2, "0");
                             const createdLabel = `${year}-${month}-${day} ${hours}:${minutes}`;
                         %>
-                        <small class="opacity-50 text-nowrap"><%= createdLabel %></small>
-                    </div>
-            </div>
-            <% } %>
-            <% }) %>
+          <small class="opacity-50 text-nowrap"><%= createdLabel %></small>
         </div>
-        <div class="d-flex flex-wrap justify-content-between align-items-center my-2 gap-2 board-pagination">
-
-            <%
-                const currentPage = pagination.page;
-                const totalPages = pagination.totalPages;
-                const currentLimit = pagination.limit;
-                const limitOptions = Array.isArray(pagination.limitOptions) ? pagination.limitOptions : [10, 20, 30, 40, 50, 100];
-                const startRow = pagination.totalCount === 0 ? 0 : (currentPage - 1) * currentLimit + 1;
-                const endRow = (currentPage - 1) * currentLimit + postOutlines.length;
-
-                const pageRange = 1; // +/-1
-                const startPage = Math.max(1, currentPage - pageRange);
-                const endPage = Math.min(totalPages, currentPage + pageRange);
-            %>
-
-            <div class="small mb-0" id="dataTable_info" role="status" aria-live="polite">
-                Showing <%= startRow %>
-                to <%= endRow %>
-                of <%= pagination.totalCount %> Posts
-            </div>
-
-            <div class="dropup">
-                <button
-                    class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center"
-                    type="button"
-                    data-bs-toggle="dropdown"
-                    data-bs-auto-close="outside"
-                    data-bs-display="static"
-                    aria-expanded="false"
-                    aria-label="Pagination options"
-                    title="Pagination options"
-                >
-                    <svg class="bi" width="16" height="16" aria-hidden="true">
-                        <use xlink:href="/assets/icons/icons.svg#grid"></use>
-                    </svg>
-                </button>
-                <div class="dropdown-menu p-3 start-50 translate-middle-x" style="min-width: 220px;">
-                    <form method="get" action="/board/<%= boardSlug %>" class="d-flex flex-column gap-2 mb-0">
-                        <input type="hidden" name="q" value="<%= q %>">
-                        <input type="hidden" name="sort" value="<%= sort %>">
-                        <input type="hidden" name="order" value="<%= order %>">
-                        <label class="form-label mb-0 small" for="limit">Rows</label>
-                        <select id="limit" class="form-select form-select-sm" name="limit">
-                            <% limitOptions.forEach((option) => { %>
-                            <option value="<%= option %>" <%= currentLimit === option ? "selected" : "" %>><%= option %></option>
-                            <% }) %>
-                        </select>
-                        <div class="d-flex flex-wrap gap-1">
-                            <% limitOptions.forEach((option) => { %>
-                            <a
-                                class="btn btn-outline-secondary btn-sm <%= currentLimit === option ? "active" : "" %>"
-                                href="<%= queryCarry({ limit: option }) %>"
-                            ><%= option %></a>
-                            <% }) %>
-                        </div>
-
-                        <label class="form-label mb-0 small" for="page-jump">
-                            Page <span id="page-jump-meta" class="small text-muted">(Total <%= totalPages %>)</span>
-                        </label>
-                        <input
-                            id="page-jump"
-                            class="form-control form-control-sm"
-                            name="page"
-                            type="number"
-                            min="1"
-                            max="<%= totalPages %>"
-                            step="1"
-                            inputmode="numeric"
-                            required
-                            value="<%= currentPage %>"
-                        />
-                        <button type="submit" class="btn btn-primary btn-sm">Apply</button>
-                    </form>
-                </div>
-            </div>
-
-            <div id="dataTable_paginate">
-                <ul class="pagination pagination-sm mb-0">
-
-                    <!-- Previous -->
-                    <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                        <a class="page-link" href="<%= queryCarry({ page: currentPage - 1 }) %>">Previous</a>
-                    </li>
-
-                    <!-- current page +/-1 -->
-                    <% for (let i = startPage; i <= endPage; i++) { %>
-                    <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-                        <a class="page-link" href="<%= queryCarry({ page: i }) %>"><%= i %></a>
-                    </li>
-                    <% } %>
-
-                    <!-- ellipsis + last page -->
-                    <% if (endPage < totalPages) { %>
-                    <li class="page-item disabled">
-                        <span class="page-link">...</span>
-                    </li>
-
-                    <li class="page-item <%= currentPage === totalPages ? 'active' : '' %>">
-                        <a class="page-link" href="<%= queryCarry({ page: totalPages }) %>"><%= totalPages %></a>
-                    </li>
-                    <% } %>
-
-                    <!-- Next -->
-                    <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                        <a class="page-link" href="<%= queryCarry({ page: currentPage + 1 }) %>">Next</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-        <% } %>
+      </div>
+      <% } %>
+      <% }) %>
     </div>
+    <div
+      class="d-flex flex-wrap justify-content-between align-items-center my-2 gap-2 board-pagination"
+    >
+      <% const currentPage = pagination.page; const totalPages = pagination.totalPages; const
+      currentLimit = pagination.limit; const limitOptions = Array.isArray(pagination.limitOptions) ?
+      pagination.limitOptions : [10, 20, 30, 40, 50, 100]; const startRow = pagination.totalCount
+      === 0 ? 0 : (currentPage - 1) * currentLimit + 1; const endRow = (currentPage - 1) *
+      currentLimit + postOutlines.length; const pageRange = 1; // +/-1 const startPage = Math.max(1,
+      currentPage - pageRange); const endPage = Math.min(totalPages, currentPage + pageRange); %>
+
+      <div class="small mb-0" id="dataTable_info" role="status" aria-live="polite">
+        Showing <%= startRow %> to <%= endRow %> of <%= pagination.totalCount %> Posts
+      </div>
+
+      <div class="dropup">
+        <button
+          class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center"
+          type="button"
+          data-bs-toggle="dropdown"
+          data-bs-auto-close="outside"
+          data-bs-display="static"
+          aria-expanded="false"
+          aria-label="Pagination options"
+          title="Pagination options"
+        >
+          <svg class="bi" width="16" height="16" aria-hidden="true">
+            <use xlink:href="/assets/icons/icons.svg#grid"></use>
+          </svg>
+        </button>
+        <div class="dropdown-menu p-3 start-50 translate-middle-x" style="min-width: 220px">
+          <form method="get" action="/board/<%= boardSlug %>" class="d-flex flex-column gap-2 mb-0">
+            <input type="hidden" name="q" value="<%= q %>" />
+            <input type="hidden" name="sort" value="<%= sort %>" />
+            <input type="hidden" name="order" value="<%= order %>" />
+            <label class="form-label mb-0 small" for="limit">Rows</label>
+            <select id="limit" class="form-select form-select-sm" name="limit">
+              <% limitOptions.forEach((option) => { %>
+              <% if (currentLimit === option) { %>
+              <option value="<%= option %>" selected><%= option %></option>
+              <% } else { %>
+              <option value="<%= option %>"><%= option %></option>
+              <% } %>
+              <% }) %>
+            </select>
+            <div class="d-flex flex-wrap gap-1">
+              <% limitOptions.forEach((option) => { %>
+              <a
+                class="btn btn-outline-secondary btn-sm <%= currentLimit === option ? 'active' : '' %>"
+                href="<%= queryCarry({ limit: option }) %>"
+                ><%= option %></a
+              >
+              <% }) %>
+            </div>
+
+            <label class="form-label mb-0 small" for="page-jump">
+              Page
+              <span id="page-jump-meta" class="small text-muted">(Total <%= totalPages %>)</span>
+            </label>
+            <input
+              id="page-jump"
+              class="form-control form-control-sm"
+              name="page"
+              type="number"
+              min="1"
+              max="<%= totalPages %>"
+              step="1"
+              inputmode="numeric"
+              required
+              value="<%= currentPage %>"
+            />
+            <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="dataTable_paginate">
+        <ul class="pagination pagination-sm mb-0">
+          <!-- Previous -->
+          <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+            <a class="page-link" href="<%= queryCarry({ page: currentPage - 1 }) %>">Previous</a>
+          </li>
+
+          <!-- current page +/-1 -->
+          <% for (let i = startPage; i <= endPage; i++) { %>
+          <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+            <a class="page-link" href="<%= queryCarry({ page: i }) %>"><%= i %></a>
+          </li>
+          <% } %>
+
+          <!-- ellipsis + last page -->
+          <% if (endPage < totalPages) { %>
+          <li class="page-item disabled">
+            <span class="page-link">...</span>
+          </li>
+
+          <li class="page-item <%= currentPage === totalPages ? 'active' : '' %>">
+            <a class="page-link" href="<%= queryCarry({ page: totalPages }) %>"
+              ><%= totalPages %></a
+            >
+          </li>
+          <% } %>
+
+          <!-- Next -->
+          <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+            <a class="page-link" href="<%= queryCarry({ page: currentPage + 1 }) %>">Next</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <% } %>
+  </div>
 </main>
-
-
-

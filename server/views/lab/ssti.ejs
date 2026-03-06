@@ -1,76 +1,78 @@
 <!doctype html>
 <html lang="en" data-bs-theme="auto">
-    <%- include("../partials/head", {
-        title: "SSTI Lab",
-        styles: [
-            "/assets/css/color-modes.css",
-        ],
-    }) %>
+  <%- include("../partials/head", { title: "SSTI Lab", styles: [ "/assets/css/color-modes.css", ],
+  }) %>
 
-    <body>
-        <%- include("../partials/theme-toggle") %>
-        <%- include("../partials/header") %>
+  <body>
+    <%- include("../partials/theme-toggle") %>
+    <%- include("../partials/header") %>
 
-        <main class="container py-4 board-page">
-            <div class="board-layout">
-                <div class="board-content-width board-header">
-                    <h1 class="board-title fw-bold text-body-emphasis">
-                        <a href="/labs/ssti" class="text-decoration-none text-reset">
-                            SSTI Lab
-                        </a>
-                    </h1>
-                    <p class="board-description text-muted">
-                        이 곳에서 입력한 템플릿 문자열은 EJS 템플릿 엔진을 통해 렌더링이 됩니다.
-                    </p>
-                </div>
+    <main class="container py-4 board-page">
+      <div class="board-layout">
+        <div class="board-content-width board-header">
+          <h1 class="board-title fw-bold text-body-emphasis">
+            <a href="/labs/ssti" class="text-decoration-none text-reset"> SSTI Lab </a>
+          </h1>
+          <p class="board-description text-muted">
+            이 곳에서 입력한 템플릿 문자열은 EJS 템플릿 엔진을 통해 렌더링이 됩니다.
+          </p>
+        </div>
 
-                <div class="board-content-width board-list">
-                    <% if (!labEnabled) { %>
-                    <div class="alert alert-warning" role="alert">
-                        SSTI 실습이 비활성화되어 있습니다. <code>server/lab-options.json</code>에서 활성화하세요.
-                    </div>
-                    <% } %>
+        <div class="board-content-width board-list">
+          <% if (!labEnabled) { %>
+          <div class="alert alert-warning" role="alert">
+            SSTI 실습이 비활성화되어 있습니다. <code>server/lab-options.json</code>에서
+            활성화하세요.
+          </div>
+          <% } %>
 
-                    <form method="post" action="/labs/ssti" class="card mb-4">
-                        <div class="card-body">
-                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                            <div class="mb-3">
-                                <label for="template" class="form-label">입력창</label>
-                                <textarea
-                                    id="template"
-                                    name="template"
-                                    rows="6"
-                                    class="form-control"
-                                    placeholder="EJS 템플릿 문자열을 입력하세요 (예시: &lt;%= 7 * 7 %&gt;)."
-                                ><%= templateInput %></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-danger" <%= labEnabled ? "" : "disabled" %>>렌더링</button>
-                        </div>
-                    </form>
-
-                    <% if (renderError) { %>
-                    <div class="alert alert-danger" role="alert">
-                        <strong>Render error:</strong> <%= renderError %>
-                    </div>
-                    <% } %>
-
-                    <% if (renderedOutput) { %>
-                    <div class="card">
-                        <div class="card-header">렌더링 결과</div>
-                        <div class="card-body">
-                            <div class="border rounded p-3 bg-body-tertiary text-body"><%- renderedOutput %></div>
-                        </div>
-                    </div>
-                    <% } %>
-                </div>
+          <form method="post" action="/labs/ssti" class="card mb-4">
+            <div class="card-body">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+              <div class="mb-3">
+                <label for="template" class="form-label">입력창</label>
+                <textarea
+                  id="template"
+                  name="template"
+                  rows="6"
+                  class="form-control"
+                  placeholder="EJS 템플릿 문자열을 입력하세요 (예시: &lt;%= 7 * 7 %&gt;)."
+                >
+<%= templateInput %></textarea
+                >
+              </div>
+              <% if (labEnabled) { %>
+              <button type="submit" class="btn btn-danger">렌더링</button>
+              <% } else { %>
+              <button type="submit" class="btn btn-danger" disabled>렌더링</button>
+              <% } %>
             </div>
-        </main>
+          </form>
 
-        <%- include("../partials/footer") %>
-        <%- include("../partials/scripts", {
+          <% if (renderError) { %>
+          <div class="alert alert-danger" role="alert">
+            <strong>Render error:</strong>
+            <%= renderError %>
+          </div>
+          <% } %>
+
+          <% if (renderedOutput) { %>
+          <div class="card">
+            <div class="card-header">렌더링 결과</div>
+            <div class="card-body">
+              <div class="border rounded p-3 bg-body-tertiary text-body"><%- renderedOutput %></div>
+            </div>
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </main>
+
+    <%- include("../partials/footer") %>
+    <%- include("../partials/scripts", {
             scripts: [
                 "/assets/js/color-modes.js",
             ],
         }) %>
-    </body>
+  </body>
 </html>
