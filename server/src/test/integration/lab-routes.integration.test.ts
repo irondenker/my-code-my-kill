@@ -1,7 +1,7 @@
-import assert from "node:assert/strict";
-import test from "node:test";
-import { runTsxInlineScript } from "../helpers/subprocess-test.helpers.js";
-import { SESSION_COOKIE_NAME } from "../../constants/session.constants.js";
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { runTsxInlineScript } from '../helpers/subprocess-test.helpers.js';
+import { SESSION_COOKIE_NAME } from '../../constants/session.constants.js';
 
 const LAB_ROUTE_PROBE_SCRIPT = `
 import fs from "node:fs";
@@ -119,118 +119,118 @@ console.log(JSON.stringify({
 `;
 
 async function probeLabRoute(params: {
-    nodeEnv: string;
-    options: Record<string, unknown>;
-    path: string;
-    method?: "GET" | "POST";
-    body?: string;
+  nodeEnv: string;
+  options: Record<string, unknown>;
+  path: string;
+  method?: 'GET' | 'POST';
+  body?: string;
 }) {
-    const { stdout } = await runTsxInlineScript({
-        script: LAB_ROUTE_PROBE_SCRIPT,
-        env: {
-            NODE_ENV_OVERRIDE: params.nodeEnv,
-            LAB_OPTIONS_MODE: "payload",
-            LAB_OPTIONS_PAYLOAD: JSON.stringify(params.options),
-            REQUEST_PATH: params.path,
-            REQUEST_METHOD: params.method ?? "GET",
-            ...(params.body ? { REQUEST_BODY: params.body } : {}),
-        },
-    });
-    const lines = stdout
-        .trim()
-        .split("\n")
-        .filter((line) => line.trim().length > 0);
-    const jsonLine = lines[lines.length - 1] ?? "{}";
-    return JSON.parse(jsonLine) as {
-        status: number;
-        location: string | null;
-        csp: string | null;
-        cspReportOnly: string | null;
-        body: string;
-    };
+  const { stdout } = await runTsxInlineScript({
+    script: LAB_ROUTE_PROBE_SCRIPT,
+    env: {
+      NODE_ENV_OVERRIDE: params.nodeEnv,
+      LAB_OPTIONS_MODE: 'payload',
+      LAB_OPTIONS_PAYLOAD: JSON.stringify(params.options),
+      REQUEST_PATH: params.path,
+      REQUEST_METHOD: params.method ?? 'GET',
+      ...(params.body ? { REQUEST_BODY: params.body } : {}),
+    },
+  });
+  const lines = stdout
+    .trim()
+    .split('\n')
+    .filter((line) => line.trim().length > 0);
+  const jsonLine = lines[lines.length - 1] ?? '{}';
+  return JSON.parse(jsonLine) as {
+    status: number;
+    location: string | null;
+    csp: string | null;
+    cspReportOnly: string | null;
+    body: string;
+  };
 }
 
-test("occur route is blocked in production when debugErrorRoutes is disabled", async () => {
-    const result = await probeLabRoute({
-        nodeEnv: "production",
-        options: {
-            debug: { errorRoutes: { enabled: false } },
-        },
-        path: "/occur/ssr/500",
-    });
+test('occur route is blocked in production when debugErrorRoutes is disabled', async () => {
+  const result = await probeLabRoute({
+    nodeEnv: 'production',
+    options: {
+      debug: { errorRoutes: { enabled: false } },
+    },
+    path: '/occur/ssr/500',
+  });
 
-    assert.equal(result.status, 404);
-    assert.match(result.body, /data-error-code="404"/);
+  assert.equal(result.status, 404);
+  assert.match(result.body, /data-error-code="404"/);
 });
 
-test("occur route is enabled in production when debugErrorRoutes is enabled", async () => {
-    const result = await probeLabRoute({
-        nodeEnv: "production",
-        options: {
-            debug: { errorRoutes: { enabled: true } },
-        },
-        path: "/occur/ssr/500",
-    });
+test('occur route is enabled in production when debugErrorRoutes is enabled', async () => {
+  const result = await probeLabRoute({
+    nodeEnv: 'production',
+    options: {
+      debug: { errorRoutes: { enabled: true } },
+    },
+    path: '/occur/ssr/500',
+  });
 
-    assert.equal(result.status, 500);
-    assert.match(result.body, /data-error-code="500"/);
+  assert.equal(result.status, 500);
+  assert.match(result.body, /data-error-code="500"/);
 });
 
-test("ssti route shows disabled message when lab option is off", async () => {
-    const result = await probeLabRoute({
-        nodeEnv: "test",
-        options: {
-            ssti: { enabled: false },
-        },
-        path: "/labs/ssti",
-    });
+test('ssti route shows disabled message when lab option is off', async () => {
+  const result = await probeLabRoute({
+    nodeEnv: 'test',
+    options: {
+      ssti: { enabled: false },
+    },
+    path: '/labs/ssti',
+  });
 
-    assert.equal(result.status, 200);
-    assert.match(result.body, /<form method="post" action="\/labs\/ssti"/);
-    assert.match(result.body, /btn btn-danger" disabled/);
+  assert.equal(result.status, 200);
+  assert.match(result.body, /<form method="post" action="\/labs\/ssti"/);
+  assert.match(result.body, /btn btn-danger" disabled/);
 });
 
-test("ssti route renders template output when lab option is on (with csrf lab mode)", async () => {
-    const body = `_csrf=__CSRF__&title=${encodeURIComponent("hello")}&template=${encodeURIComponent("<%= title %>-<%= 7 * 7 %>")}`;
-    const result = await probeLabRoute({
-        nodeEnv: "test",
-        options: {
-            csrf: { enabled: true },
-            ssti: { enabled: true },
-        },
-        path: "/labs/ssti",
-        method: "POST",
-        body,
-    });
+test('ssti route renders template output when lab option is on (with csrf lab mode)', async () => {
+  const body = `_csrf=__CSRF__&title=${encodeURIComponent('hello')}&template=${encodeURIComponent('<%= title %>-<%= 7 * 7 %>')}`;
+  const result = await probeLabRoute({
+    nodeEnv: 'test',
+    options: {
+      csrf: { enabled: true },
+      ssti: { enabled: true },
+    },
+    path: '/labs/ssti',
+    method: 'POST',
+    body,
+  });
 
-    assert.equal(result.status, 200);
-    assert.match(result.body, /hello-49/);
+  assert.equal(result.status, 200);
+  assert.match(result.body, /hello-49/);
 });
 
-test("csp header is emitted when csp lab option is enabled", async () => {
-    const result = await probeLabRoute({
-        nodeEnv: "test",
-        options: {
-            csp: { enabled: true },
-        },
-        path: "/healthz",
-    });
+test('csp header is emitted when csp lab option is enabled', async () => {
+  const result = await probeLabRoute({
+    nodeEnv: 'test',
+    options: {
+      csp: { enabled: true },
+    },
+    path: '/healthz',
+  });
 
-    assert.equal(result.status, 200);
-    assert.match(result.csp ?? "", /default-src 'self'/);
-    assert.equal(result.cspReportOnly, null);
+  assert.equal(result.status, 200);
+  assert.match(result.csp ?? '', /default-src 'self'/);
+  assert.equal(result.cspReportOnly, null);
 });
 
-test("csp header is not emitted when csp lab option is disabled", async () => {
-    const result = await probeLabRoute({
-        nodeEnv: "test",
-        options: {
-            csp: { enabled: false },
-        },
-        path: "/healthz",
-    });
+test('csp header is not emitted when csp lab option is disabled', async () => {
+  const result = await probeLabRoute({
+    nodeEnv: 'test',
+    options: {
+      csp: { enabled: false },
+    },
+    path: '/healthz',
+  });
 
-    assert.equal(result.status, 200);
-    assert.equal(result.csp, null);
-    assert.equal(result.cspReportOnly, null);
+  assert.equal(result.status, 200);
+  assert.equal(result.csp, null);
+  assert.equal(result.cspReportOnly, null);
 });

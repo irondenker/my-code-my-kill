@@ -9,15 +9,15 @@
  * - 라우트 import 경로 호환성을 위해 기존 경로(`controllers/admin.controller`)에서 재노출합니다.
  */
 
-export { getAdminDashboard } from "./admin/admin-dashboard.controller.js";
+export { getAdminDashboard } from './admin/admin-dashboard.controller.js';
 export {
-    getAdminUsersPage,
-    postAdminUserRole,
-    postAdminUserStatus,
-} from "./admin/admin-users.controller.js";
+  getAdminUsersPage,
+  postAdminUserRole,
+  postAdminUserStatus,
+} from './admin/admin-users.controller.js';
 export {
-    getAdminBoardEditPage,
-    getAdminBoardsPage,
-    postAdminBoardCreate,
-    postAdminBoardEdit,
-} from "./admin/admin-boards.controller.js";
+  getAdminBoardEditPage,
+  getAdminBoardsPage,
+  postAdminBoardCreate,
+  postAdminBoardEdit,
+} from './admin/admin-boards.controller.js';

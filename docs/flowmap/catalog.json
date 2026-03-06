@@ -276,7 +276,7 @@
       "handler": {
         "name": "getAdminBoardsPage",
         "file": "server/src/controllers/admin/admin-boards.controller.ts",
-        "line": 49
+        "line": 56
       },
       "sinks": [
         "req.session.read()",
@@ -305,7 +305,7 @@
       "handler": {
         "name": "postAdminBoardCreate",
         "file": "server/src/controllers/admin/admin-boards.controller.ts",
-        "line": 57
+        "line": 64
       },
       "sinks": [
         "req.session.read()",
@@ -339,7 +339,7 @@
       "handler": {
         "name": "getAdminBoardEditPage",
         "file": "server/src/controllers/admin/admin-boards.controller.ts",
-        "line": 162
+        "line": 173
       },
       "sinks": [],
       "exits": [
@@ -363,7 +363,7 @@
       "handler": {
         "name": "postAdminBoardEdit",
         "file": "server/src/controllers/admin/admin-boards.controller.ts",
-        "line": 187
+        "line": 198
       },
       "sinks": [
         "req.session.write()"
@@ -424,7 +424,7 @@
       "handler": {
         "name": "postAdminUserRole",
         "file": "server/src/controllers/admin/admin-users.controller.ts",
-        "line": 147
+        "line": 149
       },
       "sinks": [
         "req.session.read()",
@@ -606,7 +606,7 @@
       "handler": {
         "name": "postLogin",
         "file": "server/src/controllers/auth/auth-login.controller.ts",
-        "line": 63
+        "line": 68
       },
       "sinks": [
         "req.session.read()",
@@ -703,7 +703,7 @@
       "handler": {
         "name": "postRegister",
         "file": "server/src/controllers/auth/auth-register.controller.ts",
-        "line": 21
+        "line": 18
       },
       "sinks": [
         "req.session.write()"
@@ -792,7 +792,7 @@
       "handler": {
         "name": "getBoardIndex",
         "file": "server/src/controllers/board.controller.ts",
-        "line": 104
+        "line": 105
       },
       "sinks": [
         "req.session.read()"
@@ -819,7 +819,7 @@
       "handler": {
         "name": "getBoardBySlug",
         "file": "server/src/controllers/board.controller.ts",
-        "line": 123
+        "line": 124
       },
       "sinks": [
         "req.session.read()",
@@ -853,7 +853,7 @@
       "handler": {
         "name": "postArticleCreate",
         "file": "server/src/controllers/article/article-create.controller.ts",
-        "line": 39
+        "line": 36
       },
       "sinks": [
         "req.session.read()"
@@ -883,7 +883,7 @@
       "handler": {
         "name": "getArticleShow",
         "file": "server/src/controllers/article/article-show.controller.ts",
-        "line": 21
+        "line": 27
       },
       "sinks": [
         "req.session.read()"
@@ -913,7 +913,7 @@
       "handler": {
         "name": "deleteArticle",
         "file": "server/src/controllers/article/article-delete.controller.ts",
-        "line": 12
+        "line": 15
       },
       "sinks": [
         "req.session.read()",
@@ -950,7 +950,7 @@
       "handler": {
         "name": "deleteArticle",
         "file": "server/src/controllers/article/article-delete.controller.ts",
-        "line": 12
+        "line": 15
       },
       "sinks": [
         "req.session.read()",
@@ -986,7 +986,7 @@
       "handler": {
         "name": "getArticleEditForm",
         "file": "server/src/controllers/article/article-edit.controller.ts",
-        "line": 25
+        "line": 28
       },
       "sinks": [
         "req.session.read()"
@@ -1014,7 +1014,7 @@
       "handler": {
         "name": "postArticleEdit",
         "file": "server/src/controllers/article/article-edit.controller.ts",
-        "line": 41
+        "line": 44
       },
       "sinks": [
         "req.session.read()"
@@ -1046,7 +1046,7 @@
       "handler": {
         "name": "getArticleCreateForm",
         "file": "server/src/controllers/article/article-create.controller.ts",
-        "line": 26
+        "line": 23
       },
       "sinks": [
         "req.session.read()"
@@ -1133,7 +1133,7 @@
       "routeFile": "server/src/routes/occur.routes.ts",
       "middlewares": [],
       "handler": {
-        "name": "INLINE_HANDLER@server/src/routes/occur.routes.ts:18"
+        "name": "INLINE_HANDLER@server/src/routes/occur.routes.ts:16"
       },
       "sinks": [],
       "exits": [
@@ -1197,7 +1197,7 @@
       "handler": {
         "name": "getUserProfile",
         "file": "server/src/controllers/user.controller.ts",
-        "line": 43
+        "line": 47
       },
       "sinks": [
         "req.session.read()"
@@ -1226,7 +1226,7 @@
       "handler": {
         "name": "getProfileEditForm",
         "file": "server/src/controllers/user.controller.ts",
-        "line": 89
+        "line": 93
       },
       "sinks": [
         "req.session.read()"
@@ -1258,7 +1258,7 @@
       "handler": {
         "name": "postProfileEdit",
         "file": "server/src/controllers/user.controller.ts",
-        "line": 117
+        "line": 121
       },
       "sinks": [
         "req.session.read()"
@@ -1296,7 +1296,7 @@
       "handler": {
         "name": "getProfileEditForm",
         "file": "server/src/controllers/user.controller.ts",
-        "line": 89
+        "line": 93
       },
       "sinks": [
         "req.session.read()"
@@ -1328,7 +1328,7 @@
       "handler": {
         "name": "postProfileEdit",
         "file": "server/src/controllers/user.controller.ts",
-        "line": 117
+        "line": 121
       },
       "sinks": [
         "req.session.read()"
@@ -1366,7 +1366,7 @@
       "handler": {
         "name": "postAvatarUpload",
         "file": "server/src/controllers/avatar.controller.ts",
-        "line": 43
+        "line": 46
       },
       "sinks": [
         "File Upload",
@@ -1402,7 +1402,7 @@
       "handler": {
         "name": "postAvatarDelete",
         "file": "server/src/controllers/avatar.controller.ts",
-        "line": 68
+        "line": 71
       },
       "sinks": [
         "req.session.read()",

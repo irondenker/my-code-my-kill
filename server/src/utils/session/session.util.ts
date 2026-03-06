@@ -1,4 +1,4 @@
-import type { Request } from "express";
+import type { Request } from 'express';
 
 /**
  * express-session의 콜백 기반 API를 Promise로 감싼 유틸입니다.
@@ -12,14 +12,14 @@ import type { Request } from "express";
  * @param req Express 요청 객체
  */
 export function regenerateSession(req: Request): Promise<void> {
-    return new Promise((resolve, reject) => {
-        req.session.regenerate((err) => {
-            if (err) {
-                return reject(err);
-            }
-            return resolve();
-        });
+  return new Promise((resolve, reject) => {
+    req.session.regenerate((err) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve();
     });
+  });
 }
 
 /**
@@ -29,14 +29,14 @@ export function regenerateSession(req: Request): Promise<void> {
  * @param req Express 요청 객체
  */
 export function saveSession(req: Request): Promise<void> {
-    return new Promise((resolve, reject) => {
-        req.session.save((err) => {
-            if (err) {
-                return reject(err);
-            }
-            return resolve();
-        });
+  return new Promise((resolve, reject) => {
+    req.session.save((err) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve();
     });
+  });
 }
 
 /**
@@ -46,12 +46,12 @@ export function saveSession(req: Request): Promise<void> {
  * @param req Express 요청 객체
  */
 export function destroySession(req: Request): Promise<void> {
-    return new Promise((resolve, reject) => {
-        req.session.destroy((err) => {
-            if (err) {
-                return reject(err);
-            }
-            return resolve();
-        });
+  return new Promise((resolve, reject) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve();
     });
+  });
 }

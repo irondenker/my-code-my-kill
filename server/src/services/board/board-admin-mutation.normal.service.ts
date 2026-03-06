@@ -1,8 +1,12 @@
-import { QueryTypes } from "sequelize";
-import { sequelize } from "../../db/index.js";
-import type { BoardCreateAccess, BoardMeta, BoardReadAccess } from "../../types/board/board.types.js";
-import type { BoardMetaRow } from "../../types/board/board-data.types.js";
-import { mapBoardMeta } from "../../utils/board/board-mapper.util.js";
+import { QueryTypes } from 'sequelize';
+import { sequelize } from '../../db/index.js';
+import type {
+  BoardCreateAccess,
+  BoardMeta,
+  BoardReadAccess,
+} from '../../types/board/board.types.js';
+import type { BoardMetaRow } from '../../types/board/board-data.types.js';
+import { mapBoardMeta } from '../../utils/board/board-mapper.util.js';
 
 /**
  * 보드 생성/수정 정상 모드 서비스입니다.
@@ -16,51 +20,51 @@ import { mapBoardMeta } from "../../utils/board/board-mapper.util.js";
  * 보드를 안전하게 생성합니다.
  */
 export async function createBoard(params: {
-    slug: string;
-    name: string;
-    description?: string | null;
-    readAccess?: BoardReadAccess;
-    createAccess?: BoardCreateAccess;
+  slug: string;
+  name: string;
+  description?: string | null;
+  readAccess?: BoardReadAccess;
+  createAccess?: BoardCreateAccess;
 }): Promise<BoardMeta> {
-    const rows = await sequelize.query<BoardMetaRow>(
-        `
+  const rows = await sequelize.query<BoardMetaRow>(
+    `
         INSERT INTO boards (slug, name, description, read_access, create_access, created_at, updated_at)
         VALUES (:slug, :name, :description, :readAccess, :createAccess, NOW(), NOW())
         RETURNING board_id, slug, name, description, read_access, create_access
         `,
-        {
-            type: QueryTypes.SELECT,
-            replacements: {
-                slug: params.slug,
-                name: params.name,
-                description: params.description ?? null,
-                readAccess: params.readAccess ?? "public",
-                createAccess: params.createAccess ?? "auth",
-            },
-        }
-    );
-
-    const row = rows[0];
-    if (!row) {
-        throw new Error("Failed to create board");
+    {
+      type: QueryTypes.SELECT,
+      replacements: {
+        slug: params.slug,
+        name: params.name,
+        description: params.description ?? null,
+        readAccess: params.readAccess ?? 'public',
+        createAccess: params.createAccess ?? 'auth',
+      },
     }
+  );
 
-    return mapBoardMeta(row);
+  const row = rows[0];
+  if (!row) {
+    throw new Error('Failed to create board');
+  }
+
+  return mapBoardMeta(row);
 }
 
 /**
  * 보드를 안전하게 업데이트합니다.
  */
 export async function updateBoard(params: {
-    boardId: number;
-    slug: string;
-    name: string;
-    description?: string | null;
-    readAccess: BoardReadAccess;
-    createAccess: BoardCreateAccess;
+  boardId: number;
+  slug: string;
+  name: string;
+  description?: string | null;
+  readAccess: BoardReadAccess;
+  createAccess: BoardCreateAccess;
 }): Promise<boolean> {
-    const rows = await sequelize.query<{ board_id: number }>(
-        `
+  const rows = await sequelize.query<{ board_id: number }>(
+    `
         UPDATE boards
         SET slug = :slug,
             name = :name,
@@ -71,18 +75,18 @@ export async function updateBoard(params: {
         WHERE board_id = :boardId
         RETURNING board_id
         `,
-        {
-            type: QueryTypes.SELECT,
-            replacements: {
-                boardId: params.boardId,
-                slug: params.slug,
-                name: params.name,
-                description: params.description ?? null,
-                readAccess: params.readAccess,
-                createAccess: params.createAccess,
-            },
-        }
-    );
+    {
+      type: QueryTypes.SELECT,
+      replacements: {
+        boardId: params.boardId,
+        slug: params.slug,
+        name: params.name,
+        description: params.description ?? null,
+        readAccess: params.readAccess,
+        createAccess: params.createAccess,
+      },
+    }
+  );
 
-    return rows.length > 0;
+  return rows.length > 0;
 }

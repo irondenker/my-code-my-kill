@@ -7,7 +7,7 @@
  * username 문자열이 유효한 길이인지 판정합니다.
  */
 export function isValidUsername(username: string): boolean {
-    return username.length >= 3 && username.length <= 50;
+  return username.length >= 3 && username.length <= 50;
 }
 
 /**
@@ -20,13 +20,13 @@ export function isValidUsername(username: string): boolean {
  * @param value 핸들 문자열
  */
 export function isPublicProfileHandle(value: string): boolean {
-    if (!value) {
-        return false;
-    }
+  if (!value) {
+    return false;
+  }
 
-    if (value.startsWith("@")) {
-        return false;
-    }
+  if (value.startsWith('@')) {
+    return false;
+  }
 
-    return true;
+  return true;
 }

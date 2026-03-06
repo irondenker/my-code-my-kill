@@ -6,4 +6,4 @@
  */
 
 /** express-session이 사용하는 세션 쿠키 이름입니다. */
-export const SESSION_COOKIE_NAME = "mcmk.sid";
+export const SESSION_COOKIE_NAME = 'mcmk.sid';

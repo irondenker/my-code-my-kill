@@ -6,13 +6,13 @@
  * - 라우트 import 경로 호환성을 위해 기존 경로(`controllers/auth.controller`)에서 재노출합니다.
  */
 
-export { getLoginPage, getRegisterPage } from "./auth/auth-pages.controller.js";
-export { postRegister } from "./auth/auth-register.controller.js";
-export { postLogin } from "./auth/auth-login.controller.js";
-export { postLogout } from "./auth/auth-logout.controller.js";
+export { getLoginPage, getRegisterPage } from './auth/auth-pages.controller.js';
+export { postRegister } from './auth/auth-register.controller.js';
+export { postLogin } from './auth/auth-login.controller.js';
+export { postLogout } from './auth/auth-logout.controller.js';
 export {
-    getForgotPasswordPage,
-    postForgotPassword,
-    getResetPasswordPage,
-    postResetPassword,
-} from "./auth/auth-password-reset.controller.js";
+  getForgotPasswordPage,
+  postForgotPassword,
+  getResetPasswordPage,
+  postResetPassword,
+} from './auth/auth-password-reset.controller.js';

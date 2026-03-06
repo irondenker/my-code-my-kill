@@ -1,5 +1,5 @@
-import type { Request } from "express";
-import { HttpError } from "./http-error.js";
+import type { Request } from 'express';
+import { HttpError } from './http-error.js';
 
 /**
  * 라우트 파라미터를 문자열로 정규화(trim)하여 반환합니다.
@@ -8,11 +8,11 @@ import { HttpError } from "./http-error.js";
  * @throws HttpError(404)
  */
 export function getStringParamOrThrow(req: Request, paramName: string): string {
-    const value = String((req.params as Record<string, unknown>)[paramName] ?? "").trim();
-    if (!value) {
-        throw new HttpError(404, "Not Found");
-    }
-    return value;
+  const value = String((req.params as Record<string, unknown>)[paramName] ?? '').trim();
+  if (!value) {
+    throw new HttpError(404, 'Not Found');
+  }
+  return value;
 }
 
 /**
@@ -22,10 +22,10 @@ export function getStringParamOrThrow(req: Request, paramName: string): string {
  * @throws HttpError(404)
  */
 export function getPositiveIntParamOrThrow(req: Request, paramName: string): number {
-    const raw = (req.params as Record<string, unknown>)[paramName];
-    const value = Number(raw);
-    if (!Number.isFinite(value) || value <= 0) {
-        throw new HttpError(404, "Not Found");
-    }
-    return Math.trunc(value);
+  const raw = (req.params as Record<string, unknown>)[paramName];
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new HttpError(404, 'Not Found');
+  }
+  return Math.trunc(value);
 }

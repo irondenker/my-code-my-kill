@@ -7,16 +7,13 @@
  */
 
 export {
-    listUsersForAdmin,
-    updateUserActiveStatus,
-    findUserMetaForAdminById,
-    countAdminUsers,
-    updateUserRole,
-} from "./admin/admin-management.service.js";
+  listUsersForAdmin,
+  updateUserActiveStatus,
+  findUserMetaForAdminById,
+  countAdminUsers,
+  updateUserRole,
+} from './admin/admin-management.service.js';
 
-export {
-    adminUpdateUserRole,
-    adminUpdateUserStatus,
-} from "./admin/admin-management.service.js";
+export { adminUpdateUserRole, adminUpdateUserStatus } from './admin/admin-management.service.js';
 
-export type { AdminAuditContext } from "./admin/admin-management.service.js";
+export type { AdminAuditContext } from './admin/admin-management.service.js';

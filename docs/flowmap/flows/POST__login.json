@@ -7,7 +7,7 @@
   "handler": {
     "name": "postLogin",
     "file": "server/src/controllers/auth/auth-login.controller.ts",
-    "line": 63
+    "line": 68
   },
   "sinks": [
     "req.session.read()",

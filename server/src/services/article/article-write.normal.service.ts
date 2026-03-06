@@ -1,5 +1,5 @@
-import { QueryTypes, type Transaction } from "sequelize";
-import { sequelize } from "../../db/index.js";
+import { QueryTypes, type Transaction } from 'sequelize';
+import { sequelize } from '../../db/index.js';
 
 /**
  * 게시글 쓰기/수정/삭제 정상 모드 서비스입니다.
@@ -10,18 +10,18 @@ import { sequelize } from "../../db/index.js";
  */
 
 export async function createArticle(params: {
-    boardId: number;
-    userId: number;
-    title: string;
-    content: string;
-    imageUrl?: string | null;
-    fileUrl?: string | null;
+  boardId: number;
+  userId: number;
+  title: string;
+  content: string;
+  imageUrl?: string | null;
+  fileUrl?: string | null;
 }): Promise<{ displayId: number }> {
-    const { boardId, userId, title, content, imageUrl, fileUrl } = params;
+  const { boardId, userId, title, content, imageUrl, fileUrl } = params;
 
-    return sequelize.transaction(async (transaction: Transaction) => {
-        const displayRows = await sequelize.query<{ display_id: number }>(
-            `
+  return sequelize.transaction(async (transaction: Transaction) => {
+    const displayRows = await sequelize.query<{ display_id: number }>(
+      `
             WITH max_display AS (
                 SELECT COALESCE(MAX(display_id), 0) AS max_display_id
                 FROM posts
@@ -39,16 +39,16 @@ export async function createArticle(params: {
             )
             SELECT next_display_id - 1 AS display_id FROM upsert
             `,
-            { type: QueryTypes.SELECT, replacements: { boardId }, transaction }
-        );
+      { type: QueryTypes.SELECT, replacements: { boardId }, transaction }
+    );
 
-        const displayId = Number(displayRows[0]?.display_id);
-        if (!Number.isFinite(displayId) || displayId <= 0) {
-            throw new Error("Failed to allocate display id");
-        }
+    const displayId = Number(displayRows[0]?.display_id);
+    if (!Number.isFinite(displayId) || displayId <= 0) {
+      throw new Error('Failed to allocate display id');
+    }
 
-        await sequelize.query(
-            `
+    await sequelize.query(
+      `
             INSERT INTO posts (
                 board_id,
                 display_id,
@@ -74,35 +74,35 @@ export async function createArticle(params: {
                 true
             )
             `,
-            {
-                replacements: {
-                    boardId,
-                    displayId,
-                    userId,
-                    title,
-                    content,
-                    imageUrl: imageUrl ?? null,
-                    fileUrl: fileUrl ?? null,
-                },
-                transaction,
-            }
-        );
+      {
+        replacements: {
+          boardId,
+          displayId,
+          userId,
+          title,
+          content,
+          imageUrl: imageUrl ?? null,
+          fileUrl: fileUrl ?? null,
+        },
+        transaction,
+      }
+    );
 
-        return { displayId };
-    });
+    return { displayId };
+  });
 }
 
 export async function updateArticle(params: {
-    postId: number;
-    title: string;
-    content: string;
-    imageUrl?: string | null;
-    fileUrl?: string | null;
+  postId: number;
+  title: string;
+  content: string;
+  imageUrl?: string | null;
+  fileUrl?: string | null;
 }): Promise<boolean> {
-    const { postId, title, content, imageUrl, fileUrl } = params;
+  const { postId, title, content, imageUrl, fileUrl } = params;
 
-    const rows = await sequelize.query<{ post_id: number }>(
-        `
+  const rows = await sequelize.query<{ post_id: number }>(
+    `
         UPDATE posts
         SET title = :title,
             content = :content,
@@ -113,24 +113,27 @@ export async function updateArticle(params: {
           AND use_yn = true
         RETURNING post_id
         `,
-        {
-            type: QueryTypes.SELECT,
-            replacements: {
-                postId,
-                title,
-                content,
-                imageUrl: imageUrl ?? null,
-                fileUrl: fileUrl ?? null,
-            },
-        }
-    );
-    return rows.length > 0;
+    {
+      type: QueryTypes.SELECT,
+      replacements: {
+        postId,
+        title,
+        content,
+        imageUrl: imageUrl ?? null,
+        fileUrl: fileUrl ?? null,
+      },
+    }
+  );
+  return rows.length > 0;
 }
 
-export async function softDeleteArticleBySlugDisplayIdAsAdmin(params: { slug: string; displayId: number }): Promise<boolean> {
-    const { slug, displayId } = params;
-    const rows = await sequelize.query<{ post_id: number }>(
-        `
+export async function softDeleteArticleBySlugDisplayIdAsAdmin(params: {
+  slug: string;
+  displayId: number;
+}): Promise<boolean> {
+  const { slug, displayId } = params;
+  const rows = await sequelize.query<{ post_id: number }>(
+    `
         WITH updated AS (
             UPDATE posts p
             SET use_yn = false,
@@ -144,20 +147,20 @@ export async function softDeleteArticleBySlugDisplayIdAsAdmin(params: { slug: st
         )
         SELECT post_id FROM updated
         `,
-        { type: QueryTypes.SELECT, replacements: { slug, displayId } }
-    );
+    { type: QueryTypes.SELECT, replacements: { slug, displayId } }
+  );
 
-    return rows.length > 0;
+  return rows.length > 0;
 }
 
 export async function softDeleteArticleBySlugDisplayId(params: {
-    slug: string;
-    displayId: number;
-    requestUserId: number;
+  slug: string;
+  displayId: number;
+  requestUserId: number;
 }): Promise<boolean> {
-    const { slug, displayId, requestUserId } = params;
-    const rows = await sequelize.query<{ post_id: number }>(
-        `
+  const { slug, displayId, requestUserId } = params;
+  const rows = await sequelize.query<{ post_id: number }>(
+    `
         WITH updated AS (
             UPDATE posts p
             SET use_yn = false,
@@ -173,8 +176,8 @@ export async function softDeleteArticleBySlugDisplayId(params: {
         )
         SELECT post_id FROM updated
         `,
-        { type: QueryTypes.SELECT, replacements: { slug, displayId, requestUserId } }
-    );
+    { type: QueryTypes.SELECT, replacements: { slug, displayId, requestUserId } }
+  );
 
-    return rows.length > 0;
+  return rows.length > 0;
 }

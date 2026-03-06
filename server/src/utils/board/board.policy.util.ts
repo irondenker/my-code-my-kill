@@ -1,4 +1,9 @@
-import type { BoardCreateAccess, BoardReadAccess, BoardMeta, ViewerContext } from "../../types/board/board.types.js";
+import type {
+  BoardCreateAccess,
+  BoardReadAccess,
+  BoardMeta,
+  ViewerContext,
+} from '../../types/board/board.types.js';
 
 /**
  * 보드 접근 정책 유틸입니다.
@@ -8,7 +13,7 @@ import type { BoardCreateAccess, BoardReadAccess, BoardMeta, ViewerContext } fro
  * - 컨트롤러는 세션 등 I/O 값을 읽어와 여기로 전달합니다.
  */
 
-export type { ViewerContext } from "../../types/board/board.types.js";
+export type { ViewerContext } from '../../types/board/board.types.js';
 
 /**
  * 세션 값(유저 ID/역할)을 기반으로 viewer 컨텍스트를 구성합니다.
@@ -16,11 +21,14 @@ export type { ViewerContext } from "../../types/board/board.types.js";
  * @param sessionUserId 세션의 userId 후보 값
  * @param sessionUserRole 세션의 userRole 후보 값
  */
-export function buildViewerContext(sessionUserId: unknown, sessionUserRole: unknown): ViewerContext {
-    const viewerUserId = Number(sessionUserId);
-    const isAuthenticated = Number.isFinite(viewerUserId) && viewerUserId > 0;
-    const isAdmin = sessionUserRole === "admin";
-    return { viewerUserId, isAuthenticated, isAdmin };
+export function buildViewerContext(
+  sessionUserId: unknown,
+  sessionUserRole: unknown
+): ViewerContext {
+  const viewerUserId = Number(sessionUserId);
+  const isAuthenticated = Number.isFinite(viewerUserId) && viewerUserId > 0;
+  const isAdmin = sessionUserRole === 'admin';
+  return { viewerUserId, isAuthenticated, isAdmin };
 }
 
 /**
@@ -30,25 +38,28 @@ export function buildViewerContext(sessionUserId: unknown, sessionUserRole: unkn
  * @param context viewer 컨텍스트
  * @returns ok | unauthorized(로그인 필요) | forbidden(권한 없음)
  */
-export function getBoardReadAccessResult(board: Pick<BoardMeta, "readAccess">, context: ViewerContext): "ok" | "unauthorized" | "forbidden" {
-    const readAccess: BoardReadAccess = board.readAccess;
+export function getBoardReadAccessResult(
+  board: Pick<BoardMeta, 'readAccess'>,
+  context: ViewerContext
+): 'ok' | 'unauthorized' | 'forbidden' {
+  const readAccess: BoardReadAccess = board.readAccess;
 
-    if (readAccess === "public") {
-        return "ok";
-    }
+  if (readAccess === 'public') {
+    return 'ok';
+  }
 
-    if (readAccess === "admin") {
-        if (!context.isAuthenticated) {
-            return "unauthorized";
-        }
-        return context.isAdmin ? "ok" : "forbidden";
-    }
-
+  if (readAccess === 'admin') {
     if (!context.isAuthenticated) {
-        return "unauthorized";
+      return 'unauthorized';
     }
+    return context.isAdmin ? 'ok' : 'forbidden';
+  }
 
-    return "ok";
+  if (!context.isAuthenticated) {
+    return 'unauthorized';
+  }
+
+  return 'ok';
 }
 
 /**
@@ -57,15 +68,15 @@ export function getBoardReadAccessResult(board: Pick<BoardMeta, "readAccess">, c
  * @returns ok | redirect_login(로그인으로 유도) | forbidden(권한 없음)
  */
 export function getBoardCreateAccessResult(
-    board: Pick<BoardMeta, "createAccess">,
-    context: ViewerContext
-): "ok" | "redirect_login" | "forbidden" {
-    const createAccess: BoardCreateAccess = board.createAccess;
+  board: Pick<BoardMeta, 'createAccess'>,
+  context: ViewerContext
+): 'ok' | 'redirect_login' | 'forbidden' {
+  const createAccess: BoardCreateAccess = board.createAccess;
 
-    if (createAccess === "admin") {
-        return context.isAdmin ? "ok" : "forbidden";
-    }
+  if (createAccess === 'admin') {
+    return context.isAdmin ? 'ok' : 'forbidden';
+  }
 
-    // 인증 사용자(auth) 보드는 로그인 여부만 확인합니다.
-    return context.isAuthenticated ? "ok" : "redirect_login";
+  // 인증 사용자(auth) 보드는 로그인 여부만 확인합니다.
+  return context.isAuthenticated ? 'ok' : 'redirect_login';
 }

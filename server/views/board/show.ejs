@@ -1,118 +1,135 @@
 <!doctype html>
 <html lang="en" data-bs-theme="auto">
-    <%- include("../partials/head", {
-        styles: [
-            "/assets/css/color-modes.css",
-            "/assets/css/list-groups.css",
-        ]
-    }) %>
+  <%- include("../partials/head", { styles: [ "/assets/css/color-modes.css",
+  "/assets/css/list-groups.css", ] }) %>
 
-    <body>
-        <%- include("../partials/theme-toggle") %>
-        <%- include("../partials/header") %>
+  <body>
+    <%- include("../partials/theme-toggle") %>
+    <%- include("../partials/header") %>
 
-        <main class="container py-4" style="max-width: 920px;">
-            <div class="mb-3">
-                <a href="/board/<%= boardSlug %>" class="btn btn-outline-secondary btn-sm">&larr; 목록으로</a>
+    <main class="container py-4" style="max-width: 920px">
+      <div class="mb-3">
+        <a href="/board/<%= boardSlug %>" class="btn btn-outline-secondary btn-sm"
+          >&larr; 목록으로</a
+        >
+      </div>
+
+      <article class="card shadow-sm">
+        <div class="card-body">
+          <h1 class="h4 mb-2"><%= post.title %></h1>
+
+          <div class="d-flex flex-wrap gap-2 text-muted small mb-3">
+            <div>작성자: <strong class="text-body"><%= post.username %></strong></div>
+            <div>·</div>
+            <div>
+              작성:
+              <%= post.created_at %>
             </div>
-
-            <article class="card shadow-sm">
-                <div class="card-body">
-                    <h1 class="h4 mb-2"><%= post.title %></h1>
-
-                    <div class="d-flex flex-wrap gap-2 text-muted small mb-3">
-                        <div>작성자: <strong class="text-body"><%= post.username %></strong></div>
-                        <div>·</div>
-                        <div>작성: <%= post.created_at %></div>
-                        <div>·</div>
-                        <div>수정: <%= post.updated_at ? post.updated_at : '-' %></div>
-                    </div>
-
-                    <hr class="my-3" />
-
-                    <% if (post.image_url) { %>
-                    <div class="mb-3">
-                        <div class="text-muted small mb-2">Image</div>
-                        <a href="<%= post.image_url %>" target="_blank" rel="noreferrer">
-                            <img src="<%= post.image_url %>" alt="Post image" class="img-fluid rounded border" />
-                        </a>
-                    </div>
-                    <% } %>
-
-                    <% if (post.file_url) { %>
-                    <div class="mb-3">
-                        <div class="text-muted small mb-2">Attachment</div>
-                        <a href="<%= post.file_url %>" class="btn btn-outline-secondary btn-sm" download>
-                            <%= post.file_name || "Download attachment" %>
-                        </a>
-                    </div>
-                    <% } %>
-
-                    <% if (serverSideSanitizeEnabled) { %>
-                    <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7;"><%= post.content %></div>
-                    <% } else if (labStoredXssEnabled) { %>
-                    <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7;"><%- post.content %></div>
-                    <% } else { %>
-                    <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7;"><%- escapeForXss(post.content) %></div>
-                    <% } %>
-                </div>
-            </article>
-
-            <% if (canEdit || canDelete) { %>
-            <div class="d-flex gap-2 mt-3">
-                <% if (canEdit) { %>
-                <a class="btn btn-outline-primary btn-sm" href="/board/<%= boardSlug %>/<%= post.display_id %>/edit">Edit</a>
-                <% } %>
-                <% if (canDelete) { %>
-                <form method="post" action="/board/<%= boardSlug %>/<%= post.display_id %>/delete">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
-                </form>
-                <% } %>
+            <div>·</div>
+            <div>
+              수정:
+              <%= post.updated_at ? post.updated_at : '-' %>
             </div>
+          </div>
+
+          <hr class="my-3" />
+
+          <% if (post.image_url) { %>
+          <div class="mb-3">
+            <div class="text-muted small mb-2">Image</div>
+            <a href="<%= post.image_url %>" target="_blank" rel="noreferrer">
+              <img src="<%= post.image_url %>" alt="Post image" class="img-fluid rounded border" />
+            </a>
+          </div>
+          <% } %>
+          <% if (post.file_url) { %>
+          <div class="mb-3">
+            <div class="text-muted small mb-2">Attachment</div>
+            <a href="<%= post.file_url %>" class="btn btn-outline-secondary btn-sm" download>
+              <%= post.file_name || "Download attachment" %>
+            </a>
+          </div>
+          <% } %>
+          <% if (serverSideSanitizeEnabled) { %>
+          <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7">
+            <%= post.content %>
+          </div>
+          <% } else if (labStoredXssEnabled) { %>
+          <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7">
+            <%- post.content %>
+          </div>
+          <% } else { %>
+          <div class="fs-6" style="white-space: pre-wrap; line-height: 1.7">
+            <%- escapeForXss(post.content) %>
+          </div>
+          <% } %>
+        </div>
+      </article>
+
+      <% if (canEdit || canDelete) { %>
+      <div class="d-flex gap-2 mt-3">
+        <% if (canEdit) { %>
+        <a
+          class="btn btn-outline-primary btn-sm"
+          href="/board/<%= boardSlug %>/<%= post.display_id %>/edit"
+          >Edit</a
+        >
+        <% } %>
+        <% if (canDelete) { %>
+        <form method="post" action="/board/<%= boardSlug %>/<%= post.display_id %>/delete">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+        </form>
+        <% } %>
+      </div>
+      <% } %>
+
+      <nav class="mt-4">
+        <div
+          class="d-grid align-items-start"
+          style="grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); column-gap: 1rem"
+        >
+          <div style="min-width: 0">
+            <% if (prevPost) { %>
+            <a
+              class="btn btn-outline-secondary btn-sm"
+              href="/board/<%= boardSlug %>/<%= prevPost.display_id %>"
+            >
+              &larr; 이전 글
+            </a>
+            <div class="small text-muted mt-1"><%= prevPost.title %></div>
+            <% } else { %>
+            <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true"
+              >&larr; 이전 글</span
+            >
             <% } %>
+          </div>
 
-            <nav class="mt-4">
-                <div class="d-grid align-items-start" style="grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); column-gap: 1rem;">
-                <div style="min-width: 0;">
-                    <% if (prevPost) { %>
-                    <a class="btn btn-outline-secondary btn-sm" href="/board/<%= boardSlug %>/<%= prevPost.display_id %>">
-                        &larr; 이전 글
-                    </a>
-                    <div class="small text-muted mt-1">
-                        <%= prevPost.title %>
-                    </div>
-                    <% } else { %>
-                    <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">&larr; 이전 글</span>
-                    <% } %>
-                </div>
+          <div class="text-center align-self-center">
+            <span class="badge text-bg-light">#<%= post.display_id %></span>
+          </div>
 
-                <div class="text-center align-self-center">
-                    <span class="badge text-bg-light">#<%= post.display_id %></span>
-                </div>
+          <div class="text-end" style="min-width: 0">
+            <% if (nextPost) { %>
+            <a
+              class="btn btn-outline-secondary btn-sm"
+              href="/board/<%= boardSlug %>/<%= nextPost.display_id %>"
+            >
+              다음 글 &rarr;
+            </a>
+            <div class="small text-muted mt-1"><%= nextPost.title %></div>
+            <% } else { %>
+            <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true"
+              >다음 글 &rarr;</span
+            >
+            <% } %>
+          </div>
+        </div>
+      </nav>
+    </main>
 
-                <div class="text-end" style="min-width: 0;">
-                    <% if (nextPost) { %>
-                    <a class="btn btn-outline-secondary btn-sm" href="/board/<%= boardSlug %>/<%= nextPost.display_id %>">
-                        다음 글 &rarr;
-                    </a>
-                    <div class="small text-muted mt-1">
-                        <%= nextPost.title %>
-                    </div>
-                    <% } else { %>
-                    <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">다음 글 &rarr;</span>
-                    <% } %>
-                </div>
-                </div>
-            </nav>
-        </main>
-
-        <%- include("../partials/footer") %>
-        <%- include("../partials/scripts", {
-            scripts: [
-                "/assets/js/color-modes.js"
-            ]
-        }) %>
-    </body>
-
+    <%- include("../partials/footer") %>
+    <%- include("../partials/scripts", { scripts: [
+    "/assets/js/color-modes.js" ] }) %>
+  </body>
 </html>

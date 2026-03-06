@@ -9,7 +9,7 @@
   "handler": {
     "name": "getAdminBoardEditPage",
     "file": "server/src/controllers/admin/admin-boards.controller.ts",
-    "line": 162
+    "line": 173
   },
   "sinks": [],
   "exits": [

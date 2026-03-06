@@ -9,7 +9,7 @@
   "handler": {
     "name": "postAvatarDelete",
     "file": "server/src/controllers/avatar.controller.ts",
-    "line": 68
+    "line": 71
   },
   "sinks": [
     "req.session.read()",

@@ -27,10 +27,10 @@
                     <form method="get" action="/admin/audit-logs" class="d-flex gap-2 align-items-center">
                         <label class="form-label mb-0" for="limit">Rows</label>
                         <select id="limit" class="form-select" style="width: 140px;" name="limit">
-                            <option value="50" <%= selectedLimit === 50 ? "selected" : "" %>>50</option>
-                            <option value="100" <%= selectedLimit === 100 ? "selected" : "" %>>100</option>
-                            <option value="200" <%= selectedLimit === 200 ? "selected" : "" %>>200</option>
-                            <option value="500" <%= selectedLimit === 500 ? "selected" : "" %>>500</option>
+                            <option value="50" <%= selectedLimit === 50 ? "selected" : "" %> >50</option>
+                            <option value="100" <%= selectedLimit === 100 ? "selected" : "" %> >100</option>
+                            <option value="200" <%= selectedLimit === 200 ? "selected" : "" %> >200</option>
+                            <option value="500" <%= selectedLimit === 500 ? "selected" : "" %> >500</option>
                         </select>
                         <button type="submit" class="btn btn-primary btn-sm">Apply</button>
                     </form>

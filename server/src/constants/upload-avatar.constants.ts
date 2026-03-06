@@ -1,4 +1,4 @@
-import path from "node:path";
+import path from 'node:path';
 
 /**
  * 업로드(아바타) 관련 상수 모음입니다.
@@ -12,7 +12,7 @@ import path from "node:path";
  * 허용하는 이미지 MIME 타입 목록입니다.
  * (1차 필터링 용도이며, 매직넘버 검증이 켜져 있으면 추가 검증을 수행합니다.)
  */
-export const AVATAR_IMAGE_ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+export const AVATAR_IMAGE_ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 /**
  * 아바타 업로드 최대 허용 크기(bytes)입니다.
@@ -45,4 +45,4 @@ export const AVATAR_IMAGE_OUTPUT_QUALITY = 80;
  * 업로드된 아바타 파일이 저장될 디스크 경로입니다.
  * public 정적 경로 하위로 저장되어 `/uploads/avatars/...` 로 접근됩니다.
  */
-export const AVATAR_IMAGE_UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "avatars");
+export const AVATAR_IMAGE_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars');

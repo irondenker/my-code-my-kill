@@ -10,28 +10,28 @@
  * 게시글 기본 레코드(서비스 계층에서 사용하는 공통 형태)입니다.
  */
 export type ArticleRecord = {
-    postId: number;
-    boardId: number;
-    boardSlug: string;
-    boardName: string;
-    displayId: number;
-    userId: number;
-    title: string;
-    content: string;
-    imageUrl: string | null;
-    fileUrl: string | null;
+  postId: number;
+  boardId: number;
+  boardSlug: string;
+  boardName: string;
+  displayId: number;
+  userId: number;
+  title: string;
+  content: string;
+  imageUrl: string | null;
+  fileUrl: string | null;
 };
 
 /**
  * 게시글 목록(outline)에서 사용하는 요약 타입입니다.
  */
 export interface ArticleOutline {
-    boardSlug: string;
-    displayId: number;
-    userId: number;
-    title: string;
-    author: string;
-    createdAt: Date;
+  boardSlug: string;
+  displayId: number;
+  userId: number;
+  title: string;
+  author: string;
+  createdAt: Date;
 }
 
 /**
@@ -39,19 +39,19 @@ export interface ArticleOutline {
  * (템플릿 호환을 위해 snake_case 키를 유지합니다.)
  */
 export type ArticleForShow = {
-    board_slug: string;
-    display_id: number;
-    title: string;
-    username: string;
-    content: string;
-    image_url: string | null;
-    file_url: string | null;
-    file_name: string | null;
-    created_at: string;
-    updated_at: string | null;
-    user_id: number;
-    board_name: string;
-    board_id: number;
+  board_slug: string;
+  display_id: number;
+  title: string;
+  username: string;
+  content: string;
+  image_url: string | null;
+  file_url: string | null;
+  file_name: string | null;
+  created_at: string;
+  updated_at: string | null;
+  user_id: number;
+  board_name: string;
+  board_id: number;
 };
 
 /**
@@ -63,6 +63,6 @@ export type NeighborPost = { display_id: number; title: string } | null;
  * 게시글 변경 정책(수정/삭제)을 나타냅니다.
  */
 export type ArticleMutationPolicy = {
-    update: "self" | "admin";
-    delete: "selfOrAdmin" | "admin";
+  update: 'self' | 'admin';
+  delete: 'selfOrAdmin' | 'admin';
 };

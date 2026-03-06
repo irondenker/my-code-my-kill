@@ -7,9 +7,9 @@
  */
 
 export {
-    findUserProfileById,
-    findPrivateProfileByUsername,
-    findPublicProfileByUsername,
-    updateUserProfile,
-    updateUserProfileImage,
-} from "./profile/profile-management.service.js";
+  findUserProfileById,
+  findPrivateProfileByUsername,
+  findPublicProfileByUsername,
+  updateUserProfile,
+  updateUserProfileImage,
+} from './profile/profile-management.service.js';

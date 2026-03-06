@@ -1,29 +1,29 @@
-import crypto from "node:crypto";
-import fs from "node:fs/promises";
-import path from "node:path";
-import sharp from "sharp";
-import { ensureDir, safeUnlink } from "../../utils/upload/fs.util.js";
+import crypto from 'node:crypto';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import sharp from 'sharp';
+import { ensureDir, safeUnlink } from '../../utils/upload/fs.util.js';
 import {
-    isExtensionCheckEnabled,
-    isMimeCheckEnabled,
-    isMagicNumberCheckEnabled,
-    resolveAttachmentExpectation,
-    validateAllowedExtension,
-    validateMagicNumberForAttachment,
-    validateMagicNumberForImage,
-} from "../../utils/upload/upload-validation.util.js";
+  isExtensionCheckEnabled,
+  isMimeCheckEnabled,
+  isMagicNumberCheckEnabled,
+  resolveAttachmentExpectation,
+  validateAllowedExtension,
+  validateMagicNumberForAttachment,
+  validateMagicNumberForImage,
+} from '../../utils/upload/upload-validation.util.js';
 import {
-    ARTICLE_ATTACHMENT_EXTENSIONS,
-    ARTICLE_ATTACHMENT_MAX_BYTES,
-    ARTICLE_ATTACHMENT_ALLOWED_MIME_TYPES,
-    ARTICLE_ATTACHMENT_UPLOAD_DIR,
-    ARTICLE_IMAGE_ALLOWED_MIME_TYPES,
-    ARTICLE_IMAGE_MAX_BYTES,
-    ARTICLE_IMAGE_MAX_DIMENSION,
-    ARTICLE_IMAGE_MAX_OUTPUT_WIDTH,
-    ARTICLE_IMAGE_OUTPUT_QUALITY,
-    ARTICLE_IMAGE_UPLOAD_DIR,
-} from "../../constants/upload-article.constants.js";
+  ARTICLE_ATTACHMENT_EXTENSIONS,
+  ARTICLE_ATTACHMENT_MAX_BYTES,
+  ARTICLE_ATTACHMENT_ALLOWED_MIME_TYPES,
+  ARTICLE_ATTACHMENT_UPLOAD_DIR,
+  ARTICLE_IMAGE_ALLOWED_MIME_TYPES,
+  ARTICLE_IMAGE_MAX_BYTES,
+  ARTICLE_IMAGE_MAX_DIMENSION,
+  ARTICLE_IMAGE_MAX_OUTPUT_WIDTH,
+  ARTICLE_IMAGE_OUTPUT_QUALITY,
+  ARTICLE_IMAGE_UPLOAD_DIR,
+} from '../../constants/upload-article.constants.js';
 
 /**
  * 게시글 업로드(이미지/첨부파일) 저장을 담당하는 서비스입니다.
@@ -43,7 +43,10 @@ import {
  * `recursive: true`로 idempotent하게 처리합니다.
  */
 async function ensureArticleUploadDirs(): Promise<void> {
-    await Promise.all([ensureDir(ARTICLE_IMAGE_UPLOAD_DIR), ensureDir(ARTICLE_ATTACHMENT_UPLOAD_DIR)]);
+  await Promise.all([
+    ensureDir(ARTICLE_IMAGE_UPLOAD_DIR),
+    ensureDir(ARTICLE_ATTACHMENT_UPLOAD_DIR),
+  ]);
 }
 
 /**
@@ -54,8 +57,8 @@ async function ensureArticleUploadDirs(): Promise<void> {
  * @param extension 파일 확장자(예: .webp, .pdf)
  */
 function createUploadName(prefix: string, extension: string): string {
-    const suffix = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}`;
-    return `${prefix}-${suffix}${extension}`;
+  const suffix = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
+  return `${prefix}-${suffix}${extension}`;
 }
 
 /**
@@ -65,40 +68,43 @@ function createUploadName(prefix: string, extension: string): string {
  * @throws 검증 실패 시 Error(message)
  */
 export async function storeArticleImage(file: Express.Multer.File): Promise<string> {
-    if (isMagicNumberCheckEnabled()) {
-        validateMagicNumberForImage(file.buffer);
-    }
-    if (isMimeCheckEnabled() && !ARTICLE_IMAGE_ALLOWED_MIME_TYPES.has(file.mimetype)) {
-        throw new Error("Unsupported image type.");
-    }
-    if (file.size > ARTICLE_IMAGE_MAX_BYTES) {
-        throw new Error("Image file is too large.");
-    }
+  if (isMagicNumberCheckEnabled()) {
+    validateMagicNumberForImage(file.buffer);
+  }
+  if (isMimeCheckEnabled() && !ARTICLE_IMAGE_ALLOWED_MIME_TYPES.has(file.mimetype)) {
+    throw new Error('Unsupported image type.');
+  }
+  if (file.size > ARTICLE_IMAGE_MAX_BYTES) {
+    throw new Error('Image file is too large.');
+  }
 
-    const image = sharp(file.buffer, {
-        limitInputPixels: ARTICLE_IMAGE_MAX_DIMENSION * ARTICLE_IMAGE_MAX_DIMENSION,
-    });
-    const metadata = await image.metadata();
-    const width = metadata.width ?? 0;
-    const height = metadata.height ?? 0;
+  const image = sharp(file.buffer, {
+    limitInputPixels: ARTICLE_IMAGE_MAX_DIMENSION * ARTICLE_IMAGE_MAX_DIMENSION,
+  });
+  const metadata = await image.metadata();
+  const width = metadata.width ?? 0;
+  const height = metadata.height ?? 0;
 
-    if (!width || !height) {
-        throw new Error("Invalid image data.");
-    }
-    if (width > ARTICLE_IMAGE_MAX_DIMENSION || height > ARTICLE_IMAGE_MAX_DIMENSION) {
-        throw new Error("Image dimensions exceed the limit.");
-    }
+  if (!width || !height) {
+    throw new Error('Invalid image data.');
+  }
+  if (width > ARTICLE_IMAGE_MAX_DIMENSION || height > ARTICLE_IMAGE_MAX_DIMENSION) {
+    throw new Error('Image dimensions exceed the limit.');
+  }
 
-    await ensureArticleUploadDirs();
-    const filename = createUploadName("article-image", ".webp");
-    const outputPath = path.join(ARTICLE_IMAGE_UPLOAD_DIR, filename);
+  await ensureArticleUploadDirs();
+  const filename = createUploadName('article-image', '.webp');
+  const outputPath = path.join(ARTICLE_IMAGE_UPLOAD_DIR, filename);
 
-    await image
-        .resize(ARTICLE_IMAGE_MAX_OUTPUT_WIDTH, ARTICLE_IMAGE_MAX_OUTPUT_WIDTH, { fit: "inside", withoutEnlargement: true })
-        .webp({ quality: ARTICLE_IMAGE_OUTPUT_QUALITY })
-        .toFile(outputPath);
+  await image
+    .resize(ARTICLE_IMAGE_MAX_OUTPUT_WIDTH, ARTICLE_IMAGE_MAX_OUTPUT_WIDTH, {
+      fit: 'inside',
+      withoutEnlargement: true,
+    })
+    .webp({ quality: ARTICLE_IMAGE_OUTPUT_QUALITY })
+    .toFile(outputPath);
 
-    return filename;
+  return filename;
 }
 
 /**
@@ -107,40 +113,40 @@ export async function storeArticleImage(file: Express.Multer.File): Promise<stri
  * @throws 검증 실패 시 Error(message)
  */
 export async function storeArticleAttachment(file: Express.Multer.File): Promise<string> {
-    if (isMimeCheckEnabled() && !ARTICLE_ATTACHMENT_ALLOWED_MIME_TYPES.has(file.mimetype)) {
-        throw new Error("Unsupported attachment type.");
-    }
-    if (file.size > ARTICLE_ATTACHMENT_MAX_BYTES) {
-        throw new Error("Attachment file is too large.");
-    }
+  if (isMimeCheckEnabled() && !ARTICLE_ATTACHMENT_ALLOWED_MIME_TYPES.has(file.mimetype)) {
+    throw new Error('Unsupported attachment type.');
+  }
+  if (file.size > ARTICLE_ATTACHMENT_MAX_BYTES) {
+    throw new Error('Attachment file is too large.');
+  }
 
-    const extension = path.extname(file.originalname).toLowerCase();
-    const extensionCheckEnabled = isExtensionCheckEnabled();
-    const mimeCheckEnabled = isMimeCheckEnabled();
-    const magicNumberCheckEnabled = isMagicNumberCheckEnabled();
+  const extension = path.extname(file.originalname).toLowerCase();
+  const extensionCheckEnabled = isExtensionCheckEnabled();
+  const mimeCheckEnabled = isMimeCheckEnabled();
+  const magicNumberCheckEnabled = isMagicNumberCheckEnabled();
 
-    if (extensionCheckEnabled) {
-        validateAllowedExtension(file.originalname, ARTICLE_ATTACHMENT_EXTENSIONS);
+  if (extensionCheckEnabled) {
+    validateAllowedExtension(file.originalname, ARTICLE_ATTACHMENT_EXTENSIONS);
+  }
+  if (magicNumberCheckEnabled) {
+    const expectation = resolveAttachmentExpectation({
+      extension,
+      mimetype: file.mimetype,
+      trustExtension: extensionCheckEnabled,
+      trustMime: mimeCheckEnabled,
+    });
+    if (!expectation) {
+      throw new Error('Unsupported attachment type.');
     }
-    if (magicNumberCheckEnabled) {
-        const expectation = resolveAttachmentExpectation({
-            extension,
-            mimetype: file.mimetype,
-            trustExtension: extensionCheckEnabled,
-            trustMime: mimeCheckEnabled,
-        });
-        if (!expectation) {
-            throw new Error("Unsupported attachment type.");
-        }
-        validateMagicNumberForAttachment(file.buffer, expectation);
-    }
+    validateMagicNumberForAttachment(file.buffer, expectation);
+  }
 
-    await ensureArticleUploadDirs();
-    const filename = createUploadName("article-file", extension);
-    const outputPath = path.join(ARTICLE_ATTACHMENT_UPLOAD_DIR, filename);
-    await fs.writeFile(outputPath, file.buffer);
+  await ensureArticleUploadDirs();
+  const filename = createUploadName('article-file', extension);
+  const outputPath = path.join(ARTICLE_ATTACHMENT_UPLOAD_DIR, filename);
+  await fs.writeFile(outputPath, file.buffer);
 
-    return filename;
+  return filename;
 }
 
 /**
@@ -149,10 +155,10 @@ export async function storeArticleAttachment(file: Express.Multer.File): Promise
  * @param filename DB에 저장된 파일명
  */
 export async function deleteStoredArticleImage(filename: string | null): Promise<void> {
-    if (!filename) {
-        return;
-    }
-    await safeUnlink(path.join(ARTICLE_IMAGE_UPLOAD_DIR, path.basename(filename)));
+  if (!filename) {
+    return;
+  }
+  await safeUnlink(path.join(ARTICLE_IMAGE_UPLOAD_DIR, path.basename(filename)));
 }
 
 /**
@@ -161,8 +167,8 @@ export async function deleteStoredArticleImage(filename: string | null): Promise
  * @param filename DB에 저장된 파일명
  */
 export async function deleteStoredArticleAttachment(filename: string | null): Promise<void> {
-    if (!filename) {
-        return;
-    }
-    await safeUnlink(path.join(ARTICLE_ATTACHMENT_UPLOAD_DIR, path.basename(filename)));
+  if (!filename) {
+    return;
+  }
+  await safeUnlink(path.join(ARTICLE_ATTACHMENT_UPLOAD_DIR, path.basename(filename)));
 }

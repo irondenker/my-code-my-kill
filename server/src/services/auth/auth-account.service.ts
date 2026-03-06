@@ -1,7 +1,7 @@
-import { isSqlInjectionTargetEnabled } from "../lab/sql-injection-control.service.js";
-import * as labImplementation from "./auth-account.lab.service.js";
-import * as normalImplementation from "./auth-account.normal.service.js";
-import type { AuthUser, AuthUserPublic } from "../../types/auth/auth.types.js";
+import { isSqlInjectionTargetEnabled } from '../lab/sql-injection-control.service.js';
+import * as labImplementation from './auth-account.lab.service.js';
+import * as normalImplementation from './auth-account.normal.service.js';
+import type { AuthUser, AuthUserPublic } from '../../types/auth/auth.types.js';
 
 /**
  * 인증 계정 서비스 facade입니다.
@@ -16,79 +16,81 @@ import type { AuthUser, AuthUserPublic } from "../../types/auth/auth.types.js";
  * SQLi username 조회 타깃이 하나라도 활성화된 경우 lab 경로를 사용합니다.
  */
 export async function findUserByUsername(username: string): Promise<AuthUser | null> {
-    if (isSqlInjectionTargetEnabled("authLookup")) {
-        return labImplementation.findUserByUsername(username);
-    }
-    return normalImplementation.findUserByUsername(username);
+  if (isSqlInjectionTargetEnabled('authLookup')) {
+    return labImplementation.findUserByUsername(username);
+  }
+  return normalImplementation.findUserByUsername(username);
 }
 
 /**
  * 회원가입 컨텍스트 사용자 생성입니다.
  */
 export async function createUserForRegister(params: {
-    username: string;
-    passwordHash: string;
+  username: string;
+  passwordHash: string;
 }): Promise<AuthUserPublic> {
-    if (isSqlInjectionTargetEnabled("authCreate")) {
-        return labImplementation.createUserForRegister(params);
-    }
-    return normalImplementation.createUserForRegister(params);
+  if (isSqlInjectionTargetEnabled('authCreate')) {
+    return labImplementation.createUserForRegister(params);
+  }
+  return normalImplementation.createUserForRegister(params);
 }
 
 export type LoginDefenseState = {
-    loginFailedCount: number;
-    loginLockedUntil: Date | null;
-    passwordResetRequired: boolean;
+  loginFailedCount: number;
+  loginLockedUntil: Date | null;
+  passwordResetRequired: boolean;
 };
 
 export type PasswordResetTokenOwner = {
-    userId: number;
-    username: string;
+  userId: number;
+  username: string;
 };
 
 export async function recordLoginFailureAndRequirePasswordReset(params: {
-    userId: number;
-    maxFailures: number;
-    useLoginLockUntil: boolean;
-    lockMinutes: number;
+  userId: number;
+  maxFailures: number;
+  useLoginLockUntil: boolean;
+  lockMinutes: number;
 }): Promise<LoginDefenseState> {
-    if (isSqlInjectionTargetEnabled("authLookup")) {
-        return labImplementation.recordLoginFailureAndRequirePasswordReset(params);
-    }
-    return normalImplementation.recordLoginFailureAndRequirePasswordReset(params);
+  if (isSqlInjectionTargetEnabled('authLookup')) {
+    return labImplementation.recordLoginFailureAndRequirePasswordReset(params);
+  }
+  return normalImplementation.recordLoginFailureAndRequirePasswordReset(params);
 }
 
 export async function resetLoginFailureState(userId: number): Promise<void> {
-    if (isSqlInjectionTargetEnabled("authLookup")) {
-        return labImplementation.resetLoginFailureState(userId);
-    }
-    return normalImplementation.resetLoginFailureState(userId);
+  if (isSqlInjectionTargetEnabled('authLookup')) {
+    return labImplementation.resetLoginFailureState(userId);
+  }
+  return normalImplementation.resetLoginFailureState(userId);
 }
 
 export async function savePasswordResetToken(params: {
-    userId: number;
-    tokenHash: string;
-    expiresAt: Date;
+  userId: number;
+  tokenHash: string;
+  expiresAt: Date;
 }): Promise<void> {
-    if (isSqlInjectionTargetEnabled("authLookup")) {
-        return labImplementation.savePasswordResetToken(params);
-    }
-    return normalImplementation.savePasswordResetToken(params);
+  if (isSqlInjectionTargetEnabled('authLookup')) {
+    return labImplementation.savePasswordResetToken(params);
+  }
+  return normalImplementation.savePasswordResetToken(params);
 }
 
-export async function findValidPasswordResetTokenOwner(tokenHash: string): Promise<PasswordResetTokenOwner | null> {
-    if (isSqlInjectionTargetEnabled("authLookup")) {
-        return labImplementation.findValidPasswordResetTokenOwner(tokenHash);
-    }
-    return normalImplementation.findValidPasswordResetTokenOwner(tokenHash);
+export async function findValidPasswordResetTokenOwner(
+  tokenHash: string
+): Promise<PasswordResetTokenOwner | null> {
+  if (isSqlInjectionTargetEnabled('authLookup')) {
+    return labImplementation.findValidPasswordResetTokenOwner(tokenHash);
+  }
+  return normalImplementation.findValidPasswordResetTokenOwner(tokenHash);
 }
 
 export async function completePasswordResetByTokenHash(params: {
-    tokenHash: string;
-    passwordHash: string;
+  tokenHash: string;
+  passwordHash: string;
 }): Promise<PasswordResetTokenOwner | null> {
-    if (isSqlInjectionTargetEnabled("authLookup")) {
-        return labImplementation.completePasswordResetByTokenHash(params);
-    }
-    return normalImplementation.completePasswordResetByTokenHash(params);
+  if (isSqlInjectionTargetEnabled('authLookup')) {
+    return labImplementation.completePasswordResetByTokenHash(params);
+  }
+  return normalImplementation.completePasswordResetByTokenHash(params);
 }

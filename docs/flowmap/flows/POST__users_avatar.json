@@ -9,7 +9,7 @@
   "handler": {
     "name": "postAvatarUpload",
     "file": "server/src/controllers/avatar.controller.ts",
-    "line": 43
+    "line": 46
   },
   "sinks": [
     "File Upload",

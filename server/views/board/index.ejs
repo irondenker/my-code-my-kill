@@ -1,20 +1,14 @@
 <!doctype html>
 <html lang="en" data-bs-theme="auto">
-    <%- include("../partials/head", {
-        styles: [
-            "/assets/css/color-modes.css",
-        ]
-    }) %>
+  <%- include("../partials/head", { styles: [ "/assets/css/color-modes.css", ] }) %>
 
-    <body>
-        <%- include("../partials/theme-toggle") %>
-        <%- include("../partials/header") %>
-        <%- include("../partials/components/board-index") %>
-        <%- include("../partials/footer") %>
-        <%- include("../partials/scripts", {
-            scripts: [
-                "/assets/js/color-modes.js"
-            ]
-        }) %>
-    </body>
+  <body>
+    <%- include("../partials/theme-toggle") %>
+    <%- include("../partials/header") %>
+    <%-
+    include("../partials/components/board-index") %>
+    <%- include("../partials/footer") %>
+    <%-
+    include("../partials/scripts", { scripts: [ "/assets/js/color-modes.js" ] }) %>
+  </body>
 </html>

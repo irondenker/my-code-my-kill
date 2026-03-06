@@ -1,7 +1,11 @@
-import { Router } from "express";
-import { postAvatarDelete, postAvatarUpload } from "../controllers/avatar.controller.js";
-import { getProfileEditForm, getUserProfile, postProfileEdit } from "../controllers/user.controller.js";
-import { requireAuthRedirect } from "../middlewares/auth.middleware.js";
+import { Router } from 'express';
+import { postAvatarDelete, postAvatarUpload } from '../controllers/avatar.controller.js';
+import {
+  getProfileEditForm,
+  getUserProfile,
+  postProfileEdit,
+} from '../controllers/user.controller.js';
+import { requireAuthRedirect } from '../middlewares/auth.middleware.js';
 
 /**
  * 사용자 라우터입니다.
@@ -17,22 +21,22 @@ import { requireAuthRedirect } from "../middlewares/auth.middleware.js";
  */
 const router = Router();
 
-router.get("/@:username", getUserProfile);
-router.get("/setting/profile", requireAuthRedirect, getProfileEditForm);
-router.get("/settings/profile", requireAuthRedirect, getProfileEditForm);
-router.post("/setting/profile", requireAuthRedirect, postProfileEdit);
-router.post("/settings/profile", requireAuthRedirect, postProfileEdit);
+router.get('/@:username', getUserProfile);
+router.get('/setting/profile', requireAuthRedirect, getProfileEditForm);
+router.get('/settings/profile', requireAuthRedirect, getProfileEditForm);
+router.post('/setting/profile', requireAuthRedirect, postProfileEdit);
+router.post('/settings/profile', requireAuthRedirect, postProfileEdit);
 
 /**
  * 아바타 업로드
  * - `avatar` 필드로 파일 1개를 받습니다.
  */
-router.post("/users/avatar", requireAuthRedirect, postAvatarUpload);
+router.post('/users/avatar', requireAuthRedirect, postAvatarUpload);
 
 /**
  * 아바타 삭제
  * - urlencoded 폼 요청이며, 전역 CSRF 미들웨어가 적용됩니다(실습 옵션에 따라 다를 수 있음).
  */
-router.post("/users/avatar/delete", requireAuthRedirect, postAvatarDelete);
+router.post('/users/avatar/delete', requireAuthRedirect, postAvatarDelete);
 
 export default router;

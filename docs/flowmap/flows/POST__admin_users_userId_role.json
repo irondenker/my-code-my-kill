@@ -9,7 +9,7 @@
   "handler": {
     "name": "postAdminUserRole",
     "file": "server/src/controllers/admin/admin-users.controller.ts",
-    "line": 147
+    "line": 149
   },
   "sinks": [
     "req.session.read()",

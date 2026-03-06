@@ -1,6 +1,6 @@
-import type { RequestHandler } from "express";
-import express from "express";
-import path from "node:path";
+import type { RequestHandler } from 'express';
+import express from 'express';
+import path from 'node:path';
 
 /**
  * 정적 파일(static) 제공 관련 미들웨어를 생성합니다.
@@ -23,27 +23,27 @@ import path from "node:path";
  * @param params.publicDir 프로젝트의 public 디렉토리 절대 경로
  */
 export function createPublicStaticMiddleware(params: { publicDir: string }): RequestHandler {
-    const postFileUploadDir = path.join(params.publicDir, "uploads", "posts", "files");
+  const postFileUploadDir = path.join(params.publicDir, 'uploads', 'posts', 'files');
 
-    return express.static(params.publicDir, {
-        // [디렉터리 자동 리다이렉트(/assets/css -> /assets/css/) 비활성화 처리]
-        // express.static은 기본적으로 301 응답을 자체 생성하며,
-        // 해당 응답은 개발자의 의도대로 헤더 정보를 세밀하게 설정하기 어려움.
-        // 따라서 정적 서빙 경로를 추가할 경우 일관된 보안 헤더(CSP 등) 적용과 누락 방지를 위해서
-        // redirect 옵션을 비활성화 처리할 필요가 있음.
-        redirect: false,
-        setHeaders(res, filePath) {
-            // Express 단에서의 정적파일 서빙에도 일관되게 no-sniff가 적용될 수 있도록 추가
-            res.setHeader("X-Content-Type-Options", "nosniff");
+  return express.static(params.publicDir, {
+    // [디렉터리 자동 리다이렉트(/assets/css -> /assets/css/) 비활성화 처리]
+    // express.static은 기본적으로 301 응답을 자체 생성하며,
+    // 해당 응답은 개발자의 의도대로 헤더 정보를 세밀하게 설정하기 어려움.
+    // 따라서 정적 서빙 경로를 추가할 경우 일관된 보안 헤더(CSP 등) 적용과 누락 방지를 위해서
+    // redirect 옵션을 비활성화 처리할 필요가 있음.
+    redirect: false,
+    setHeaders(res, filePath) {
+      // Express 단에서의 정적파일 서빙에도 일관되게 no-sniff가 적용될 수 있도록 추가
+      res.setHeader('X-Content-Type-Options', 'nosniff');
 
-            // Force attachments to download instead of rendering inline in the browser.
-            if (filePath.startsWith(postFileUploadDir + path.sep)) {
-                const filename = path.basename(filePath);
-                res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-                res.setHeader("X-Content-Type-Options", "nosniff");
-            }
-        },
-    });
+      // Force attachments to download instead of rendering inline in the browser.
+      if (filePath.startsWith(postFileUploadDir + path.sep)) {
+        const filename = path.basename(filePath);
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+      }
+    },
+  });
 }
 
 /**
@@ -54,11 +54,13 @@ export function createPublicStaticMiddleware(params: { publicDir: string }): Req
  *
  * @param params.errorStaticRoot `<project>/views/errors` 디렉토리 절대 경로
  */
-export function createErrorCommonStaticMiddleware(params: { errorStaticRoot: string }): RequestHandler {
-    return express.static(path.join(params.errorStaticRoot, "common"), {
-        redirect: false,
-        setHeaders(res) {
-            res.setHeader("X-Content-Type-Options", "nosniff");
-        },
-    });
+export function createErrorCommonStaticMiddleware(params: {
+  errorStaticRoot: string;
+}): RequestHandler {
+  return express.static(path.join(params.errorStaticRoot, 'common'), {
+    redirect: false,
+    setHeaders(res) {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+    },
+  });
 }

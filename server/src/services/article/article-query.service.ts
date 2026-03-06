@@ -1,11 +1,16 @@
-import { isSqlInjectionTargetEnabled } from "../lab/sql-injection-control.service.js";
-import * as labImplementation from "./article-query.lab.service.js";
-import * as normalImplementation from "./article-query.normal.service.js";
-import type { ArticleForShow, ArticleOutline, ArticleRecord, NeighborPost } from "../../types/article/article.types.js";
-import { normalizeBoardSlug } from "../../utils/board/board-slug.util.js";
+import { isSqlInjectionTargetEnabled } from '../lab/sql-injection-control.service.js';
+import * as labImplementation from './article-query.lab.service.js';
+import * as normalImplementation from './article-query.normal.service.js';
+import type {
+  ArticleForShow,
+  ArticleOutline,
+  ArticleRecord,
+  NeighborPost,
+} from '../../types/article/article.types.js';
+import { normalizeBoardSlug } from '../../utils/board/board-slug.util.js';
 
-type BoardListSort = "display_id";
-type BoardListOrder = "asc" | "desc";
+type BoardListSort = 'display_id';
+type BoardListOrder = 'asc' | 'desc';
 
 /**
  * 게시글 조회/존재확인 서비스 facade입니다.
@@ -19,99 +24,105 @@ type BoardListOrder = "asc" | "desc";
  * 전체 활성 게시글 수를 반환합니다.
  */
 export async function countArticles(): Promise<number> {
-    return normalImplementation.countArticles();
+  return normalImplementation.countArticles();
 }
 
 /**
  * 특정 보드(slug)의 활성 게시글 수를 반환합니다.
  */
 export async function countArticlesBySlug(slug: string, params?: { q?: string }): Promise<number> {
-    const canonicalSlug = normalizeBoardSlug(slug);
-    if (isSqlInjectionTargetEnabled("articleLookup")) {
-        return labImplementation.countArticlesBySlug(canonicalSlug, params);
-    }
-    return normalImplementation.countArticlesBySlug(canonicalSlug, params);
+  const canonicalSlug = normalizeBoardSlug(slug);
+  if (isSqlInjectionTargetEnabled('articleLookup')) {
+    return labImplementation.countArticlesBySlug(canonicalSlug, params);
+  }
+  return normalImplementation.countArticlesBySlug(canonicalSlug, params);
 }
 
 /**
  * 전체 게시글 목록(outline)을 페이지네이션으로 조회합니다.
  */
-export async function listArticleOutlines(params: { offset: number; limit: number }): Promise<ArticleOutline[]> {
-    if (isSqlInjectionTargetEnabled("articleLookup")) {
-        return labImplementation.listArticleOutlines(params);
-    }
-    return normalImplementation.listArticleOutlines(params);
+export async function listArticleOutlines(params: {
+  offset: number;
+  limit: number;
+}): Promise<ArticleOutline[]> {
+  if (isSqlInjectionTargetEnabled('articleLookup')) {
+    return labImplementation.listArticleOutlines(params);
+  }
+  return normalImplementation.listArticleOutlines(params);
 }
 
 export async function listArticleOutlinesBySlug(params: {
-    slug: string;
-    offset: number;
-    limit: number;
-    q?: string;
-    sort?: BoardListSort;
-    order?: BoardListOrder;
+  slug: string;
+  offset: number;
+  limit: number;
+  q?: string;
+  sort?: BoardListSort;
+  order?: BoardListOrder;
 }): Promise<ArticleOutline[]> {
-    const canonicalSlug = normalizeBoardSlug(params.slug);
-    const canonicalParams = { ...params, slug: canonicalSlug };
-    if (isSqlInjectionTargetEnabled("articleLookup")) {
-        return labImplementation.listArticleOutlinesBySlug(canonicalParams);
-    }
-    return normalImplementation.listArticleOutlinesBySlug(canonicalParams);
+  const canonicalSlug = normalizeBoardSlug(params.slug);
+  const canonicalParams = { ...params, slug: canonicalSlug };
+  if (isSqlInjectionTargetEnabled('articleLookup')) {
+    return labImplementation.listArticleOutlinesBySlug(canonicalParams);
+  }
+  return normalImplementation.listArticleOutlinesBySlug(canonicalParams);
 }
 
 /**
  * 보드 slug + displayId로 게시글 상세 레코드를 조회합니다.
  */
 export async function findArticleBySlugDisplayId(params: {
-    slug: string;
-    displayId: number;
+  slug: string;
+  displayId: number;
 }): Promise<ArticleRecord | null> {
-    const canonicalSlug = normalizeBoardSlug(params.slug);
-    const canonicalParams = { ...params, slug: canonicalSlug };
-    if (isSqlInjectionTargetEnabled("articleLookup")) {
-        return labImplementation.findArticleBySlugDisplayId(canonicalParams);
-    }
-    return normalImplementation.findArticleBySlugDisplayId(canonicalParams);
+  const canonicalSlug = normalizeBoardSlug(params.slug);
+  const canonicalParams = { ...params, slug: canonicalSlug };
+  if (isSqlInjectionTargetEnabled('articleLookup')) {
+    return labImplementation.findArticleBySlugDisplayId(canonicalParams);
+  }
+  return normalImplementation.findArticleBySlugDisplayId(canonicalParams);
 }
 
 /**
  * 게시글 존재 여부를 반환합니다.
  * (404/403 분기 등에 사용)
  */
-export async function doesArticleExistBySlugDisplayId(params: { slug: string; displayId: number }): Promise<boolean> {
-    const canonicalSlug = normalizeBoardSlug(params.slug);
-    const canonicalParams = { ...params, slug: canonicalSlug };
-    if (isSqlInjectionTargetEnabled("articleLookup")) {
-        return labImplementation.doesArticleExistBySlugDisplayId(canonicalParams);
-    }
-    return normalImplementation.doesArticleExistBySlugDisplayId(canonicalParams);
+export async function doesArticleExistBySlugDisplayId(params: {
+  slug: string;
+  displayId: number;
+}): Promise<boolean> {
+  const canonicalSlug = normalizeBoardSlug(params.slug);
+  const canonicalParams = { ...params, slug: canonicalSlug };
+  if (isSqlInjectionTargetEnabled('articleLookup')) {
+    return labImplementation.doesArticleExistBySlugDisplayId(canonicalParams);
+  }
+  return normalImplementation.doesArticleExistBySlugDisplayId(canonicalParams);
 }
 
 /**
  * 게시글 상세 화면 렌더링용 데이터를 조회합니다.
  */
 export async function findArticleForShowBySlugDisplayId(params: {
-    slug: string;
-    displayId: number;
+  slug: string;
+  displayId: number;
 }): Promise<ArticleForShow | null> {
-    const canonicalSlug = normalizeBoardSlug(params.slug);
-    const canonicalParams = { ...params, slug: canonicalSlug };
-    if (isSqlInjectionTargetEnabled("articleLookup")) {
-        return labImplementation.findArticleForShowBySlugDisplayId(canonicalParams);
-    }
-    return normalImplementation.findArticleForShowBySlugDisplayId(canonicalParams);
+  const canonicalSlug = normalizeBoardSlug(params.slug);
+  const canonicalParams = { ...params, slug: canonicalSlug };
+  if (isSqlInjectionTargetEnabled('articleLookup')) {
+    return labImplementation.findArticleForShowBySlugDisplayId(canonicalParams);
+  }
+  return normalImplementation.findArticleForShowBySlugDisplayId(canonicalParams);
 }
 
 /**
  * 게시글 상세 화면에서 이전/다음 게시글 링크를 조회합니다.
  */
 export async function findNeighborArticles(params: {
-    boardId: number;
-    displayId: number;
-    viewerUserId?: number;
+  boardId: number;
+  displayId: number;
+  viewerUserId?: number;
 }): Promise<{ prevPost: NeighborPost; nextPost: NeighborPost }> {
-    if (isSqlInjectionTargetEnabled("articleLookup")) {
-        return labImplementation.findNeighborArticles(params);
-    }
-    return normalImplementation.findNeighborArticles(params);
+  if (isSqlInjectionTargetEnabled('articleLookup')) {
+    return labImplementation.findNeighborArticles(params);
+  }
+  return normalImplementation.findNeighborArticles(params);
 }

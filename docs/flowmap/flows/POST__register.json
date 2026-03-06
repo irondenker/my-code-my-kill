@@ -7,7 +7,7 @@
   "handler": {
     "name": "postRegister",
     "file": "server/src/controllers/auth/auth-register.controller.ts",
-    "line": 21
+    "line": 18
   },
   "sinks": [
     "req.session.write()"

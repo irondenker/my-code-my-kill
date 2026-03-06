@@ -13,8 +13,8 @@
  * @param basePath 파일명일 때 붙일 public base 경로
  */
 export function buildMediaUrl(value: string | null, basePath: string): string | null {
-    if (!value) {
-        return null;
-    }
-    return value.startsWith("/") ? value : `${basePath}/${value}`;
+  if (!value) {
+    return null;
+  }
+  return value.startsWith('/') ? value : `${basePath}/${value}`;
 }

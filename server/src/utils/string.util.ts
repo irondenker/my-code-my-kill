@@ -7,11 +7,11 @@
  * normalize/truncate 계열 함수에서 공통으로 사용하는 문자열 정규화 구현체입니다.
  */
 function normalizeCore(value: unknown, fallback: string | null): string | null {
-    if (typeof value !== "string") {
-        return fallback;
-    }
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : fallback;
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : fallback;
 }
 
 /**
@@ -29,8 +29,8 @@ function normalizeCore(value: unknown, fallback: string | null): string | null {
 export function normalizeString(value: unknown): string;
 export function normalizeString(value: unknown, fallback: string): string;
 export function normalizeString(value: unknown, fallback: null): string | null;
-export function normalizeString(value: unknown, fallback: string | null = ""): string | null {
-    return normalizeCore(value, fallback);
+export function normalizeString(value: unknown, fallback: string | null = ''): string | null {
+  return normalizeCore(value, fallback);
 }
 
 /**
@@ -50,8 +50,12 @@ export function normalizeString(value: unknown, fallback: string | null = ""): s
 export function truncateString(value: unknown, maxLength: number): string;
 export function truncateString(value: unknown, maxLength: number, fallback: string): string;
 export function truncateString(value: unknown, maxLength: number, fallback: null): string | null;
-export function truncateString(value: unknown, maxLength: number, fallback: string | null = ""): string | null {
-    const normalized = normalizeCore(value, fallback);
-    if (normalized === null) return null;
-    return normalized.length > maxLength ? normalized.slice(0, maxLength) : normalized;
+export function truncateString(
+  value: unknown,
+  maxLength: number,
+  fallback: string | null = ''
+): string | null {
+  const normalized = normalizeCore(value, fallback);
+  if (normalized === null) return null;
+  return normalized.length > maxLength ? normalized.slice(0, maxLength) : normalized;
 }

@@ -7,21 +7,10 @@
  */
 
 // Types
-export type {
-    BoardReadAccess,
-    BoardCreateAccess,
-    BoardMeta,
-} from "../types/board/board.types.js";
+export type { BoardReadAccess, BoardCreateAccess, BoardMeta } from '../types/board/board.types.js';
 
 // Board queries (boards)
-export {
-    listBoards,
-    findBoardBySlug,
-    findBoardById,
-} from "./board/board-query.service.js";
+export { listBoards, findBoardBySlug, findBoardById } from './board/board-query.service.js';
 
 // Board mutations (admin)
-export {
-    createBoard,
-    updateBoard,
-} from "./board/board-admin-mutation.service.js";
+export { createBoard, updateBoard } from './board/board-admin-mutation.service.js';

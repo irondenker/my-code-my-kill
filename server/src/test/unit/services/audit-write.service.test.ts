@@ -1,16 +1,16 @@
-import assert from "node:assert/strict";
-import test from "node:test";
-import { runTsxInlineScript } from "../../helpers/subprocess-test.helpers.js";
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { runTsxInlineScript } from '../../helpers/subprocess-test.helpers.js';
 
 type AuditProbeResult = {
-    queryCallCount: number;
-    logs: {
-        log: string[];
-        error: string[];
-        warn: string[];
-    };
-    writeAuditLogError: string | null;
-    safeWrapperThrew: boolean;
+  queryCallCount: number;
+  logs: {
+    log: string[];
+    error: string[];
+    warn: string[];
+  };
+  writeAuditLogError: string | null;
+  safeWrapperThrew: boolean;
 };
 
 const AUDIT_PROBE_SCRIPT = `
@@ -84,70 +84,82 @@ originalLog(JSON.stringify({
 `;
 
 async function runAuditProbe(env: Record<string, string>): Promise<AuditProbeResult> {
-    const { stdout } = await runTsxInlineScript({
-        script: AUDIT_PROBE_SCRIPT,
-        env: {
-            DB_NAME: "test_db",
-            DB_USER: "test_user",
-            DB_PASSWORD: "test_password",
-            ...env,
-        },
-    });
+  const { stdout } = await runTsxInlineScript({
+    script: AUDIT_PROBE_SCRIPT,
+    env: {
+      DB_NAME: 'test_db',
+      DB_USER: 'test_user',
+      DB_PASSWORD: 'test_password',
+      ...env,
+    },
+  });
 
-    return JSON.parse(stdout.trim()) as AuditProbeResult;
+  return JSON.parse(stdout.trim()) as AuditProbeResult;
 }
 
-test("audit write respects AUDIT_CLI_LOG_LEVEL=none for success and safe wrapper", async () => {
-    const result = await runAuditProbe({
-        AUDIT_TEST_LEVEL: "none",
-        AUDIT_TEST_MODE: "success",
-    });
+test('audit write respects AUDIT_CLI_LOG_LEVEL=none for success and safe wrapper', async () => {
+  const result = await runAuditProbe({
+    AUDIT_TEST_LEVEL: 'none',
+    AUDIT_TEST_MODE: 'success',
+  });
 
-    assert.equal(result.queryCallCount, 2);
-    assert.equal(result.writeAuditLogError, null);
-    assert.equal(result.safeWrapperThrew, false);
-    assert.deepEqual(result.logs.log, []);
-    assert.deepEqual(result.logs.error, []);
-    assert.deepEqual(result.logs.warn, []);
+  assert.equal(result.queryCallCount, 2);
+  assert.equal(result.writeAuditLogError, null);
+  assert.equal(result.safeWrapperThrew, false);
+  assert.deepEqual(result.logs.log, []);
+  assert.deepEqual(result.logs.error, []);
+  assert.deepEqual(result.logs.warn, []);
 });
 
-test("audit write emits failure logs on AUDIT_CLI_LOG_LEVEL=errors and safe wrapper swallows", async () => {
-    const result = await runAuditProbe({
-        AUDIT_TEST_LEVEL: "errors",
-        AUDIT_TEST_MODE: "db-fail",
-    });
+test('audit write emits failure logs on AUDIT_CLI_LOG_LEVEL=errors and safe wrapper swallows', async () => {
+  const result = await runAuditProbe({
+    AUDIT_TEST_LEVEL: 'errors',
+    AUDIT_TEST_MODE: 'db-fail',
+  });
 
-    assert.equal(result.queryCallCount, 2);
-    assert.equal(result.writeAuditLogError, "forced-db-failure");
-    assert.equal(result.safeWrapperThrew, false);
-    assert.equal(result.logs.log.length, 0);
-    assert.equal(result.logs.error.some((line) => line.includes("[AUDIT]")), true);
-    assert.equal(result.logs.error.some((line) => line.includes("[AUDIT_LOG_ERROR]")), true);
+  assert.equal(result.queryCallCount, 2);
+  assert.equal(result.writeAuditLogError, 'forced-db-failure');
+  assert.equal(result.safeWrapperThrew, false);
+  assert.equal(result.logs.log.length, 0);
+  assert.equal(
+    result.logs.error.some((line) => line.includes('[AUDIT]')),
+    true
+  );
+  assert.equal(
+    result.logs.error.some((line) => line.includes('[AUDIT_LOG_ERROR]')),
+    true
+  );
 });
 
-test("audit write emits success logs on AUDIT_CLI_LOG_LEVEL=all", async () => {
-    const result = await runAuditProbe({
-        AUDIT_TEST_LEVEL: "all",
-        AUDIT_TEST_MODE: "success",
-    });
+test('audit write emits success logs on AUDIT_CLI_LOG_LEVEL=all', async () => {
+  const result = await runAuditProbe({
+    AUDIT_TEST_LEVEL: 'all',
+    AUDIT_TEST_MODE: 'success',
+  });
 
-    assert.equal(result.queryCallCount, 2);
-    assert.equal(result.writeAuditLogError, null);
-    assert.equal(result.safeWrapperThrew, false);
-    assert.equal(result.logs.log.some((line) => line.includes("[AUDIT]")), true);
-    assert.deepEqual(result.logs.error, []);
+  assert.equal(result.queryCallCount, 2);
+  assert.equal(result.writeAuditLogError, null);
+  assert.equal(result.safeWrapperThrew, false);
+  assert.equal(
+    result.logs.log.some((line) => line.includes('[AUDIT]')),
+    true
+  );
+  assert.deepEqual(result.logs.error, []);
 });
 
-test("audit write warns and falls back to none for invalid AUDIT_CLI_LOG_LEVEL", async () => {
-    const result = await runAuditProbe({
-        AUDIT_TEST_LEVEL: "invalid-level",
-        AUDIT_TEST_MODE: "success",
-    });
+test('audit write warns and falls back to none for invalid AUDIT_CLI_LOG_LEVEL', async () => {
+  const result = await runAuditProbe({
+    AUDIT_TEST_LEVEL: 'invalid-level',
+    AUDIT_TEST_MODE: 'success',
+  });
 
-    assert.equal(result.queryCallCount, 2);
-    assert.equal(result.writeAuditLogError, null);
-    assert.equal(result.safeWrapperThrew, false);
-    assert.equal(result.logs.warn.some((line) => line.includes("Invalid AUDIT_CLI_LOG_LEVEL")), true);
-    assert.deepEqual(result.logs.log, []);
-    assert.deepEqual(result.logs.error, []);
+  assert.equal(result.queryCallCount, 2);
+  assert.equal(result.writeAuditLogError, null);
+  assert.equal(result.safeWrapperThrew, false);
+  assert.equal(
+    result.logs.warn.some((line) => line.includes('Invalid AUDIT_CLI_LOG_LEVEL')),
+    true
+  );
+  assert.deepEqual(result.logs.log, []);
+  assert.deepEqual(result.logs.error, []);
 });

@@ -10,7 +10,7 @@
   "handler": {
     "name": "postArticleEdit",
     "file": "server/src/controllers/article/article-edit.controller.ts",
-    "line": 41
+    "line": 44
   },
   "sinks": [
     "req.session.read()"

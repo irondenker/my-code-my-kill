@@ -9,9 +9,9 @@
  * @param limit 페이지당 항목 개수
  */
 export function computeTotalPages(totalCount: number, limit: number): number {
-    const normalizedLimit = Math.max(Math.trunc(limit), 1);
-    const totalPages = Math.max(Math.ceil(totalCount / normalizedLimit), 1);
-    return totalPages;
+  const normalizedLimit = Math.max(Math.trunc(limit), 1);
+  const totalPages = Math.max(Math.ceil(totalCount / normalizedLimit), 1);
+  return totalPages;
 }
 
 /**
@@ -19,21 +19,21 @@ export function computeTotalPages(totalCount: number, limit: number): number {
  * 숫자가 아니거나 1 미만이면 fallback을 반환합니다.
  */
 export function parsePositiveInt(rawValue: unknown, fallback: number): number {
-    if (typeof rawValue === "number") {
-        return Number.isInteger(rawValue) && rawValue > 0 ? rawValue : fallback;
+  if (typeof rawValue === 'number') {
+    return Number.isInteger(rawValue) && rawValue > 0 ? rawValue : fallback;
+  }
+
+  if (typeof rawValue === 'string') {
+    const trimmed = rawValue.trim();
+    if (!/^[0-9]+$/.test(trimmed)) {
+      return fallback;
     }
 
-    if (typeof rawValue === "string") {
-        const trimmed = rawValue.trim();
-        if (!/^[0-9]+$/.test(trimmed)) {
-            return fallback;
-        }
+    const value = Number.parseInt(trimmed, 10);
+    return value > 0 ? value : fallback;
+  }
 
-        const value = Number.parseInt(trimmed, 10);
-        return value > 0 ? value : fallback;
-    }
-
-    return fallback;
+  return fallback;
 }
 
 /**
@@ -43,12 +43,12 @@ export function parsePositiveInt(rawValue: unknown, fallback: number): number {
  * - allowedOptions에 없는 값이면 defaultLimit
  */
 export function normalizeLimitByOptions(params: {
-    rawValue: unknown;
-    defaultLimit: number;
-    maxLimit: number;
-    allowedOptions: readonly number[];
+  rawValue: unknown;
+  defaultLimit: number;
+  maxLimit: number;
+  allowedOptions: readonly number[];
 }): number {
-    const parsed = parsePositiveInt(params.rawValue, params.defaultLimit);
-    const clamped = Math.min(parsed, params.maxLimit);
-    return params.allowedOptions.includes(clamped) ? clamped : params.defaultLimit;
+  const parsed = parsePositiveInt(params.rawValue, params.defaultLimit);
+  const clamped = Math.min(parsed, params.maxLimit);
+  return params.allowedOptions.includes(clamped) ? clamped : params.defaultLimit;
 }

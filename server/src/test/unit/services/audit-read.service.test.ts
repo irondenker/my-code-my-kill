@@ -1,15 +1,15 @@
-import assert from "node:assert/strict";
-import test from "node:test";
-import { runTsxInlineScript } from "../../helpers/subprocess-test.helpers.js";
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { runTsxInlineScript } from '../../helpers/subprocess-test.helpers.js';
 
 type AuditReadProbeResult = {
-    appliedLimit: number | null;
-    logs: Array<{
-        auditLogId: number;
-        action: string;
-        details: Record<string, unknown>;
-    }>;
-    warnings: string[];
+  appliedLimit: number | null;
+  logs: Array<{
+    auditLogId: number;
+    action: string;
+    details: Record<string, unknown>;
+  }>;
+  warnings: string[];
 };
 
 const AUDIT_READ_PROBE_SCRIPT = `
@@ -99,44 +99,47 @@ console.log(JSON.stringify({ appliedLimit, logs, warnings }));
 `;
 
 async function runAuditReadProbe(params: {
-    limit: number;
-    mode: string;
+  limit: number;
+  mode: string;
 }): Promise<AuditReadProbeResult> {
-    const { stdout } = await runTsxInlineScript({
-        script: AUDIT_READ_PROBE_SCRIPT,
-        env: {
-            DB_NAME: "test_db",
-            DB_USER: "test_user",
-            DB_PASSWORD: "test_password",
-            AUDIT_READ_LIMIT: String(params.limit),
-            AUDIT_READ_MODE: params.mode,
-        },
-    });
+  const { stdout } = await runTsxInlineScript({
+    script: AUDIT_READ_PROBE_SCRIPT,
+    env: {
+      DB_NAME: 'test_db',
+      DB_USER: 'test_user',
+      DB_PASSWORD: 'test_password',
+      AUDIT_READ_LIMIT: String(params.limit),
+      AUDIT_READ_MODE: params.mode,
+    },
+  });
 
-    return JSON.parse(stdout.trim()) as AuditReadProbeResult;
+  return JSON.parse(stdout.trim()) as AuditReadProbeResult;
 }
 
-test("listAuditLogs clamps limit to max 500", async () => {
-    const result = await runAuditReadProbe({ limit: 9999, mode: "valid-only" });
-    assert.equal(result.appliedLimit, 500);
+test('listAuditLogs clamps limit to max 500', async () => {
+  const result = await runAuditReadProbe({ limit: 9999, mode: 'valid-only' });
+  assert.equal(result.appliedLimit, 500);
 });
 
-test("listAuditLogs clamps limit to min 1", async () => {
-    const result = await runAuditReadProbe({ limit: 0, mode: "valid-only" });
-    assert.equal(result.appliedLimit, 1);
+test('listAuditLogs clamps limit to min 1', async () => {
+  const result = await runAuditReadProbe({ limit: 0, mode: 'valid-only' });
+  assert.equal(result.appliedLimit, 1);
 });
 
-test("listAuditLogs skips unsupported actions and warns", async () => {
-    const result = await runAuditReadProbe({ limit: 200, mode: "mixed-actions" });
+test('listAuditLogs skips unsupported actions and warns', async () => {
+  const result = await runAuditReadProbe({ limit: 200, mode: 'mixed-actions' });
 
-    assert.equal(result.logs.length, 1);
-    assert.equal(result.logs[0]?.action, "LOGIN");
-    assert.equal(result.warnings.some((line) => line.includes("Skipping audit_log_id=2")), true);
+  assert.equal(result.logs.length, 1);
+  assert.equal(result.logs[0]?.action, 'LOGIN');
+  assert.equal(
+    result.warnings.some((line) => line.includes('Skipping audit_log_id=2')),
+    true
+  );
 });
 
-test("listAuditLogs sanitizes non-record details to empty object", async () => {
-    const result = await runAuditReadProbe({ limit: 200, mode: "non-record-details" });
+test('listAuditLogs sanitizes non-record details to empty object', async () => {
+  const result = await runAuditReadProbe({ limit: 200, mode: 'non-record-details' });
 
-    assert.equal(result.logs.length, 1);
-    assert.deepEqual(result.logs[0]?.details, {});
+  assert.equal(result.logs.length, 1);
+  assert.deepEqual(result.logs[0]?.details, {});
 });

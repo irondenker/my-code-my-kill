@@ -1,4 +1,4 @@
-import { getLabOptions, type SqlInjectionOptions } from "../../config/lab-options.js";
+import { getLabOptions, type SqlInjectionOptions } from '../../config/lab-options.js';
 
 /**
  * SQLi 실습 토글(전역 + 타깃) 제어 서비스입니다.
@@ -8,16 +8,16 @@ import { getLabOptions, type SqlInjectionOptions } from "../../config/lab-option
  * - 각 도메인 서비스는 config를 직접 읽지 않고 이 모듈을 통해 분기합니다.
  */
 
-export type SqlInjectionTargetKey = keyof SqlInjectionOptions["targets"];
+export type SqlInjectionTargetKey = keyof SqlInjectionOptions['targets'];
 
 function getSqlInjectionOptions(): SqlInjectionOptions {
-    return getLabOptions().sqlInjection;
+  return getLabOptions().sqlInjection;
 }
 
 /**
  * 특정 SQLi 타깃의 취약 모드 활성 여부를 반환합니다.
  */
 export function isSqlInjectionTargetEnabled(target: SqlInjectionTargetKey): boolean {
-    const sqlInjectionOptions = getSqlInjectionOptions();
-    return sqlInjectionOptions.enabled && sqlInjectionOptions.targets[target];
+  const sqlInjectionOptions = getSqlInjectionOptions();
+  return sqlInjectionOptions.enabled && sqlInjectionOptions.targets[target];
 }

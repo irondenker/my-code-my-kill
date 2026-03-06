@@ -13,10 +13,12 @@
         xssClientSideOptions: _xssClientSideOptions,
     }).replace(/</g, "\\u003c");
 %>
-<script id="app-bootstrap-config" type="application/json"><%- _bootstrapConfigJson %></script>
+<script id="app-bootstrap-config" type="application/json">
+  <%- _bootstrapConfigJson %>
+</script>
 <script src="/assets/js/bootstrap-config.js" defer></script>
 <% _scripts.forEach(function (src) { %>
-    <script src="<%= src %>" defer></script>
+<script src="<%= src %>" defer></script>
 <% }) %>
 
 <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js" defer></script>

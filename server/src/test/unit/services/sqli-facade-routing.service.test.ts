@@ -1,11 +1,11 @@
-import assert from "node:assert/strict";
-import test from "node:test";
-import { runTsxInlineScript } from "../../helpers/subprocess-test.helpers.js";
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { runTsxInlineScript } from '../../helpers/subprocess-test.helpers.js';
 
 type RoutingProbeResult = {
-    queryCallCount: number;
-    allCallsUseReplacements: boolean;
-    anyCallUsesReplacements: boolean;
+  queryCallCount: number;
+  allCallsUseReplacements: boolean;
+  anyCallUsesReplacements: boolean;
 };
 
 const ROUTING_PROBE_SCRIPT = `
@@ -236,56 +236,56 @@ console.log(JSON.stringify(result));
 `;
 
 async function runRoutingProbe(params: {
-    operation: string;
-    target: string;
-    mode: "safe" | "lab";
+  operation: string;
+  target: string;
+  mode: 'safe' | 'lab';
 }): Promise<RoutingProbeResult> {
-    const { stdout } = await runTsxInlineScript({
-        script: ROUTING_PROBE_SCRIPT,
-        env: {
-            DB_NAME: "test_db",
-            DB_USER: "test_user",
-            DB_PASSWORD: "test_password",
-            SQLI_TEST_OPERATION: params.operation,
-            SQLI_TEST_TARGET: params.target,
-            SQLI_TEST_MODE: params.mode,
-        },
-    });
+  const { stdout } = await runTsxInlineScript({
+    script: ROUTING_PROBE_SCRIPT,
+    env: {
+      DB_NAME: 'test_db',
+      DB_USER: 'test_user',
+      DB_PASSWORD: 'test_password',
+      SQLI_TEST_OPERATION: params.operation,
+      SQLI_TEST_TARGET: params.target,
+      SQLI_TEST_MODE: params.mode,
+    },
+  });
 
-    return JSON.parse(stdout.trim()) as RoutingProbeResult;
+  return JSON.parse(stdout.trim()) as RoutingProbeResult;
 }
 
 const ROUTING_CASES = [
-    { operation: "authLookup", target: "authLookup" },
-    { operation: "authCreate", target: "authCreate" },
-    { operation: "profileLookup", target: "profileLookup" },
-    { operation: "profileUpdate", target: "profileUpdate" },
-    { operation: "boardLookup", target: "boardLookup" },
-    { operation: "boardCreate", target: "boardCreate" },
-    { operation: "boardUpdate", target: "boardUpdate" },
-    { operation: "articleLookup", target: "articleLookup" },
-    { operation: "articleCreate", target: "articleCreate" },
-    { operation: "articleUpdate", target: "articleUpdate" },
-    { operation: "articleDeleteAsAdmin", target: "articleDelete" },
-    { operation: "articleDelete", target: "articleDelete" },
+  { operation: 'authLookup', target: 'authLookup' },
+  { operation: 'authCreate', target: 'authCreate' },
+  { operation: 'profileLookup', target: 'profileLookup' },
+  { operation: 'profileUpdate', target: 'profileUpdate' },
+  { operation: 'boardLookup', target: 'boardLookup' },
+  { operation: 'boardCreate', target: 'boardCreate' },
+  { operation: 'boardUpdate', target: 'boardUpdate' },
+  { operation: 'articleLookup', target: 'articleLookup' },
+  { operation: 'articleCreate', target: 'articleCreate' },
+  { operation: 'articleUpdate', target: 'articleUpdate' },
+  { operation: 'articleDeleteAsAdmin', target: 'articleDelete' },
+  { operation: 'articleDelete', target: 'articleDelete' },
 ] as const;
 
 for (const routingCase of ROUTING_CASES) {
-    test(`SQLi facade routing for ${routingCase.operation} toggles by ${routingCase.target}`, async () => {
-        const safe = await runRoutingProbe({
-            operation: routingCase.operation,
-            target: routingCase.target,
-            mode: "safe",
-        });
-        const lab = await runRoutingProbe({
-            operation: routingCase.operation,
-            target: routingCase.target,
-            mode: "lab",
-        });
-
-        assert.equal(safe.queryCallCount > 0, true);
-        assert.equal(lab.queryCallCount > 0, true);
-        assert.equal(safe.allCallsUseReplacements, true);
-        assert.equal(lab.anyCallUsesReplacements, false);
+  test(`SQLi facade routing for ${routingCase.operation} toggles by ${routingCase.target}`, async () => {
+    const safe = await runRoutingProbe({
+      operation: routingCase.operation,
+      target: routingCase.target,
+      mode: 'safe',
     });
+    const lab = await runRoutingProbe({
+      operation: routingCase.operation,
+      target: routingCase.target,
+      mode: 'lab',
+    });
+
+    assert.equal(safe.queryCallCount > 0, true);
+    assert.equal(lab.queryCallCount > 0, true);
+    assert.equal(safe.allCallsUseReplacements, true);
+    assert.equal(lab.anyCallUsesReplacements, false);
+  });
 }

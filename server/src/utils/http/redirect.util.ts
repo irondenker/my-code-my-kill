@@ -18,31 +18,31 @@
  * @param value 후보 입력값
  */
 function isSafeRedirectPath(value: unknown): value is string {
-    if (typeof value !== "string") {
-        return false;
-    }
+  if (typeof value !== 'string') {
+    return false;
+  }
 
-    if (value.length === 0) {
-        return false;
-    }
+  if (value.length === 0) {
+    return false;
+  }
 
-    if (!value.startsWith("/")) {
-        return false;
-    }
+  if (!value.startsWith('/')) {
+    return false;
+  }
 
-    if (value.startsWith("//")) {
-        return false;
-    }
+  if (value.startsWith('//')) {
+    return false;
+  }
 
-    if (value.includes("://")) {
-        return false;
-    }
+  if (value.includes('://')) {
+    return false;
+  }
 
-    if (value.includes("\\")) {
-        return false;
-    }
+  if (value.includes('\\')) {
+    return false;
+  }
 
-    return true;
+  return true;
 }
 
 /**
@@ -53,5 +53,5 @@ function isSafeRedirectPath(value: unknown): value is string {
  * @param fallback 기본 경로
  */
 export function getSafeRedirectPath(value: unknown, fallback: string): string {
-    return isSafeRedirectPath(value) ? value : fallback;
+  return isSafeRedirectPath(value) ? value : fallback;
 }

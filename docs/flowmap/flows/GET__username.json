@@ -7,7 +7,7 @@
   "handler": {
     "name": "getUserProfile",
     "file": "server/src/controllers/user.controller.ts",
-    "line": 43
+    "line": 47
   },
   "sinks": [
     "req.session.read()"

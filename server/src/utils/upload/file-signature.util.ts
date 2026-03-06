@@ -20,12 +20,12 @@ type ByteArray = Uint8Array | Buffer;
  * @param bytes 기대 바이트 시퀀스
  */
 function hasBytesAt(buf: ByteArray, offset: number, bytes: readonly number[]): boolean {
-    if (offset < 0) return false;
-    if (buf.length < offset + bytes.length) return false;
-    for (let i = 0; i < bytes.length; i += 1) {
-        if (buf[offset + i] !== bytes[i]) return false;
-    }
-    return true;
+  if (offset < 0) return false;
+  if (buf.length < offset + bytes.length) return false;
+  for (let i = 0; i < bytes.length; i += 1) {
+    if (buf[offset + i] !== bytes[i]) return false;
+  }
+  return true;
 }
 
 /**
@@ -34,8 +34,8 @@ function hasBytesAt(buf: ByteArray, offset: number, bytes: readonly number[]): b
  * @param buf 대상 버퍼
  */
 export function isJpegSignature(buf: ByteArray): boolean {
-    // JPEG 파일 시작 시그니처
-    return hasBytesAt(buf, 0, [0xff, 0xd8, 0xff]);
+  // JPEG 파일 시작 시그니처
+  return hasBytesAt(buf, 0, [0xff, 0xd8, 0xff]);
 }
 
 /**
@@ -44,8 +44,8 @@ export function isJpegSignature(buf: ByteArray): boolean {
  * @param buf 대상 버퍼
  */
 export function isPngSignature(buf: ByteArray): boolean {
-    // PNG 파일 시작 시그니처
-    return hasBytesAt(buf, 0, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  // PNG 파일 시작 시그니처
+  return hasBytesAt(buf, 0, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 }
 
 /**
@@ -54,8 +54,10 @@ export function isPngSignature(buf: ByteArray): boolean {
  * @param buf 대상 버퍼
  */
 export function isWebpSignature(buf: ByteArray): boolean {
-    // RIFF 컨테이너 + WEBP 브랜드 시그니처
-    return hasBytesAt(buf, 0, [0x52, 0x49, 0x46, 0x46]) && hasBytesAt(buf, 8, [0x57, 0x45, 0x42, 0x50]);
+  // RIFF 컨테이너 + WEBP 브랜드 시그니처
+  return (
+    hasBytesAt(buf, 0, [0x52, 0x49, 0x46, 0x46]) && hasBytesAt(buf, 8, [0x57, 0x45, 0x42, 0x50])
+  );
 }
 
 /**
@@ -64,8 +66,8 @@ export function isWebpSignature(buf: ByteArray): boolean {
  * @param buf 대상 버퍼
  */
 export function isPdfSignature(buf: ByteArray): boolean {
-    // PDF 파일 시작 시그니처("%PDF-")
-    return hasBytesAt(buf, 0, [0x25, 0x50, 0x44, 0x46, 0x2d]);
+  // PDF 파일 시작 시그니처("%PDF-")
+  return hasBytesAt(buf, 0, [0x25, 0x50, 0x44, 0x46, 0x2d]);
 }
 
 /**
@@ -75,16 +77,14 @@ export function isPdfSignature(buf: ByteArray): boolean {
  * @param buf 대상 버퍼
  */
 export function isZipSignature(buf: ByteArray): boolean {
-    // "PK" + (로컬 헤더 / 중앙 디렉터리 종료 / 분할 아카이브) 시그니처 허용
-    if (!hasBytesAt(buf, 0, [0x50, 0x4b])) return false;
-    if (buf.length < 4) return false;
-    const b2 = buf[2];
-    const b3 = buf[3];
-    return (
-        (b2 === 0x03 && b3 === 0x04) ||
-        (b2 === 0x05 && b3 === 0x06) ||
-        (b2 === 0x07 && b3 === 0x08)
-    );
+  // "PK" + (로컬 헤더 / 중앙 디렉터리 종료 / 분할 아카이브) 시그니처 허용
+  if (!hasBytesAt(buf, 0, [0x50, 0x4b])) return false;
+  if (buf.length < 4) return false;
+  const b2 = buf[2];
+  const b3 = buf[3];
+  return (
+    (b2 === 0x03 && b3 === 0x04) || (b2 === 0x05 && b3 === 0x06) || (b2 === 0x07 && b3 === 0x08)
+  );
 }
 
 /**
@@ -95,22 +95,22 @@ export function isZipSignature(buf: ByteArray): boolean {
  * @param buffer 대상 버퍼
  */
 export function looksLikePdf(buffer: Buffer): boolean {
-    if (!isPdfSignature(buffer)) return false;
-    // 라이트 sanity check: 대부분의 PDF는 파일 끝 근처에 "%%EOF"가 존재합니다.
-    const tailSize = Math.min(buffer.length, 2048);
-    const tail = buffer.subarray(buffer.length - tailSize);
-    return tail.includes("%%EOF");
+  if (!isPdfSignature(buffer)) return false;
+  // 라이트 sanity check: 대부분의 PDF는 파일 끝 근처에 "%%EOF"가 존재합니다.
+  const tailSize = Math.min(buffer.length, 2048);
+  const tail = buffer.subarray(buffer.length - tailSize);
+  return tail.includes('%%EOF');
 }
 
 export type TextLooksLikeOptions = {
-    /**
-     * 검사에 사용할 샘플 바이트 수(앞/뒤에서 일부를 샘플링).
-     */
-    sampleBytes?: number;
-    /**
-     * 의심스러운 제어문자 비율 허용치.
-     */
-    maxControlCharRatio?: number;
+  /**
+   * 검사에 사용할 샘플 바이트 수(앞/뒤에서 일부를 샘플링).
+   */
+  sampleBytes?: number;
+  /**
+   * 의심스러운 제어문자 비율 허용치.
+   */
+  maxControlCharRatio?: number;
 };
 
 /**
@@ -120,9 +120,9 @@ export type TextLooksLikeOptions = {
  * @param sampleBytes 샘플 크기
  */
 function sliceSamples(buffer: Buffer, sampleBytes: number): Buffer[] {
-    if (buffer.length <= sampleBytes) return [buffer];
-    if (buffer.length <= sampleBytes * 2) return [buffer.subarray(0, sampleBytes)];
-    return [buffer.subarray(0, sampleBytes), buffer.subarray(buffer.length - sampleBytes)];
+  if (buffer.length <= sampleBytes) return [buffer];
+  if (buffer.length <= sampleBytes * 2) return [buffer.subarray(0, sampleBytes)];
+  return [buffer.subarray(0, sampleBytes), buffer.subarray(buffer.length - sampleBytes)];
 }
 
 /**
@@ -131,16 +131,16 @@ function sliceSamples(buffer: Buffer, sampleBytes: number): Buffer[] {
  * @param text 디코딩된 텍스트
  */
 function countSuspiciousControlChars(text: string): { suspicious: number; total: number } {
-    let suspicious = 0;
-    let total = 0;
-    for (let i = 0; i < text.length; i += 1) {
-        const code = text.charCodeAt(i);
-        total += 1;
-        // 일반적인 공백 제어문자(tab/newline/carriage return)만 허용합니다.
-        if (code === 0x09 || code === 0x0a || code === 0x0d) continue;
-        if (code < 0x20 || code === 0x7f) suspicious += 1;
-    }
-    return { suspicious, total };
+  let suspicious = 0;
+  let total = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    const code = text.charCodeAt(i);
+    total += 1;
+    // 일반적인 공백 제어문자(tab/newline/carriage return)만 허용합니다.
+    if (code === 0x09 || code === 0x0a || code === 0x0d) continue;
+    if (code < 0x20 || code === 0x7f) suspicious += 1;
+  }
+  return { suspicious, total };
 }
 
 /**
@@ -153,36 +153,42 @@ function countSuspiciousControlChars(text: string): { suspicious: number; total:
  * @throws 텍스트로 보기 어렵다면 Error를 던집니다.
  */
 export function assertLooksLikeUtf8Text(buffer: Buffer, options: TextLooksLikeOptions = {}): void {
-    const sampleBytes = options.sampleBytes ?? 64 * 1024;
-    const maxControlCharRatio = options.maxControlCharRatio ?? 0.02;
+  const sampleBytes = options.sampleBytes ?? 64 * 1024;
+  const maxControlCharRatio = options.maxControlCharRatio ?? 0.02;
 
-    // 일부 바이너리도 UTF-8 디코딩 자체는 될 수 있으므로, 명백한 바이너리 마커를 먼저 차단합니다.
-    if (buffer.includes(0x00)) {
-        throw new Error("Attachment is not a valid text file (contains NUL bytes).");
+  // 일부 바이너리도 UTF-8 디코딩 자체는 될 수 있으므로, 명백한 바이너리 마커를 먼저 차단합니다.
+  if (buffer.includes(0x00)) {
+    throw new Error('Attachment is not a valid text file (contains NUL bytes).');
+  }
+  if (
+    isPdfSignature(buffer) ||
+    isZipSignature(buffer) ||
+    isJpegSignature(buffer) ||
+    isPngSignature(buffer) ||
+    isWebpSignature(buffer)
+  ) {
+    throw new Error('Attachment is not a valid text file (looks like a binary format).');
+  }
+
+  const decoder = new TextDecoder('utf-8', { fatal: true });
+  const samples = sliceSamples(buffer, sampleBytes);
+
+  let suspicious = 0;
+  let total = 0;
+  for (const sample of samples) {
+    let decoded: string;
+    try {
+      decoded = decoder.decode(sample);
+    } catch {
+      throw new Error('Attachment is not a valid UTF-8 text file.');
     }
-    if (isPdfSignature(buffer) || isZipSignature(buffer) || isJpegSignature(buffer) || isPngSignature(buffer) || isWebpSignature(buffer)) {
-        throw new Error("Attachment is not a valid text file (looks like a binary format).");
-    }
 
-    const decoder = new TextDecoder("utf-8", { fatal: true });
-    const samples = sliceSamples(buffer, sampleBytes);
+    const counts = countSuspiciousControlChars(decoded);
+    suspicious += counts.suspicious;
+    total += counts.total;
+  }
 
-    let suspicious = 0;
-    let total = 0;
-    for (const sample of samples) {
-        let decoded: string;
-        try {
-            decoded = decoder.decode(sample);
-        } catch {
-            throw new Error("Attachment is not a valid UTF-8 text file.");
-        }
-
-        const counts = countSuspiciousControlChars(decoded);
-        suspicious += counts.suspicious;
-        total += counts.total;
-    }
-
-    if (total > 0 && suspicious / total > maxControlCharRatio) {
-        throw new Error("Attachment is not a valid text file (too many control characters).");
-    }
+  if (total > 0 && suspicious / total > maxControlCharRatio) {
+    throw new Error('Attachment is not a valid text file (too many control characters).');
+  }
 }

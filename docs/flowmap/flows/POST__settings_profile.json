@@ -9,7 +9,7 @@
   "handler": {
     "name": "postProfileEdit",
     "file": "server/src/controllers/user.controller.ts",
-    "line": 117
+    "line": 121
   },
   "sinks": [
     "req.session.read()"

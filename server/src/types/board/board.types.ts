@@ -10,30 +10,30 @@
 /**
  * 보드 읽기 권한 타입입니다.
  */
-export type BoardReadAccess = "public" | "auth" | "admin" | "owner_or_admin";
+export type BoardReadAccess = 'public' | 'auth' | 'admin' | 'owner_or_admin';
 
 /**
  * 보드 글쓰기 권한 타입입니다.
  */
-export type BoardCreateAccess = "auth" | "admin";
+export type BoardCreateAccess = 'auth' | 'admin';
 
 /**
  * 보드 메타 정보입니다.
  */
 export type BoardMeta = {
-    boardId: number;
-    slug: string;
-    name: string;
-    description: string | null;
-    readAccess: BoardReadAccess;
-    createAccess: BoardCreateAccess;
+  boardId: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  readAccess: BoardReadAccess;
+  createAccess: BoardCreateAccess;
 };
 
 /**
  * 현재 viewer(세션)의 인증/권한 컨텍스트입니다.
  */
 export type ViewerContext = {
-    viewerUserId: number;
-    isAuthenticated: boolean;
-    isAdmin: boolean;
+  viewerUserId: number;
+  isAuthenticated: boolean;
+  isAdmin: boolean;
 };

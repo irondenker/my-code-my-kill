@@ -7,7 +7,7 @@
   "handler": {
     "name": "getBoardIndex",
     "file": "server/src/controllers/board.controller.ts",
-    "line": 104
+    "line": 105
   },
   "sinks": [
     "req.session.read()"

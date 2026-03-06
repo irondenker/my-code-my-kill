@@ -1,16 +1,16 @@
-import type { BoardMeta } from "../../types/board/board.types.js";
-import type { BoardMetaRow } from "../../types/board/board-data.types.js";
+import type { BoardMeta } from '../../types/board/board.types.js';
+import type { BoardMetaRow } from '../../types/board/board-data.types.js';
 
 /**
  * DB 조회 결과(BoardMetaRow)를 애플리케이션 타입(BoardMeta)으로 매핑합니다.
  */
 export function mapBoardMeta(row: BoardMetaRow): BoardMeta {
-    return {
-        boardId: Number(row.board_id),
-        slug: row.slug,
-        name: row.name,
-        description: row.description ?? null,
-        readAccess: row.read_access,
-        createAccess: row.create_access,
-    };
+  return {
+    boardId: Number(row.board_id),
+    slug: row.slug,
+    name: row.name,
+    description: row.description ?? null,
+    readAccess: row.read_access,
+    createAccess: row.create_access,
+  };
 }

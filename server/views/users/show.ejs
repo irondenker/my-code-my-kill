@@ -1,66 +1,70 @@
 <!doctype html>
 <html lang="en" data-bs-theme="auto">
-<%- include("../partials/head", {
-    styles: [
-        "/assets/css/color-modes.css",
-        "/assets/css/list-groups.css"
-    ]
-}) %>
+  <%- include("../partials/head", { styles: [ "/assets/css/color-modes.css",
+  "/assets/css/list-groups.css" ] }) %>
 
-<body>
+  <body>
     <%- include("../partials/theme-toggle") %>
     <%- include("../partials/header") %>
 
-    <main class="container py-4" style="max-width: 920px;">
-        <section class="card shadow-sm">
-            <div class="card-body">
-                <% const hasAvatar = Boolean(profile.profileImageUrl); %>
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <% if (hasAvatar) { %>
-                    <img
-                        src="<%= profile.profileImageUrl %>"
-                        alt="Profile image"
-                        class="profile-avatar rounded-circle border"
-                    />
-                    <% } else { %>
-                    <svg class="profile-avatar rounded-circle border" aria-hidden="true">
-                        <use xlink:href="/assets/icons/icons.svg#people-circle"></use>
-                    </svg>
-                    <% } %>
-                    <div>
-                        <h1 class="h4 mb-1">@<%= profile.username %></h1>
-                    </div>
-                </div>
-                <div class="mb-2"><strong>Display name</strong>: <%= profile.displayName || "-" %></div>
-                <div class="mb-2"><strong>Bio</strong>: <%= profile.bio || "-" %></div>
-
-                <% if (privateProfile) { %>
-                <div class="mt-3 border-top pt-3">
-                    <div class="mb-2"><strong>Email</strong>: <%= privateProfile.email || "-" %></div>
-                    <div class="mb-2"><strong>Phone</strong>: <%= privateProfile.phoneNumber || "-" %></div>
-                </div>
-                <% } %>
-
-                <% if (showAdminNotice) { %>
-                <div class="alert alert-warning mt-3 mb-0" role="alert">
-                    관리자 권한으로 사용자 비공개 정보 포함 조회 중
-                </div>
-                <% } %>
+    <main class="container py-4" style="max-width: 920px">
+      <section class="card shadow-sm">
+        <div class="card-body">
+          <% const hasAvatar = Boolean(profile.profileImageUrl); %>
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <% if (hasAvatar) { %>
+            <img
+              src="<%= profile.profileImageUrl %>"
+              alt="Profile image"
+              class="profile-avatar rounded-circle border"
+            />
+            <% } else { %>
+            <svg class="profile-avatar rounded-circle border" aria-hidden="true">
+              <use xlink:href="/assets/icons/icons.svg#people-circle"></use>
+            </svg>
+            <% } %>
+            <div>
+              <h1 class="h4 mb-1">@<%= profile.username %></h1>
             </div>
-        </section>
+          </div>
+          <div class="mb-2">
+            <strong>Display name</strong>:
+            <%= profile.displayName || "-" %>
+          </div>
+          <div class="mb-2">
+            <strong>Bio</strong>:
+            <%= profile.bio || "-" %>
+          </div>
 
-        <% if (showOwnerActions) { %>
-        <div class="mt-4">
-            <a href="/settings/profile" class="btn btn-outline-secondary btn-sm">Edit profile</a>
+          <% if (privateProfile) { %>
+          <div class="mt-3 border-top pt-3">
+            <div class="mb-2">
+              <strong>Email</strong>:
+              <%= privateProfile.email || "-" %>
+            </div>
+            <div class="mb-2">
+              <strong>Phone</strong>:
+              <%= privateProfile.phoneNumber || "-" %>
+            </div>
+          </div>
+          <% } %>
+          <% if (showAdminNotice) { %>
+          <div class="alert alert-warning mt-3 mb-0" role="alert">
+            관리자 권한으로 사용자 비공개 정보 포함 조회 중
+          </div>
+          <% } %>
         </div>
-        <% } %>
+      </section>
+
+      <% if (showOwnerActions) { %>
+      <div class="mt-4">
+        <a href="/settings/profile" class="btn btn-outline-secondary btn-sm">Edit profile</a>
+      </div>
+      <% } %>
     </main>
 
     <%- include("../partials/footer") %>
-    <%- include("../partials/scripts", {
-        scripts: [
-            "/assets/js/color-modes.js"
-        ]
-    }) %>
-</body>
+    <%- include("../partials/scripts", { scripts: [
+    "/assets/js/color-modes.js" ] }) %>
+  </body>
 </html>

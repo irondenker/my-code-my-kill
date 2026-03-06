@@ -1,4 +1,4 @@
-import fs from "node:fs/promises";
+import fs from 'node:fs/promises';
 
 /**
  * 파일 시스템 관련 유틸입니다.
@@ -14,7 +14,7 @@ import fs from "node:fs/promises";
  * @param dirPath 생성할 디렉토리 경로
  */
 export async function ensureDir(dirPath: string): Promise<void> {
-    await fs.mkdir(dirPath, { recursive: true });
+  await fs.mkdir(dirPath, { recursive: true });
 }
 
 /**
@@ -24,9 +24,8 @@ export async function ensureDir(dirPath: string): Promise<void> {
  * @param filePath 삭제할 파일 경로(없으면 no-op)
  */
 export async function safeUnlink(filePath: string | null): Promise<void> {
-    if (!filePath) {
-        return;
-    }
-    await fs.unlink(filePath).catch(() => undefined);
+  if (!filePath) {
+    return;
+  }
+  await fs.unlink(filePath).catch(() => undefined);
 }
-

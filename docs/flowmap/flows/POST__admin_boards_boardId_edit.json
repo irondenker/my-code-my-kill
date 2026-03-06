@@ -9,7 +9,7 @@
   "handler": {
     "name": "postAdminBoardEdit",
     "file": "server/src/controllers/admin/admin-boards.controller.ts",
-    "line": 187
+    "line": 198
   },
   "sinks": [
     "req.session.write()"

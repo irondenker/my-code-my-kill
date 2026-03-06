@@ -1,11 +1,11 @@
-import assert from "node:assert/strict";
-import test from "node:test";
-import { runTsxInlineScript } from "../../helpers/subprocess-test.helpers.js";
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { runTsxInlineScript } from '../../helpers/subprocess-test.helpers.js';
 
 type AdminManagementProbeResult = {
-    updated: boolean;
-    updateCalls: number;
-    auditInsertCalls: number;
+  updated: boolean;
+  updateCalls: number;
+  auditInsertCalls: number;
 };
 
 const ADMIN_MANAGEMENT_PROBE_SCRIPT = `
@@ -69,47 +69,47 @@ console.log(JSON.stringify({ updated, updateCalls, auditInsertCalls }));
 `;
 
 async function runAdminManagementProbe(mode: string): Promise<AdminManagementProbeResult> {
-    const { stdout } = await runTsxInlineScript({
-        script: ADMIN_MANAGEMENT_PROBE_SCRIPT,
-        env: {
-            DB_NAME: "test_db",
-            DB_USER: "test_user",
-            DB_PASSWORD: "test_password",
-            ADMIN_MGMT_TEST_MODE: mode,
-        },
-    });
+  const { stdout } = await runTsxInlineScript({
+    script: ADMIN_MANAGEMENT_PROBE_SCRIPT,
+    env: {
+      DB_NAME: 'test_db',
+      DB_USER: 'test_user',
+      DB_PASSWORD: 'test_password',
+      ADMIN_MGMT_TEST_MODE: mode,
+    },
+  });
 
-    return JSON.parse(stdout.trim()) as AdminManagementProbeResult;
+  return JSON.parse(stdout.trim()) as AdminManagementProbeResult;
 }
 
-test("adminUpdateUserStatus returns false and skips audit log when update fails", async () => {
-    const result = await runAdminManagementProbe("status-fail");
+test('adminUpdateUserStatus returns false and skips audit log when update fails', async () => {
+  const result = await runAdminManagementProbe('status-fail');
 
-    assert.equal(result.updated, false);
-    assert.equal(result.updateCalls, 1);
-    assert.equal(result.auditInsertCalls, 0);
+  assert.equal(result.updated, false);
+  assert.equal(result.updateCalls, 1);
+  assert.equal(result.auditInsertCalls, 0);
 });
 
-test("adminUpdateUserStatus writes audit log when update succeeds", async () => {
-    const result = await runAdminManagementProbe("status-success");
+test('adminUpdateUserStatus writes audit log when update succeeds', async () => {
+  const result = await runAdminManagementProbe('status-success');
 
-    assert.equal(result.updated, true);
-    assert.equal(result.updateCalls, 1);
-    assert.equal(result.auditInsertCalls, 1);
+  assert.equal(result.updated, true);
+  assert.equal(result.updateCalls, 1);
+  assert.equal(result.auditInsertCalls, 1);
 });
 
-test("adminUpdateUserRole returns false and skips audit log when update fails", async () => {
-    const result = await runAdminManagementProbe("role-fail");
+test('adminUpdateUserRole returns false and skips audit log when update fails', async () => {
+  const result = await runAdminManagementProbe('role-fail');
 
-    assert.equal(result.updated, false);
-    assert.equal(result.updateCalls, 1);
-    assert.equal(result.auditInsertCalls, 0);
+  assert.equal(result.updated, false);
+  assert.equal(result.updateCalls, 1);
+  assert.equal(result.auditInsertCalls, 0);
 });
 
-test("adminUpdateUserRole writes audit log when update succeeds", async () => {
-    const result = await runAdminManagementProbe("role-success");
+test('adminUpdateUserRole writes audit log when update succeeds', async () => {
+  const result = await runAdminManagementProbe('role-success');
 
-    assert.equal(result.updated, true);
-    assert.equal(result.updateCalls, 1);
-    assert.equal(result.auditInsertCalls, 1);
+  assert.equal(result.updated, true);
+  assert.equal(result.updateCalls, 1);
+  assert.equal(result.auditInsertCalls, 1);
 });

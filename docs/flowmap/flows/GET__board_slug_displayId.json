@@ -7,7 +7,7 @@
   "handler": {
     "name": "getArticleShow",
     "file": "server/src/controllers/article/article-show.controller.ts",
-    "line": 21
+    "line": 27
   },
   "sinks": [
     "req.session.read()"

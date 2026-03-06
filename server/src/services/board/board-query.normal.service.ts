@@ -1,8 +1,8 @@
-import { QueryTypes } from "sequelize";
-import { sequelize } from "../../db/index.js";
-import type { BoardMeta } from "../../types/board/board.types.js";
-import type { BoardMetaRow } from "../../types/board/board-data.types.js";
-import { mapBoardMeta } from "../../utils/board/board-mapper.util.js";
+import { QueryTypes } from 'sequelize';
+import { sequelize } from '../../db/index.js';
+import type { BoardMeta } from '../../types/board/board.types.js';
+import type { BoardMetaRow } from '../../types/board/board-data.types.js';
+import { mapBoardMeta } from '../../utils/board/board-mapper.util.js';
 
 /**
  * 보드 메타(boards) 정상 모드 서비스입니다.
@@ -16,56 +16,56 @@ import { mapBoardMeta } from "../../utils/board/board-mapper.util.js";
  * 보드 목록을 반환합니다.
  */
 export async function listBoards(): Promise<BoardMeta[]> {
-    const rows = await sequelize.query<BoardMetaRow>(
-        `
+  const rows = await sequelize.query<BoardMetaRow>(
+    `
         SELECT board_id, slug, name, description, read_access, create_access
         FROM boards
         ORDER BY name ASC
         `,
-        { type: QueryTypes.SELECT }
-    );
+    { type: QueryTypes.SELECT }
+  );
 
-    return rows.map(mapBoardMeta);
+  return rows.map(mapBoardMeta);
 }
 
 /**
  * slug로 보드 메타를 안전하게 조회합니다.
  */
 export async function findBoardBySlug(slug: string): Promise<BoardMeta | null> {
-    const rows = await sequelize.query<BoardMetaRow>(
-        `
+  const rows = await sequelize.query<BoardMetaRow>(
+    `
         SELECT board_id, slug, name, description, read_access, create_access
         FROM boards
         WHERE slug = :slug
         LIMIT 1
         `,
-        {
-            type: QueryTypes.SELECT,
-            replacements: { slug },
-        }
-    );
+    {
+      type: QueryTypes.SELECT,
+      replacements: { slug },
+    }
+  );
 
-    const row = rows[0];
-    return row ? mapBoardMeta(row) : null;
+  const row = rows[0];
+  return row ? mapBoardMeta(row) : null;
 }
 
 /**
  * boardId로 보드 메타를 조회합니다.
  */
 export async function findBoardById(boardId: number): Promise<BoardMeta | null> {
-    const rows = await sequelize.query<BoardMetaRow>(
-        `
+  const rows = await sequelize.query<BoardMetaRow>(
+    `
         SELECT board_id, slug, name, description, read_access, create_access
         FROM boards
         WHERE board_id = :boardId
         LIMIT 1
         `,
-        {
-            type: QueryTypes.SELECT,
-            replacements: { boardId },
-        }
-    );
+    {
+      type: QueryTypes.SELECT,
+      replacements: { boardId },
+    }
+  );
 
-    const row = rows[0];
-    return row ? mapBoardMeta(row) : null;
+  const row = rows[0];
+  return row ? mapBoardMeta(row) : null;
 }

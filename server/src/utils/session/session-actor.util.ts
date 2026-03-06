@@ -1,14 +1,14 @@
-import type { Request } from "express";
-import { HttpError } from "../http/http-error.js";
-import { normalizeString } from "../string.util.js";
+import type { Request } from 'express';
+import { HttpError } from '../http/http-error.js';
+import { normalizeString } from '../string.util.js';
 
 export type SessionActor = {
-    userId: number | null;
-    username: string | null;
+  userId: number | null;
+  username: string | null;
 };
 
 function isValidSessionUserId(value: unknown): value is number {
-    return typeof value === "number" && Number.isFinite(value) && value > 0;
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
 }
 
 /**
@@ -16,10 +16,10 @@ function isValidSessionUserId(value: unknown): value is number {
  * 유효하지 않은 값은 null로 정규화합니다.
  */
 export function getSessionActor(req: Request): SessionActor {
-    return {
-        userId: isValidSessionUserId(req.session.userId) ? req.session.userId : null,
-        username: normalizeString(req.session.username, null),
-    };
+  return {
+    userId: isValidSessionUserId(req.session.userId) ? req.session.userId : null,
+    username: normalizeString(req.session.username, null),
+  };
 }
 
 /**
@@ -27,12 +27,12 @@ export function getSessionActor(req: Request): SessionActor {
  * userId가 없으면 401을 던집니다.
  */
 export function requireSessionActor(req: Request): { userId: number; username: string | null } {
-    const actor = getSessionActor(req);
-    if (actor.userId === null) {
-        throw new HttpError(401, "Unauthorized");
-    }
-    return {
-        userId: actor.userId,
-        username: actor.username,
-    };
+  const actor = getSessionActor(req);
+  if (actor.userId === null) {
+    throw new HttpError(401, 'Unauthorized');
+  }
+  return {
+    userId: actor.userId,
+    username: actor.username,
+  };
 }

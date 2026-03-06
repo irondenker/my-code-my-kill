@@ -22,6 +22,8 @@
     "@types/multer": "^1.4.13",
     "@types/node": "^25.0.3",
     "nodemon": "^3.1.11",
+    "prettier": "^3.8.1",
+    "prettier-plugin-ejs": "^1.0.3",
     "sequelize-cli": "^6.6.5",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
@@ -43,7 +45,9 @@
     "start": "node dist/server.js",
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",
-    "db:seed:all": "sequelize-cli db:seed:all"
+    "db:seed:all": "sequelize-cli db:seed:all",
+    "format": "prettier --write \"src/**/*.{ts,js,json}\" \"views/**/*.{ejs,html}\" \"*.{json,yml,yaml}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json}\" \"views/**/*.{ejs,html}\" \"*.{json,yml,yaml}\""
   },
   "type": "module"
 }

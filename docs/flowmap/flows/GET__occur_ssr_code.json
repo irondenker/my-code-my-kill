@@ -5,7 +5,7 @@
   "routeFile": "server/src/routes/occur.routes.ts",
   "middlewares": [],
   "handler": {
-    "name": "INLINE_HANDLER@server/src/routes/occur.routes.ts:18"
+    "name": "INLINE_HANDLER@server/src/routes/occur.routes.ts:16"
   },
   "sinks": [],
   "exits": [

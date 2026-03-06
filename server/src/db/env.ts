@@ -15,14 +15,14 @@ function toNumber(name: string, fallback: number): number {
 function toBool(name: string, fallback: boolean): boolean {
   const raw = process.env[name];
   if (!raw) return fallback;
-  return ["1", "true", "yes", "y", "on"].includes(raw.toLowerCase());
+  return ['1', 'true', 'yes', 'y', 'on'].includes(raw.toLowerCase());
 }
 
 export const dbEnv = {
-  host: process.env.DB_HOST ?? "localhost",
-  port: toNumber("DB_PORT", 5432),
-  name: required("DB_NAME"),
-  user: required("DB_USER"),
-  password: required("DB_PASSWORD"),
-  logging: toBool("DB_LOGGING", false),
+  host: process.env.DB_HOST ?? 'localhost',
+  port: toNumber('DB_PORT', 5432),
+  name: required('DB_NAME'),
+  user: required('DB_USER'),
+  password: required('DB_PASSWORD'),
+  logging: toBool('DB_LOGGING', false),
 };

@@ -1,4 +1,4 @@
-import type { BoardCreateAccess, BoardReadAccess } from "../../types/board/board.types.js";
+import type { BoardCreateAccess, BoardReadAccess } from '../../types/board/board.types.js';
 
 /**
  * 보드(메타) 입력 검증 유틸입니다.
@@ -9,8 +9,13 @@ import type { BoardCreateAccess, BoardReadAccess } from "../../types/board/board
  * - 게시글(Article) 입력 검증은 `article-validation.util.ts`에서 담당합니다.
  */
 
-const BOARD_READ_ACCESS_VALUES: readonly BoardReadAccess[] = ["public", "auth", "admin", "owner_or_admin"];
-const BOARD_CREATE_ACCESS_VALUES: readonly BoardCreateAccess[] = ["auth", "admin"];
+const BOARD_READ_ACCESS_VALUES: readonly BoardReadAccess[] = [
+  'public',
+  'auth',
+  'admin',
+  'owner_or_admin',
+];
+const BOARD_CREATE_ACCESS_VALUES: readonly BoardCreateAccess[] = ['auth', 'admin'];
 
 /**
  * 문자열이 `BoardReadAccess` 허용값인지 판정하는 type guard입니다.
@@ -18,7 +23,7 @@ const BOARD_CREATE_ACCESS_VALUES: readonly BoardCreateAccess[] = ["auth", "admin
  * @param value 후보 문자열
  */
 export function isBoardReadAccess(value: string): value is BoardReadAccess {
-    return BOARD_READ_ACCESS_VALUES.includes(value as BoardReadAccess);
+  return BOARD_READ_ACCESS_VALUES.includes(value as BoardReadAccess);
 }
 
 /**
@@ -27,7 +32,7 @@ export function isBoardReadAccess(value: string): value is BoardReadAccess {
  * @param value 후보 문자열
  */
 export function isBoardCreateAccess(value: string): value is BoardCreateAccess {
-    return BOARD_CREATE_ACCESS_VALUES.includes(value as BoardCreateAccess);
+  return BOARD_CREATE_ACCESS_VALUES.includes(value as BoardCreateAccess);
 }
 
 /**
@@ -40,8 +45,8 @@ export function isBoardCreateAccess(value: string): value is BoardCreateAccess {
  * @param value 보드 slug 후보 값
  */
 export function isValidBoardSlug(value: string): boolean {
-    if (value.length < 2 || value.length > 50) {
-        return false;
-    }
-    return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+  if (value.length < 2 || value.length > 50) {
+    return false;
+  }
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
 }

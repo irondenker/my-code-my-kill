@@ -1,9 +1,9 @@
-import type { Request, Response, NextFunction } from "express";
-import { getSafeRedirectPath } from "../utils/http/redirect.util.js";
-import { HttpError } from "../utils/http/http-error.js";
-import { logAdminPageAccessAttemptSafely } from "../services/audit.service.js";
-import { getRequestIp, getRequestUserAgent } from "../utils/http/request-meta.util.js";
-import { getSessionActor } from "../utils/session/session-actor.util.js";
+import type { Request, Response, NextFunction } from 'express';
+import { getSafeRedirectPath } from '../utils/http/redirect.util.js';
+import { HttpError } from '../utils/http/http-error.js';
+import { logAdminPageAccessAttemptSafely } from '../services/audit.service.js';
+import { getRequestIp, getRequestUserAgent } from '../utils/http/request-meta.util.js';
+import { getSessionActor } from '../utils/session/session-actor.util.js';
 
 /**
  * 관리자 페이지 접근 시도 이벤트를 감사 로그에 안전하게 기록합니다.
@@ -13,66 +13,66 @@ import { getSessionActor } from "../utils/session/session-actor.util.js";
  * @param params 접근 시도 결과와 사유
  */
 function writeAdminAccessAttemptLogSafely(
-    req: Request,
-    params: { result: "allowed" | "redirect_login" | "forbidden"; reason: string }
+  req: Request,
+  params: { result: 'allowed' | 'redirect_login' | 'forbidden'; reason: string }
 ) {
-    const actor = getSessionActor(req);
-    logAdminPageAccessAttemptSafely({
-        actorUserId: actor.userId,
-        actorUsername: actor.username,
-        result: params.result,
-        reason: params.reason,
-        method: req.method,
-        path: req.originalUrl,
-        ipAddress: getRequestIp(req),
-        userAgent: getRequestUserAgent(req),
-    });
+  const actor = getSessionActor(req);
+  logAdminPageAccessAttemptSafely({
+    actorUserId: actor.userId,
+    actorUsername: actor.username,
+    result: params.result,
+    reason: params.reason,
+    method: req.method,
+    path: req.originalUrl,
+    ipAddress: getRequestIp(req),
+    userAgent: getRequestUserAgent(req),
+  });
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-    if (!req.session.userId) {
-        return next(new HttpError(401, "Unauthorized"));
-    }
-    return next();
+  if (!req.session.userId) {
+    return next(new HttpError(401, 'Unauthorized'));
+  }
+  return next();
 }
 
 export function requireAuthRedirect(req: Request, res: Response, next: NextFunction) {
-    if (!req.session.userId) {
-        const nextPath = getSafeRedirectPath(req.originalUrl, "");
-        if (nextPath) {
-            return res.redirect(`/login?next=${encodeURIComponent(nextPath)}`);
-        }
-        return res.redirect("/login");
+  if (!req.session.userId) {
+    const nextPath = getSafeRedirectPath(req.originalUrl, '');
+    if (nextPath) {
+      return res.redirect(`/login?next=${encodeURIComponent(nextPath)}`);
     }
-    return next();
+    return res.redirect('/login');
+  }
+  return next();
 }
 
 export function requireAdminRedirect(req: Request, res: Response, next: NextFunction) {
-    if (!req.session.userId) {
-        writeAdminAccessAttemptLogSafely(req, {
-            result: "redirect_login",
-            reason: "unauthenticated",
-        });
-
-        const nextPath = getSafeRedirectPath(req.originalUrl, "");
-        if (nextPath) {
-            return res.redirect(`/login?next=${encodeURIComponent(nextPath)}`);
-        }
-        return res.redirect("/login");
-    }
-
-    if (req.session.userRole !== "admin") {
-        writeAdminAccessAttemptLogSafely(req, {
-            result: "forbidden",
-            reason: "admin_role_required",
-        });
-        res.locals.securityEventLogged = true;
-        return next(new HttpError(403, "Forbidden"));
-    }
-
+  if (!req.session.userId) {
     writeAdminAccessAttemptLogSafely(req, {
-        result: "allowed",
-        reason: "admin_role_verified",
+      result: 'redirect_login',
+      reason: 'unauthenticated',
     });
-    return next();
+
+    const nextPath = getSafeRedirectPath(req.originalUrl, '');
+    if (nextPath) {
+      return res.redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+    }
+    return res.redirect('/login');
+  }
+
+  if (req.session.userRole !== 'admin') {
+    writeAdminAccessAttemptLogSafely(req, {
+      result: 'forbidden',
+      reason: 'admin_role_required',
+    });
+    res.locals.securityEventLogged = true;
+    return next(new HttpError(403, 'Forbidden'));
+  }
+
+  writeAdminAccessAttemptLogSafely(req, {
+    result: 'allowed',
+    reason: 'admin_role_verified',
+  });
+  return next();
 }

@@ -1,19 +1,16 @@
-import { Router } from "express";
-import { openApiDocument } from "../docs/openapi.js";
+import { Router } from 'express';
+import { openApiDocument } from '../docs/openapi.js';
 
 const router = Router();
 
-router.get("/api-docs", (_req, res) => {
-    const cspNonce = String(res.locals.cspNonce ?? "");
-    const inlinedSpecJson = JSON.stringify(openApiDocument)
-        .replace(/</g, "\\u003c")
-        .replace(/\u2028/g, "\\u2028")
-        .replace(/\u2029/g, "\\u2029");
+router.get('/api-docs', (_req, res) => {
+  const cspNonce = String(res.locals.cspNonce ?? '');
+  const inlinedSpecJson = JSON.stringify(openApiDocument)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
 
-    return res
-        .status(200)
-        .type("html")
-        .send(`<!doctype html>
+  return res.status(200).type('html').send(`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />

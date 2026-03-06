@@ -10,7 +10,7 @@
   "handler": {
     "name": "postArticleCreate",
     "file": "server/src/controllers/article/article-create.controller.ts",
-    "line": 39
+    "line": 36
   },
   "sinks": [
     "req.session.read()"

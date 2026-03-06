@@ -1,14 +1,14 @@
-import assert from "node:assert/strict";
-import test from "node:test";
-import { runTsxInlineScript } from "../../helpers/subprocess-test.helpers.js";
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { runTsxInlineScript } from '../../helpers/subprocess-test.helpers.js';
 
 type AuditEventProbeResult = {
-    calls: Array<{
-        action: string;
-        details: Record<string, unknown>;
-        actorUserId: number | null;
-        targetUserId: number | null;
-    }>;
+  calls: Array<{
+    action: string;
+    details: Record<string, unknown>;
+    actorUserId: number | null;
+    targetUserId: number | null;
+  }>;
 };
 
 const AUDIT_EVENT_PROBE_SCRIPT = `
@@ -160,71 +160,71 @@ console.log(JSON.stringify({ calls }));
 `;
 
 async function runAuditEventProbe(mode: string): Promise<AuditEventProbeResult> {
-    const { stdout } = await runTsxInlineScript({
-        script: AUDIT_EVENT_PROBE_SCRIPT,
-        env: {
-            DB_NAME: "test_db",
-            DB_USER: "test_user",
-            DB_PASSWORD: "test_password",
-            AUDIT_EVENT_TEST_MODE: mode,
-        },
-    });
+  const { stdout } = await runTsxInlineScript({
+    script: AUDIT_EVENT_PROBE_SCRIPT,
+    env: {
+      DB_NAME: 'test_db',
+      DB_USER: 'test_user',
+      DB_PASSWORD: 'test_password',
+      AUDIT_EVENT_TEST_MODE: mode,
+    },
+  });
 
-    return JSON.parse(stdout.trim()) as AuditEventProbeResult;
+  return JSON.parse(stdout.trim()) as AuditEventProbeResult;
 }
 
-test("audit event wrapper maps LOGIN_FAILED payload", async () => {
-    const result = await runAuditEventProbe("login-failed");
-    assert.equal(result.calls.length, 1);
-    assert.equal(result.calls[0]?.action, "LOGIN_FAILED");
-    assert.equal(result.calls[0]?.details.reason, "invalid_credentials");
+test('audit event wrapper maps LOGIN_FAILED payload', async () => {
+  const result = await runAuditEventProbe('login-failed');
+  assert.equal(result.calls.length, 1);
+  assert.equal(result.calls[0]?.action, 'LOGIN_FAILED');
+  assert.equal(result.calls[0]?.details.reason, 'invalid_credentials');
 });
 
-test("audit event wrapper maps LOGIN and LOGOUT payloads", async () => {
-    const login = await runAuditEventProbe("login-success");
-    const logout = await runAuditEventProbe("logout-success");
+test('audit event wrapper maps LOGIN and LOGOUT payloads', async () => {
+  const login = await runAuditEventProbe('login-success');
+  const logout = await runAuditEventProbe('logout-success');
 
-    assert.equal(login.calls[0]?.action, "LOGIN");
-    assert.equal(login.calls[0]?.details.loginResult, "success");
+  assert.equal(login.calls[0]?.action, 'LOGIN');
+  assert.equal(login.calls[0]?.details.loginResult, 'success');
 
-    assert.equal(logout.calls[0]?.action, "LOGOUT");
-    assert.equal(logout.calls[0]?.details.logoutResult, "success");
+  assert.equal(logout.calls[0]?.action, 'LOGOUT');
+  assert.equal(logout.calls[0]?.details.logoutResult, 'success');
 });
 
-test("audit event wrapper maps admin access/authz/csrf payloads", async () => {
-    const adminAccess = await runAuditEventProbe("admin-access");
-    const authzDenied = await runAuditEventProbe("authz-denied");
-    const csrfInvalid = await runAuditEventProbe("csrf-invalid");
+test('audit event wrapper maps admin access/authz/csrf payloads', async () => {
+  const adminAccess = await runAuditEventProbe('admin-access');
+  const authzDenied = await runAuditEventProbe('authz-denied');
+  const csrfInvalid = await runAuditEventProbe('csrf-invalid');
 
-    assert.equal(adminAccess.calls[0]?.action, "ADMIN_PAGE_ACCESS_ATTEMPT");
-    assert.equal(adminAccess.calls[0]?.details.path, "/admin");
+  assert.equal(adminAccess.calls[0]?.action, 'ADMIN_PAGE_ACCESS_ATTEMPT');
+  assert.equal(adminAccess.calls[0]?.details.path, '/admin');
 
-    assert.equal(authzDenied.calls[0]?.action, "AUTHZ_DENIED");
-    assert.equal(authzDenied.calls[0]?.details.reason, "forbidden");
+  assert.equal(authzDenied.calls[0]?.action, 'AUTHZ_DENIED');
+  assert.equal(authzDenied.calls[0]?.details.reason, 'forbidden');
 
-    assert.equal(csrfInvalid.calls[0]?.action, "CSRF_INVALID");
-    assert.equal(csrfInvalid.calls[0]?.details.reason, "invalid_csrf_token");
+  assert.equal(csrfInvalid.calls[0]?.action, 'CSRF_INVALID');
+  assert.equal(csrfInvalid.calls[0]?.details.reason, 'invalid_csrf_token');
 });
 
-test("audit event wrapper maps account status and admin role payloads", async () => {
-    const accountStatus = await runAuditEventProbe("account-status");
-    const adminRole = await runAuditEventProbe("admin-role");
-    const accountLocked = await runAuditEventProbe("account-locked");
-    const passwordResetRequested = await runAuditEventProbe("password-reset-requested");
-    const passwordResetCompleted = await runAuditEventProbe("password-reset-completed");
+test('audit event wrapper maps account status and admin role payloads', async () => {
+  const accountStatus = await runAuditEventProbe('account-status');
+  const adminRole = await runAuditEventProbe('admin-role');
+  const accountLocked = await runAuditEventProbe('account-locked');
+  const passwordResetRequested = await runAuditEventProbe('password-reset-requested');
+  const passwordResetCompleted = await runAuditEventProbe('password-reset-completed');
 
-    assert.equal(accountStatus.calls[0]?.action, "ACCOUNT_DEACTIVATED");
-    assert.equal(accountStatus.calls[0]?.targetUserId, 21);
+  assert.equal(accountStatus.calls[0]?.action, 'ACCOUNT_DEACTIVATED');
+  assert.equal(accountStatus.calls[0]?.targetUserId, 21);
 
-    assert.equal(adminRole.calls[0]?.action, "ADMIN_GRANTED");
-    assert.equal(adminRole.calls[0]?.targetUserId, 21);
+  assert.equal(adminRole.calls[0]?.action, 'ADMIN_GRANTED');
+  assert.equal(adminRole.calls[0]?.targetUserId, 21);
 
-    assert.equal(accountLocked.calls[0]?.action, "ACCOUNT_LOCKED");
-    assert.equal(accountLocked.calls[0]?.details.failedCount, 5);
+  assert.equal(accountLocked.calls[0]?.action, 'ACCOUNT_LOCKED');
+  assert.equal(accountLocked.calls[0]?.details.failedCount, 5);
 
-    assert.equal(passwordResetRequested.calls[0]?.action, "PASSWORD_RESET_REQUESTED");
-    assert.equal(passwordResetRequested.calls[0]?.details.issued, true);
+  assert.equal(passwordResetRequested.calls[0]?.action, 'PASSWORD_RESET_REQUESTED');
+  assert.equal(passwordResetRequested.calls[0]?.details.issued, true);
 
-    assert.equal(passwordResetCompleted.calls[0]?.action, "PASSWORD_RESET_COMPLETED");
-    assert.equal(passwordResetCompleted.calls[0]?.details.result, "success");
+  assert.equal(passwordResetCompleted.calls[0]?.action, 'PASSWORD_RESET_COMPLETED');
+  assert.equal(passwordResetCompleted.calls[0]?.details.result, 'success');
 });

@@ -6,15 +6,15 @@
  * - 전역 에러 핸들러가 `status`를 읽어 적절한 응답을 생성합니다.
  */
 export class HttpError extends Error {
-    status: number;
+  status: number;
 
-    /**
-     * @param status HTTP 상태 코드(예: 400, 401, 403, 404, 500)
-     * @param message 사용자/로그에 전달할 에러 메시지
-     */
-    constructor(status: number, message: string) {
-        super(message);
-        this.status = status;
-        Object.setPrototypeOf(this, new.target.prototype);
-    }
+  /**
+   * @param status HTTP 상태 코드(예: 400, 401, 403, 404, 500)
+   * @param message 사용자/로그에 전달할 에러 메시지
+   */
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
 }

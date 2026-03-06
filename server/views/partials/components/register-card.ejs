@@ -1,36 +1,55 @@
 <main class="form-signin w-100 m-auto">
-    <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 link-body-emphasis text-decoration-none">
-        <svg class="bi mb-3" width="72" height="72" aria-hidden="true" aria-label="Logo" role="img">
-            <use xlink:href="/assets/icons/logo.svg#logo"></use>
-        </svg>
-    </a>
-    <form method="post" action="/register">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <h1 class="h3 mb-3 fw-normal"><a class="auth-title-link" href="/register">Create account</a></h1>
-        <% if (formError) { %>
-        <div class="alert alert-danger py-2" role="alert"><%= formError %></div>
-        <% } %>
-        <div class="form-floating">
-            <input type="text" class="form-control" id="floatingInput" name="username" placeholder="username" required />
-            <label for="floatingInput">Username</label>
-        </div>
-        <div class="form-floating">
-            <input type="password" class="form-control" id="floatingPassword" name="password" placeholder="Password" required />
-            <label for="floatingPassword">Password</label>
-        </div>
-        <button class="btn btn-primary w-100 py-2" type="submit">
-            Create account
-        </button>
-        <hr class="my-4" />
-        <div>
-            <p class="fs-6 mb-3">
-                Already have an account?
-                <a class="fw-semibold" href="/login">Sign in</a>
-            </p>
-            <p class="fs-6 mb-3">
-                <a class="fw-semibold" href="/forgot-password">Forgot password?</a>
-            </p>
-        </div>
-        <p class="mt-5 mb-3 text-body-secondary auth-copyright">&copy; 2025-2026. Irondenker&trade; All rights reserved.</p>
-    </form>
+  <a
+    href="/"
+    class="d-flex align-items-center mb-2 mb-lg-0 link-body-emphasis text-decoration-none"
+  >
+    <svg class="bi mb-3" width="72" height="72" aria-hidden="true" aria-label="Logo" role="img">
+      <use xlink:href="/assets/icons/logo.svg#logo"></use>
+    </svg>
+  </a>
+  <form method="post" action="/register">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <h1 class="h3 mb-3 fw-normal">
+      <a class="auth-title-link" href="/register">Create account</a>
+    </h1>
+    <% if (formError) { %>
+    <div class="alert alert-danger py-2" role="alert"><%= formError %></div>
+    <% } %>
+    <div class="form-floating">
+      <input
+        type="text"
+        class="form-control"
+        id="floatingInput"
+        name="username"
+        placeholder="username"
+        required
+      />
+      <label for="floatingInput">Username</label>
+    </div>
+    <div class="form-floating">
+      <input
+        type="password"
+        class="form-control"
+        id="floatingPassword"
+        name="password"
+        placeholder="Password"
+        required
+      />
+      <label for="floatingPassword">Password</label>
+    </div>
+    <button class="btn btn-primary w-100 py-2" type="submit">Create account</button>
+    <hr class="my-4" />
+    <div>
+      <p class="fs-6 mb-3">
+        Already have an account?
+        <a class="fw-semibold" href="/login">Sign in</a>
+      </p>
+      <p class="fs-6 mb-3">
+        <a class="fw-semibold" href="/forgot-password">Forgot password?</a>
+      </p>
+    </div>
+    <p class="mt-5 mb-3 text-body-secondary auth-copyright">
+      &copy; 2025-2026. Irondenker&trade; All rights reserved.
+    </p>
+  </form>
 </main>

@@ -10,7 +10,7 @@
   "handler": {
     "name": "deleteArticle",
     "file": "server/src/controllers/article/article-delete.controller.ts",
-    "line": 12
+    "line": 15
   },
   "sinks": [
     "req.session.read()",

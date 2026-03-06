@@ -9,7 +9,7 @@
   "handler": {
     "name": "getArticleCreateForm",
     "file": "server/src/controllers/article/article-create.controller.ts",
-    "line": 26
+    "line": 23
   },
   "sinks": [
     "req.session.read()"

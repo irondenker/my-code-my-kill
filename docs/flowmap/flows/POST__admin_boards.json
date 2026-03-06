@@ -9,7 +9,7 @@
   "handler": {
     "name": "postAdminBoardCreate",
     "file": "server/src/controllers/admin/admin-boards.controller.ts",
-    "line": 57
+    "line": 64
   },
   "sinks": [
     "req.session.read()",

@@ -9,7 +9,7 @@
   "handler": {
     "name": "getArticleEditForm",
     "file": "server/src/controllers/article/article-edit.controller.ts",
-    "line": 25
+    "line": 28
   },
   "sinks": [
     "req.session.read()"

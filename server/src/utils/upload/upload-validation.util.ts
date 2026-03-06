@@ -1,14 +1,14 @@
-import path from "node:path";
-import { getLabOptions } from "../../config/lab-options.js";
+import path from 'node:path';
+import { getLabOptions } from '../../config/lab-options.js';
 import {
-    assertLooksLikeUtf8Text,
-    isJpegSignature,
-    isPdfSignature,
-    looksLikePdf,
-    isPngSignature,
-    isWebpSignature,
-    isZipSignature,
-} from "./file-signature.util.js";
+  assertLooksLikeUtf8Text,
+  isJpegSignature,
+  isPdfSignature,
+  looksLikePdf,
+  isPngSignature,
+  isWebpSignature,
+  isZipSignature,
+} from './file-signature.util.js';
 
 /**
  * 업로드 검증 유틸입니다.
@@ -27,21 +27,21 @@ import {
  * 첨부파일 확장자 검증을 활성화할지 여부를 반환합니다.
  */
 export function isExtensionCheckEnabled(): boolean {
-    return getLabOptions().uploadValidation.extensionCheck;
+  return getLabOptions().uploadValidation.extensionCheck;
 }
 
 /**
  * MIME 타입 검증을 활성화할지 여부를 반환합니다.
  */
 export function isMimeCheckEnabled(): boolean {
-    return getLabOptions().uploadValidation.mimeCheck;
+  return getLabOptions().uploadValidation.mimeCheck;
 }
 
 /**
  * 매직넘버(파일 시그니처) 검증을 활성화할지 여부를 반환합니다.
  */
 export function isMagicNumberCheckEnabled(): boolean {
-    return getLabOptions().uploadValidation.magicNumberCheck;
+  return getLabOptions().uploadValidation.magicNumberCheck;
 }
 
 /**
@@ -51,15 +51,18 @@ export function isMagicNumberCheckEnabled(): boolean {
  * @param allowedExtensions 허용 확장자 집합(예: .pdf, .zip)
  * @returns 소문자 확장자(예: ".pdf")
  */
-export function validateAllowedExtension(originalname: string, allowedExtensions: ReadonlySet<string>): string {
-    const extension = path.extname(originalname).toLowerCase();
-    if (!allowedExtensions.has(extension)) {
-        throw new Error("Unsupported attachment extension.");
-    }
-    return extension;
+export function validateAllowedExtension(
+  originalname: string,
+  allowedExtensions: ReadonlySet<string>
+): string {
+  const extension = path.extname(originalname).toLowerCase();
+  if (!allowedExtensions.has(extension)) {
+    throw new Error('Unsupported attachment extension.');
+  }
+  return extension;
 }
 
-export type AttachmentExpectation = "pdf" | "zip" | "text";
+export type AttachmentExpectation = 'pdf' | 'zip' | 'text';
 
 /**
  * 첨부파일이 어떤 타입으로 검증되어야 하는지 결정합니다.
@@ -70,28 +73,29 @@ export type AttachmentExpectation = "pdf" | "zip" | "text";
  * @returns 기대 타입 또는 지원 불가(null)
  */
 export function resolveAttachmentExpectation(args: {
-    extension: string;
-    mimetype: string;
-    trustExtension: boolean;
-    trustMime: boolean;
+  extension: string;
+  mimetype: string;
+  trustExtension: boolean;
+  trustMime: boolean;
 }): AttachmentExpectation | null {
-    const ext = args.extension.toLowerCase();
-    if (args.trustExtension) {
-        if (ext === ".pdf") return "pdf";
-        if (ext === ".zip") return "zip";
-        if (ext === ".txt" || ext === ".csv") return "text";
-    }
+  const ext = args.extension.toLowerCase();
+  if (args.trustExtension) {
+    if (ext === '.pdf') return 'pdf';
+    if (ext === '.zip') return 'zip';
+    if (ext === '.txt' || ext === '.csv') return 'text';
+  }
 
-    if (!args.trustMime) {
-        return null;
-    }
-
-    const mime = args.mimetype.toLowerCase();
-    if (mime === "application/pdf") return "pdf";
-    if (mime === "application/zip" || mime === "application/x-zip-compressed") return "zip";
-    if (mime === "text/plain" || mime === "text/csv" || mime === "application/vnd.ms-excel") return "text";
-
+  if (!args.trustMime) {
     return null;
+  }
+
+  const mime = args.mimetype.toLowerCase();
+  if (mime === 'application/pdf') return 'pdf';
+  if (mime === 'application/zip' || mime === 'application/x-zip-compressed') return 'zip';
+  if (mime === 'text/plain' || mime === 'text/csv' || mime === 'application/vnd.ms-excel')
+    return 'text';
+
+  return null;
 }
 
 /**
@@ -101,10 +105,10 @@ export function resolveAttachmentExpectation(args: {
  * @throws 유효하지 않으면 Error("Invalid image data.")
  */
 export function validateMagicNumberForImage(buffer: Buffer): void {
-    const ok = isJpegSignature(buffer) || isPngSignature(buffer) || isWebpSignature(buffer);
-    if (!ok) {
-        throw new Error("Invalid image data.");
-    }
+  const ok = isJpegSignature(buffer) || isPngSignature(buffer) || isWebpSignature(buffer);
+  if (!ok) {
+    throw new Error('Invalid image data.');
+  }
 }
 
 /**
@@ -114,23 +118,26 @@ export function validateMagicNumberForImage(buffer: Buffer): void {
  * - zip: PK 시그니처
  * - text: UTF-8 텍스트로 보이는지 검사(바이너리 마커 차단 포함)
  */
-export function validateMagicNumberForAttachment(buffer: Buffer, expectation: AttachmentExpectation): void {
-    if (expectation === "pdf") {
-        if (!isPdfSignature(buffer)) {
-            throw new Error("Unsupported attachment type.");
-        }
-        if (!looksLikePdf(buffer)) {
-            throw new Error("Invalid attachment data.");
-        }
-        return;
+export function validateMagicNumberForAttachment(
+  buffer: Buffer,
+  expectation: AttachmentExpectation
+): void {
+  if (expectation === 'pdf') {
+    if (!isPdfSignature(buffer)) {
+      throw new Error('Unsupported attachment type.');
     }
-
-    if (expectation === "zip") {
-        if (!isZipSignature(buffer)) {
-            throw new Error("Unsupported attachment type.");
-        }
-        return;
+    if (!looksLikePdf(buffer)) {
+      throw new Error('Invalid attachment data.');
     }
+    return;
+  }
 
-    assertLooksLikeUtf8Text(buffer);
+  if (expectation === 'zip') {
+    if (!isZipSignature(buffer)) {
+      throw new Error('Unsupported attachment type.');
+    }
+    return;
+  }
+
+  assertLooksLikeUtf8Text(buffer);
 }

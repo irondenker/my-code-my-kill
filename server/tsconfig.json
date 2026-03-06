@@ -42,6 +42,6 @@
     "skipLibCheck": true,
 
     //custom settings
-   "moduleResolution": "NodeNext"
+    "moduleResolution": "NodeNext"
   }
 }

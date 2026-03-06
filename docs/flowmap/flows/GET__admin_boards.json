@@ -9,7 +9,7 @@
   "handler": {
     "name": "getAdminBoardsPage",
     "file": "server/src/controllers/admin/admin-boards.controller.ts",
-    "line": 49
+    "line": 56
   },
   "sinks": [
     "req.session.read()",

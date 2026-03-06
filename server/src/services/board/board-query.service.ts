@@ -1,8 +1,8 @@
-import { isSqlInjectionTargetEnabled } from "../lab/sql-injection-control.service.js";
-import * as labImplementation from "./board-query.lab.service.js";
-import * as normalImplementation from "./board-query.normal.service.js";
-import type { BoardMeta } from "../../types/board/board.types.js";
-import { normalizeBoardSlug } from "../../utils/board/board-slug.util.js";
+import { isSqlInjectionTargetEnabled } from '../lab/sql-injection-control.service.js';
+import * as labImplementation from './board-query.lab.service.js';
+import * as normalImplementation from './board-query.normal.service.js';
+import type { BoardMeta } from '../../types/board/board.types.js';
+import { normalizeBoardSlug } from '../../utils/board/board-slug.util.js';
 
 /**
  * 보드 메타 서비스 facade입니다.
@@ -13,20 +13,20 @@ import { normalizeBoardSlug } from "../../utils/board/board-slug.util.js";
  */
 
 export async function listBoards(): Promise<BoardMeta[]> {
-    return normalImplementation.listBoards();
+  return normalImplementation.listBoards();
 }
 
 export async function findBoardBySlug(slug: string): Promise<BoardMeta | null> {
-    const canonicalSlug = normalizeBoardSlug(slug);
-    if (isSqlInjectionTargetEnabled("boardLookup")) {
-        return labImplementation.findBoardBySlug(canonicalSlug);
-    }
-    return normalImplementation.findBoardBySlug(canonicalSlug);
+  const canonicalSlug = normalizeBoardSlug(slug);
+  if (isSqlInjectionTargetEnabled('boardLookup')) {
+    return labImplementation.findBoardBySlug(canonicalSlug);
+  }
+  return normalImplementation.findBoardBySlug(canonicalSlug);
 }
 
 export async function findBoardById(boardId: number): Promise<BoardMeta | null> {
-    if (isSqlInjectionTargetEnabled("boardLookup")) {
-        return labImplementation.findBoardById(boardId);
-    }
-    return normalImplementation.findBoardById(boardId);
+  if (isSqlInjectionTargetEnabled('boardLookup')) {
+    return labImplementation.findBoardById(boardId);
+  }
+  return normalImplementation.findBoardById(boardId);
 }

@@ -1,19 +1,19 @@
-import { QueryTypes } from "sequelize";
-import { sequelize } from "../../db/index.js";
-import { AUDIT_ACTIONS } from "../../types/audit/audit-action.types.js";
-import type { EmitAuditCliLogParams } from "../../types/audit/audit-cli.types.js";
-import { sanitizeRecord } from "../../utils/record.util.js";
-import { truncateString } from "../../utils/string.util.js";
-import { summarizeErrorMessage } from "../../utils/http/error-summary.util.js";
-import { formatKvLine } from "../../utils/http/log-format.util.js";
+import { QueryTypes } from 'sequelize';
+import { sequelize } from '../../db/index.js';
+import { AUDIT_ACTIONS } from '../../types/audit/audit-action.types.js';
+import type { EmitAuditCliLogParams } from '../../types/audit/audit-cli.types.js';
+import { sanitizeRecord } from '../../utils/record.util.js';
+import { truncateString } from '../../utils/string.util.js';
+import { summarizeErrorMessage } from '../../utils/http/error-summary.util.js';
+import { formatKvLine } from '../../utils/http/log-format.util.js';
 import type {
-    AuditLogWriteParams,
-    NormalizedAuditLogWriteInput,
-} from "../../types/audit/audit-log-write.types.js";
+  AuditLogWriteParams,
+  NormalizedAuditLogWriteInput,
+} from '../../types/audit/audit-log-write.types.js';
 
-export type { AuditAction } from "../../types/audit/audit-action.types.js";
+export type { AuditAction } from '../../types/audit/audit-action.types.js';
 
-const AUDIT_LOGS_TABLE = "audit_logs";
+const AUDIT_LOGS_TABLE = 'audit_logs';
 
 /**
  * 감사로그 쓰기(write) 서비스입니다.
@@ -27,19 +27,21 @@ const AUDIT_LOGS_TABLE = "audit_logs";
  * - 콘솔 출력이 필요하더라도 성공 로그는 과도해지기 쉬우므로, 기본값을 `none`으로 둡니다.
  */
 
-type AuditCliLogLevel = "none" | "errors" | "all";
+type AuditCliLogLevel = 'none' | 'errors' | 'all';
 
 /**
  * `AUDIT_CLI_LOG_LEVEL` 환경변수를 해석하여 콘솔 출력 레벨을 결정합니다.
  * 유효하지 않은 값이면 안전하게 `none`으로 폴백합니다.
  */
 function getAuditCliLogLevel(): AuditCliLogLevel {
-    const raw = String(process.env.AUDIT_CLI_LOG_LEVEL ?? "none").trim().toLowerCase();
-    if (raw === "none" || raw === "errors" || raw === "all") {
-        return raw;
-    }
-    console.warn(`[CONFIG] Invalid AUDIT_CLI_LOG_LEVEL="${raw}". Falling back to "none".`);
-    return "none";
+  const raw = String(process.env.AUDIT_CLI_LOG_LEVEL ?? 'none')
+    .trim()
+    .toLowerCase();
+  if (raw === 'none' || raw === 'errors' || raw === 'all') {
+    return raw;
+  }
+  console.warn(`[CONFIG] Invalid AUDIT_CLI_LOG_LEVEL="${raw}". Falling back to "none".`);
+  return 'none';
 }
 
 /**
@@ -51,88 +53,88 @@ const auditCliLogLevel = getAuditCliLogLevel();
  * writeAuditLogSafely 실패 시 콘솔에 남길 1줄 요약을 생성합니다.
  */
 function formatAuditSafeWriteErrorLine(params: {
-    action: AuditLogWriteParams["action"];
-    error: unknown;
+  action: AuditLogWriteParams['action'];
+  error: unknown;
 }): string {
-    return formatKvLine(
-        "[AUDIT_LOG_ERROR]",
-        {
-            action: params.action,
-            reason: summarizeErrorMessage(params.error),
-        },
-        { quoteStrings: "auto" }
-    );
+  return formatKvLine(
+    '[AUDIT_LOG_ERROR]',
+    {
+      action: params.action,
+      reason: summarizeErrorMessage(params.error),
+    },
+    { quoteStrings: 'auto' }
+  );
 }
 
 /**
  * 감사 로그를 Node 콘솔에 출력합니다.
  */
 function emitAuditCliLog(params: EmitAuditCliLogParams): void {
-    if (auditCliLogLevel === "none") {
-        return;
-    }
-    if (auditCliLogLevel === "errors" && params.result === "success") {
-        return;
-    }
+  if (auditCliLogLevel === 'none') {
+    return;
+  }
+  if (auditCliLogLevel === 'errors' && params.result === 'success') {
+    return;
+  }
 
-    const line = formatKvLine(
-        "[AUDIT]",
-        {
-            result: params.result,
-            action: params.action,
-            actor: params.actor ?? null,
-            target: params.target ?? null,
-            reason: params.reason ?? (params.error ? summarizeErrorMessage(params.error) : undefined),
-        },
-        { nullValue: "-", quoteStrings: "auto" }
-    );
+  const line = formatKvLine(
+    '[AUDIT]',
+    {
+      result: params.result,
+      action: params.action,
+      actor: params.actor ?? null,
+      target: params.target ?? null,
+      reason: params.reason ?? (params.error ? summarizeErrorMessage(params.error) : undefined),
+    },
+    { nullValue: '-', quoteStrings: 'auto' }
+  );
 
-    if (params.error) {
-        console.error(line);
-        return;
-    }
+  if (params.error) {
+    console.error(line);
+    return;
+  }
 
-    console.log(line);
+  console.log(line);
 }
 
 function toCliPrincipalLabel(username: string | null, userId: number | null): string | null {
-    if (typeof username === "string" && username.length > 0) {
-        return username;
-    }
-    if (typeof userId === "number" && Number.isFinite(userId) && userId > 0) {
-        return `#${String(userId)}`;
-    }
-    return null;
+  if (typeof username === 'string' && username.length > 0) {
+    return username;
+  }
+  if (typeof userId === 'number' && Number.isFinite(userId) && userId > 0) {
+    return `#${String(userId)}`;
+  }
+  return null;
 }
 
 function toCliReason(details: Record<string, unknown>): string | undefined {
-    const reason = details.reason;
-    return typeof reason === "string" && reason.length > 0 ? reason : undefined;
+  const reason = details.reason;
+  return typeof reason === 'string' && reason.length > 0 ? reason : undefined;
 }
 
 function emitAuditWriteResultToCli(
-    input: NormalizedAuditLogWriteInput,
-    result: "success" | "failure",
-    error?: unknown
+  input: NormalizedAuditLogWriteInput,
+  result: 'success' | 'failure',
+  error?: unknown
 ): void {
-    const base: EmitAuditCliLogParams = {
-        result,
-        action: input.action,
-        actor: toCliPrincipalLabel(input.actorUsername, input.actorUserId),
-        target: toCliPrincipalLabel(input.targetUsername, input.targetUserId),
-    };
+  const base: EmitAuditCliLogParams = {
+    result,
+    action: input.action,
+    actor: toCliPrincipalLabel(input.actorUsername, input.actorUserId),
+    target: toCliPrincipalLabel(input.targetUsername, input.targetUserId),
+  };
 
-    if (result === "failure") {
-        const reason = toCliReason(input.details);
-        emitAuditCliLog({
-            ...base,
-            ...(reason ? { reason } : {}),
-            ...(error ? { error } : {}),
-        });
-        return;
-    }
+  if (result === 'failure') {
+    const reason = toCliReason(input.details);
+    emitAuditCliLog({
+      ...base,
+      ...(reason ? { reason } : {}),
+      ...(error ? { error } : {}),
+    });
+    return;
+  }
 
-    emitAuditCliLog(base);
+  emitAuditCliLog(base);
 }
 
 /**
@@ -141,8 +143,8 @@ function emitAuditWriteResultToCli(
  * @param input 정규화된 입력
  */
 async function createAuditLog(input: NormalizedAuditLogWriteInput): Promise<void> {
-    await sequelize.query(
-        `
+  await sequelize.query(
+    `
         INSERT INTO ${AUDIT_LOGS_TABLE} (
             action,
             actor_user_id,
@@ -166,48 +168,46 @@ async function createAuditLog(input: NormalizedAuditLogWriteInput): Promise<void
             NOW()
         )
         `,
-        {
-            type: QueryTypes.INSERT,
-            replacements: {
-                action: input.action,
-                actorUserId: input.actorUserId,
-                actorUsername: input.actorUsername,
-                targetUserId: input.targetUserId,
-                targetUsername: input.targetUsername,
-                detailsJson: input.detailsJson,
-                ipAddress: input.ipAddress,
-                userAgent: input.userAgent,
-            },
-        }
-    );
+    {
+      type: QueryTypes.INSERT,
+      replacements: {
+        action: input.action,
+        actorUserId: input.actorUserId,
+        actorUsername: input.actorUsername,
+        targetUserId: input.targetUserId,
+        targetUsername: input.targetUsername,
+        detailsJson: input.detailsJson,
+        ipAddress: input.ipAddress,
+        userAgent: input.userAgent,
+      },
+    }
+  );
 }
 
 /**
  * 감사로그 저장 입력을 DB 저장/CLI 출력에 적합한 형태로 정규화합니다.
  */
-function normalizeAuditLogWriteInput(
-    params: AuditLogWriteParams
-): NormalizedAuditLogWriteInput {
-    const actorUserId = params.actorUserId ?? null;
-    const targetUserId = params.targetUserId ?? null;
-    const actorUsername = truncateString(params.actorUsername, 50, null);
-    const targetUsername = truncateString(params.targetUsername, 50, null);
-    const ipAddress = truncateString(params.ipAddress, 64, null);
-    const userAgent = truncateString(params.userAgent, 255, null);
-    const details = sanitizeRecord(params.details);
-    const detailsJson = JSON.stringify(details);
+function normalizeAuditLogWriteInput(params: AuditLogWriteParams): NormalizedAuditLogWriteInput {
+  const actorUserId = params.actorUserId ?? null;
+  const targetUserId = params.targetUserId ?? null;
+  const actorUsername = truncateString(params.actorUsername, 50, null);
+  const targetUsername = truncateString(params.targetUsername, 50, null);
+  const ipAddress = truncateString(params.ipAddress, 64, null);
+  const userAgent = truncateString(params.userAgent, 255, null);
+  const details = sanitizeRecord(params.details);
+  const detailsJson = JSON.stringify(details);
 
-    return {
-        action: params.action,
-        actorUserId,
-        actorUsername,
-        targetUserId,
-        targetUsername,
-        details,
-        detailsJson,
-        ipAddress,
-        userAgent,
-    };
+  return {
+    action: params.action,
+    actorUserId,
+    actorUsername,
+    targetUserId,
+    targetUsername,
+    details,
+    detailsJson,
+    ipAddress,
+    userAgent,
+  };
 }
 
 /**
@@ -223,20 +223,20 @@ function normalizeAuditLogWriteInput(
  * @throws 지원하지 않는 액션 또는 DB 저장 실패 시 예외를 던집니다.
  */
 export async function writeAuditLog(params: AuditLogWriteParams): Promise<void> {
-    const action = params.action;
-    if (!AUDIT_ACTIONS.includes(action)) {
-        throw new Error(`Unsupported audit action: ${action}`);
-    }
+  const action = params.action;
+  if (!AUDIT_ACTIONS.includes(action)) {
+    throw new Error(`Unsupported audit action: ${action}`);
+  }
 
-    const input = normalizeAuditLogWriteInput(params);
+  const input = normalizeAuditLogWriteInput(params);
 
-    try {
-        await createAuditLog(input);
-        emitAuditWriteResultToCli(input, "success");
-    } catch (err) {
-        emitAuditWriteResultToCli(input, "failure", err);
-        throw err;
-    }
+  try {
+    await createAuditLog(input);
+    emitAuditWriteResultToCli(input, 'success');
+  } catch (err) {
+    emitAuditWriteResultToCli(input, 'failure', err);
+    throw err;
+  }
 }
 
 /**
@@ -245,12 +245,10 @@ export async function writeAuditLog(params: AuditLogWriteParams): Promise<void> 
  *
  * @param params 감사 로그 작성 파라미터
  */
-export async function writeAuditLogSafely(
-    params: AuditLogWriteParams
-): Promise<void> {
-    try {
-        await writeAuditLog(params);
-    } catch (err) {
-        console.error(formatAuditSafeWriteErrorLine({ action: params.action, error: err }));
-    }
+export async function writeAuditLogSafely(params: AuditLogWriteParams): Promise<void> {
+  try {
+    await writeAuditLog(params);
+  } catch (err) {
+    console.error(formatAuditSafeWriteErrorLine({ action: params.action, error: err }));
+  }
 }
