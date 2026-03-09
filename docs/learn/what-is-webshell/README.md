@@ -90,6 +90,28 @@ uid=33(www-data) gid=33(www-data)
 
 이제 공격자는 **웹 서버 권한으로 시스템 명령 실행 가능**
 
+### 3.4 웹 서버는 누구의 권한으로 처리하는가?
+
+완벽한 동작 원리는 아니지만...
+
+* PHP 기준 **PHP Interpreter**를 실행하는 주체
+* JSP 기준 **JSP Interpreter**를 실행하는 주체
+* 보통 웹서비스 파일을 parsing하고 실행할 수 있는 것이  **Interpreter**
+* 이 **Interpreter**를 **OS 프로세스**로 실행시킬 수 있는 권한을 가진 서버 시스템 유저
+
+따라서, 보통 **웹 서비스 전용 계정**일 확률 매우 높음!
+
+``` text
+Apache → www-data
+nginx + php-fpm → www-data
+Tomcat → tomcat
+IIS → apppool user
+```
+
+* 적절한 유저 생성 및 권한 분리 부재
+* 쉬운 권한 상승 공격
+...등의 이유로 극초반에 root에 접근하는 경우도 있음.
+
 ## 4. 실제 공격자가 하는 일
 
 웹쉘을 얻으면 공격자는 다음 작업을 수행한다.
